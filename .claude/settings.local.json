@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan route:list --columns=method,uri,name)",
+      "Bash(php artisan view:cache)"
+    ]
+  }
+}

@@ -1,18 +1,8 @@
 <?php
+// config/services.php
+// Third party service credentials including GitHub and DriftWatch AI agent URLs.
 
 return [
-
-    /*
-    |--------------------------------------------------------------------------
-    | Third Party Services
-    |--------------------------------------------------------------------------
-    |
-    | This file is for storing the credentials for third party services such
-    | as Mailgun, Postmark, AWS and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
-    |
-    */
 
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
@@ -33,6 +23,20 @@ return [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
+    ],
+
+    // DriftWatch: GitHub integration
+    'github' => [
+        'webhook_secret' => env('GITHUB_WEBHOOK_SECRET'),
+        'token' => env('GITHUB_TOKEN'),
+    ],
+
+    // DriftWatch: AI Agent Azure Function URLs
+    'agents' => [
+        'archaeologist_url' => env('AGENT_ARCHAEOLOGIST_URL'),
+        'historian_url' => env('AGENT_HISTORIAN_URL'),
+        'negotiator_url' => env('AGENT_NEGOTIATOR_URL'),
+        'chronicler_url' => env('AGENT_CHRONICLER_URL'),
     ],
 
 ];
