@@ -29,6 +29,15 @@
 - Agent status pages (Archaeologist, Historian, Negotiator, Chronicler)
 - Settings page with config status
 
-## Stage 4: Python Agents — TODO
-## Stage 5: Azure Deployment — TODO
+## Stage 4: Python Agents — COMPLETE
+- All 4 agents in agents/function_app.py (single Azure Functions V2 app)
+- Agent 1 (Archaeologist): Fetches PR diff from GitHub, analyzes with Azure OpenAI, returns blast radius
+- Agent 2 (Historian): Fetches incidents from Laravel API, correlates with blast radius, produces risk score
+- Agent 3 (Negotiator): Makes deploy decision, posts markdown comment to GitHub PR
+- Agent 4 (Chronicler): Records post-deploy outcome, evaluates prediction accuracy
+- Health check endpoint at /api/health
+- All agents use structured JSON output (response_format: json_object)
+- Friend's Azure setup guide: docs/AZURE_SETUP_FOR_FRIEND.md
+
+## Stage 5: Azure Deployment — PENDING (friend has subscription)
 ## Stage 6: Polish & Submission — TODO

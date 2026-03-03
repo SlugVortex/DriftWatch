@@ -1,0 +1,6 @@
+# agents/.gitignore
+.venv/
+__pycache__/
+local.settings.json
+.python_packages/
+*.pyc
