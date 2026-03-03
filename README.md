@@ -1,66 +1,207 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# DriftWatch
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**Pre-deployment risk intelligence powered by multi-agent AI**
 
-## About Laravel
+Built for the [Microsoft AI Dev Days Hackathon](https://aka.ms/ai-dev-days) — Challenge 2: Agentic DevOps
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## What is DriftWatch?
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+DriftWatch is an intelligent deployment gatekeeper that analyzes GitHub pull requests in real-time to predict deployment risk before code reaches production. It uses a pipeline of 4 specialized AI agents to map blast radius, correlate with historical incidents, make deploy/block decisions, and learn from outcomes.
 
-## Learning Laravel
+### The Problem
+Teams deploy code without understanding the full impact. A "small" change to a payment service config file causes a P1 outage because nobody remembered the 3 incidents in that area last month. DriftWatch solves this by giving every PR a risk score backed by historical context.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### The Solution
+```
+GitHub PR opened → Webhook fires → 4 AI Agents analyze → Risk score + PR comment
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Architecture
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```mermaid
+flowchart LR
+    subgraph GitHub
+        PR[Pull Request]
+    end
 
-## Laravel Sponsors
+    subgraph Laravel["Laravel App"]
+        WH[Webhook Receiver]
+        DB[(MySQL Database)]
+        DASH[Dashboard UI]
+    end
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+    subgraph Agents["Azure Functions"]
+        A1["Archaeologist\n(Blast Radius)"]
+        A2["Historian\n(Risk Scoring)"]
+        A3["Negotiator\n(Deploy Gate)"]
+        A4["Chronicler\n(Feedback Loop)"]
+    end
 
-### Premium Partners
+    subgraph Azure["Azure OpenAI"]
+        LLM[gpt-4.1-mini]
+    end
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+    PR -->|webhook| WH
+    WH --> A1
+    A1 -->|affected services| A2
+    A2 -->|risk score| A3
+    A3 -->|decision| DB
+    A3 -->|PR comment| PR
+    A4 -->|post-deploy| DB
 
-## Contributing
+    A1 --> LLM
+    A2 --> LLM
+    A3 --> LLM
+    A4 --> LLM
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+    A2 -->|fetch incidents| DB
+    DB --> DASH
+```
 
-## Code of Conduct
+## The 4 Agents
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+| Agent | Role | Input | Output |
+|-------|------|-------|--------|
+| **Archaeologist** | Maps blast radius from PR diffs | PR diff, changed files | Affected files, services, endpoints, dependency graph |
+| **Historian** | Scores risk using incident history | Blast radius + historical incidents | Risk score (0-100), contributing factors, recommendation |
+| **Negotiator** | Makes deploy/block decision | Risk score + context | Decision (approve/block/review), GitHub PR comment |
+| **Chronicler** | Records post-deploy outcomes | Prediction + actual outcome | Prediction accuracy, post-mortem notes |
 
-## Security Vulnerabilities
+## Decision Rules
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| Risk Score | Decision | Action |
+|-----------|----------|--------|
+| 0-49 | Approved | Deploy proceeds |
+| 50-74 | Pending Review | On-call engineer reviews |
+| 75-100 | Blocked | Deployment blocked, team notified |
 
-## License
+## Tech Stack
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- **Backend**: Laravel 11.x (PHP 8.3+)
+- **Frontend**: Bootstrap 5 dashboard with Material Symbols icons, ApexCharts
+- **AI Agents**: Python Azure Functions V2
+- **AI Model**: Azure OpenAI (gpt-4.1-mini)
+- **Database**: Azure MySQL Flexible Server
+- **Monitoring**: Azure Application Insights
+
+## Getting Started
+
+### Prerequisites
+- PHP 8.3+, Composer
+- MySQL 8.0+
+- Python 3.11+ (for agents)
+- Azure subscription (for Azure OpenAI + Functions)
+
+### Local Setup
+
+```bash
+# Clone the repo
+git clone https://github.com/your-org/DriftWatch.git
+cd DriftWatch
+
+# Install PHP dependencies
+composer install
+
+# Configure environment
+cp .env.example .env
+php artisan key:generate
+
+# Update .env with your database credentials
+# DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD
+
+# Run migrations and seed demo data
+php artisan migrate
+php artisan db:seed
+
+# Start the dev server
+php artisan serve
+```
+
+### Agent Setup (Azure Functions)
+
+See [docs/AZURE_SETUP_FOR_FRIEND.md](docs/AZURE_SETUP_FOR_FRIEND.md) for detailed Azure Functions deployment instructions.
+
+```bash
+cd agents
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run locally
+func start
+```
+
+### Environment Variables
+
+```env
+# Laravel
+APP_NAME=DriftWatch
+DB_CONNECTION=mysql
+
+# GitHub Integration
+GITHUB_WEBHOOK_SECRET=your-webhook-secret
+GITHUB_TOKEN=your-github-pat
+
+# Agent Endpoints (Azure Functions URLs)
+AGENT_ARCHAEOLOGIST_URL=https://your-functions.azurewebsites.net/api/archaeologist
+AGENT_HISTORIAN_URL=https://your-functions.azurewebsites.net/api/historian
+AGENT_NEGOTIATOR_URL=https://your-functions.azurewebsites.net/api/negotiator
+AGENT_CHRONICLER_URL=https://your-functions.azurewebsites.net/api/chronicler
+```
+
+## Demo Data
+
+The seeder creates a realistic demo scenario:
+- **14 historical incidents** including 3 P1s in the payment-service area
+- **5 demo PRs** at various pipeline stages (pending, approved, blocked, deployed)
+- A clear narrative: PR #47 touches payment-service code where 3 recent P1 incidents occurred → risk score 87/100 → blocked
+
+## Project Structure
+
+```
+DriftWatch/
+├── app/
+│   ├── Http/Controllers/
+│   │   ├── DriftWatchController.php     # Dashboard pages
+│   │   └── GitHubWebhookController.php  # Webhook + pipeline
+│   └── Models/                          # 6 Eloquent models
+├── agents/
+│   ├── function_app.py                  # 4 AI agents (Azure Functions)
+│   ├── requirements.txt
+│   └── host.json
+├── database/
+│   ├── migrations/                      # 6 migration files
+│   └── seeders/DemoDataSeeder.php
+├── resources/views/
+│   ├── layouts/app.blade.php
+│   ├── partials/
+│   └── driftwatch/                      # All dashboard views
+├── routes/
+│   ├── web.php                          # Dashboard routes
+│   └── api.php                          # API (incidents endpoint)
+├── docs/
+│   ├── AZURE_SETUP_FOR_FRIEND.md
+│   ├── DRIFTWATCH_MASTER_GUIDE_V2.md
+│   └── STAGE_PROGRESS.md
+└── config/services.php                  # GitHub + agent config
+```
+
+## Hackathon Challenge
+
+**Challenge 2: Agentic DevOps** — Build an agentic system that improves DevOps workflows using AI agents that can reason, plan, and take actions autonomously.
+
+DriftWatch demonstrates:
+- **Multi-agent orchestration**: 4 specialized agents working in a pipeline
+- **Real-world DevOps integration**: GitHub webhooks, PR comments, deployment gating
+- **Feedback loop**: The Chronicler agent learns from outcomes to improve future predictions
+- **Practical value**: Prevents deployments that would cause incidents based on historical patterns
+
+---
+
+Built with Laravel, Azure OpenAI, and Azure Functions

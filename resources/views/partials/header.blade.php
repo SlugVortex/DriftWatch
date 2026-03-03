@@ -1,888 +1,163 @@
-<header
-    class="header-area bg-white mb-4 rounded-bottom-15"
-    id="header-area"
->
+{{-- resources/views/partials/header.blade.php --}}
+{{-- DriftWatch top header bar - burger menu, search, quick links, notifications --}}
+<header class="header-area bg-white mb-4 rounded-bottom-15" id="header-area">
     <div class="row align-items-center">
         <div class="col-lg-4 col-sm-6">
             <div class="left-header-content">
-                <ul
-                    class="d-flex align-items-center ps-0 mb-0 list-unstyled justify-content-center justify-content-sm-start"
-                >
+                <ul class="d-flex align-items-center ps-0 mb-0 list-unstyled justify-content-center justify-content-sm-start">
                     <li>
-                        <button
-                            class="header-burger-menu bg-transparent p-0 border-0"
-                            id="header-burger-menu"
-                        >
-                            <span
-                                class="material-symbols-outlined"
-                                >menu</span
-                            >
+                        <button class="header-burger-menu bg-transparent p-0 border-0" id="header-burger-menu">
+                            <span class="material-symbols-outlined">menu</span>
                         </button>
                     </li>
                     <li>
-                        <form
-                            class="src-form position-relative"
-                        >
-                            <input
-                                type="text"
-                                class="form-control"
-                                placeholder="Search here....."
-                            />
-                            <button
-                                type="submit"
-                                class="src-btn position-absolute top-50 end-0 translate-middle-y bg-transparent p-0 border-0"
-                            >
-                                <span
-                                    class="material-symbols-outlined"
-                                    >search</span
-                                >
+                        <form class="src-form position-relative" action="{{ route('driftwatch.pull-requests') }}" method="GET">
+                            <input type="text" name="search" class="form-control" placeholder="Search PRs..." value="{{ request('search') }}" />
+                            <button type="submit" class="src-btn position-absolute top-50 end-0 translate-middle-y bg-transparent p-0 border-0">
+                                <span class="material-symbols-outlined">search</span>
                             </button>
                         </form>
-                    </li>
-                    <li>
-                        <div
-                            class="dropdown notifications apps"
-                        >
-                            <button
-                                class="btn btn-secondary border-0 p-0 position-relative"
-                                type="button"
-                                data-bs-toggle="dropdown"
-                                aria-expanded="false"
-                            >
-                                <span
-                                    class="material-symbols-outlined"
-                                    >apps</span
-                                >
-                            </button>
-                            <div
-                                class="dropdown-menu dropdown-lg p-0 border-0 py-4 px-3 max-h-312"
-                                data-simplebar
-                            >
-                                <div
-                                    class="notification-menu d-flex flex-wrap justify-content-between gap-4"
-                                >
-                                    <a
-                                        href="https://www.figma.com/"
-                                        target="_blank"
-                                        class="dropdown-item p-0 text-center"
-                                    >
-                                        <img
-                                            src="/assets/images/figma.svg"
-                                            class="wh-25"
-                                            alt="united-states"
-                                        />
-                                        <span>Figma</span>
-                                    </a>
-                                    <a
-                                        href="https://www.dribbble.com/"
-                                        target="_blank"
-                                        class="dropdown-item p-0 text-center"
-                                    >
-                                        <img
-                                            src="/assets/images/dribbble.svg"
-                                            class="wh-25"
-                                            alt="united-states"
-                                        />
-                                        <span>Dribbble</span>
-                                    </a>
-                                    <a
-                                        href="https://www.spotify.com/"
-                                        target="_blank"
-                                        class="dropdown-item p-0 text-center"
-                                    >
-                                        <img
-                                            src="/assets/images/spotify.svg"
-                                            class="wh-25"
-                                            alt="united-states"
-                                        />
-                                        <span>Spotify</span>
-                                    </a>
-                                    <a
-                                        href="https://www.github.com/"
-                                        target="_blank"
-                                        class="dropdown-item p-0 text-center"
-                                    >
-                                        <img
-                                            src="/assets/images/github.svg"
-                                            class="wh-25"
-                                            alt="united-states"
-                                        />
-                                        <span>Github</span>
-                                    </a>
-                                    <a
-                                        href="https://www.google.com/drive/"
-                                        target="_blank"
-                                        class="dropdown-item p-0 text-center"
-                                    >
-                                        <img
-                                            src="/assets/images/gdrive.svg"
-                                            class="wh-25"
-                                            alt="united-states"
-                                        />
-                                        <span>GDrive</span>
-                                    </a>
-                                    <a
-                                        href="https://www.trello.com/"
-                                        target="_blank"
-                                        class="dropdown-item p-0 text-center"
-                                    >
-                                        <img
-                                            src="/assets/images/trello.svg"
-                                            class="wh-25"
-                                            alt="united-states"
-                                        />
-                                        <span>Trello</span>
-                                    </a>
-                                    <a
-                                        href="https://www.slak.com/"
-                                        target="_blank"
-                                        class="dropdown-item p-0 text-center"
-                                    >
-                                        <img
-                                            src="/assets/images/slak.svg"
-                                            class="wh-25"
-                                            alt="united-states"
-                                        />
-                                        <span>Slak</span>
-                                    </a>
-                                    <a
-                                        href="https://www.pinterest.com/"
-                                        target="_blank"
-                                        class="dropdown-item p-0 text-center"
-                                    >
-                                        <img
-                                            src="/assets/images/pinterest.svg"
-                                            class="wh-25"
-                                            alt="united-states"
-                                        />
-                                        <span>Pinterest</span>
-                                    </a>
-                                    <a
-                                        href="https://www.facebook.com/"
-                                        target="_blank"
-                                        class="dropdown-item p-0 text-center"
-                                    >
-                                        <img
-                                            src="/assets/images/facebook.svg"
-                                            class="wh-25"
-                                            alt="united-states"
-                                        />
-                                        <span>Facebook</span>
-                                    </a>
-                                    <a
-                                        href="https://www.linkedin.com/"
-                                        target="_blank"
-                                        class="dropdown-item p-0 text-center"
-                                    >
-                                        <img
-                                            src="/assets/images/linkedin.svg"
-                                            class="wh-25"
-                                            alt="united-states"
-                                        />
-                                        <span>Linkedin</span>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
                     </li>
                 </ul>
             </div>
         </div>
 
         <div class="col-lg-8 col-sm-6">
-            <div class="right-header-content mt-2 mt-sm-0">
-                <ul
-                    class="d-flex align-items-center justify-content-center justify-content-sm-end ps-0 mb-0 list-unstyled"
-                >
-                    <li class="header-right-item">
-                        <div class="light-dark">
-                            <button
-                                class="switch-toggle settings-btn dark-btn p-0 bg-transparent"
-                                id="switch-toggle"
-                            >
-                                <span class="dark"
-                                    ><i
-                                        class="material-symbols-outlined"
-                                        >light_mode</i
-                                    ></span
-                                >
-                                <span class="light"
-                                    ><i
-                                        class="material-symbols-outlined"
-                                        >dark_mode</i
-                                    ></span
-                                >
+            <div class="right-header-content">
+                <ul class="d-flex align-items-center justify-content-center justify-content-sm-end ps-0 mb-0 list-unstyled gap-2">
+
+                    {{-- Quick Navigation --}}
+                    <li>
+                        <div class="dropdown notifications apps">
+                            <button class="btn btn-secondary border-0 p-0 position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="material-symbols-outlined">apps</span>
                             </button>
-                        </div>
-                    </li>
-                    <li class="header-right-item">
-                        <div
-                            class="dropdown notifications language"
-                        >
-                            <button
-                                class="btn btn-secondary dropdown-toggle border-0 p-0 position-relative"
-                                type="button"
-                                data-bs-toggle="dropdown"
-                                aria-expanded="false"
-                            >
-                                <span
-                                    class="material-symbols-outlined"
-                                    >translate</span
-                                >
-                            </button>
-                            <div
-                                class="dropdown-menu dropdown-lg p-0 border-0 dropdown-menu-end"
-                            >
-                                <span
-                                    class="fw-semibold fs-15 text-secondary title"
-                                    >Choose Language</span
-                                >
-                                <div
-                                    class="max-h-275"
-                                    data-simplebar
-                                >
-                                    <div
-                                        class="notification-menu"
-                                    >
-                                        <a
-                                            href="javascript:void(0);"
-                                            class="dropdown-item"
-                                        >
-                                            <div
-                                                class="d-flex align-items-center"
-                                            >
-                                                <div
-                                                    class="flex-shrink-0"
-                                                >
-                                                    <img
-                                                        src="/assets/images/usa.svg"
-                                                        class="wh-30 rounded-circle"
-                                                        alt="united-states"
-                                                    />
-                                                </div>
-                                                <div
-                                                    class="flex-grow-1 ms-2"
-                                                >
-                                                    <span
-                                                        class="text-secondary fw-medium fs-14"
-                                                        >English</span
-                                                    >
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <div
-                                        class="notification-menu"
-                                    >
-                                        <a
-                                            href="javascript:void(0);"
-                                            class="dropdown-item"
-                                        >
-                                            <div
-                                                class="d-flex align-items-center"
-                                            >
-                                                <div
-                                                    class="flex-shrink-0"
-                                                >
-                                                    <img
-                                                        src="/assets/images/canada.svg"
-                                                        class="wh-30 rounded-circle"
-                                                        alt="spain"
-                                                    />
-                                                </div>
-                                                <div
-                                                    class="flex-grow-1 ms-2"
-                                                >
-                                                    <span
-                                                        class="text-secondary fw-medium fs-14"
-                                                        >Canada</span
-                                                    >
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <div
-                                        class="notification-menu"
-                                    >
-                                        <a
-                                            href="javascript:void(0);"
-                                            class="dropdown-item"
-                                        >
-                                            <div
-                                                class="d-flex align-items-center"
-                                            >
-                                                <div
-                                                    class="flex-shrink-0"
-                                                >
-                                                    <img
-                                                        src="/assets/images/germany.svg"
-                                                        class="wh-30 rounded-circle"
-                                                        alt="spain"
-                                                    />
-                                                </div>
-                                                <div
-                                                    class="flex-grow-1 ms-2"
-                                                >
-                                                    <span
-                                                        class="text-secondary fw-medium fs-14"
-                                                        >Germany</span
-                                                    >
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <div
-                                        class="notification-menu"
-                                    >
-                                        <a
-                                            href="javascript:void(0);"
-                                            class="dropdown-item"
-                                        >
-                                            <div
-                                                class="d-flex align-items-center"
-                                            >
-                                                <div
-                                                    class="flex-shrink-0"
-                                                >
-                                                    <img
-                                                        src="/assets/images/portugal.svg"
-                                                        class="wh-30 rounded-circle"
-                                                        alt="portugal"
-                                                    />
-                                                </div>
-                                                <div
-                                                    class="flex-grow-1 ms-2"
-                                                >
-                                                    <span
-                                                        class="text-secondary fw-medium fs-14"
-                                                        >Portugal</span
-                                                    >
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <div
-                                        class="notification-menu mb-0"
-                                    >
-                                        <a
-                                            href="javascript:void(0);"
-                                            class="dropdown-item"
-                                        >
-                                            <div
-                                                class="d-flex align-items-center"
-                                            >
-                                                <div
-                                                    class="flex-shrink-0"
-                                                >
-                                                    <img
-                                                        src="/assets/images/spain.svg"
-                                                        class="wh-30 rounded-circle"
-                                                        alt="spain"
-                                                    />
-                                                </div>
-                                                <div
-                                                    class="flex-grow-1 ms-2"
-                                                >
-                                                    <span
-                                                        class="text-secondary fw-medium fs-14"
-                                                        >Spain</span
-                                                    >
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
+                            <div class="dropdown-menu dropdown-lg p-0 border-0 py-4 px-3">
+                                <div class="notification-menu d-flex flex-wrap justify-content-between gap-4">
+                                    <a href="{{ route('driftwatch.index') }}" class="dropdown-item p-0 text-center">
+                                        <span class="material-symbols-outlined text-primary mb-1" style="font-size: 24px;">dashboard</span>
+                                        <span>Dashboard</span>
+                                    </a>
+                                    <a href="{{ route('driftwatch.pull-requests') }}" class="dropdown-item p-0 text-center">
+                                        <span class="material-symbols-outlined text-info mb-1" style="font-size: 24px;">merge_type</span>
+                                        <span>PRs</span>
+                                    </a>
+                                    <a href="{{ route('driftwatch.incidents') }}" class="dropdown-item p-0 text-center">
+                                        <span class="material-symbols-outlined text-warning mb-1" style="font-size: 24px;">warning</span>
+                                        <span>Incidents</span>
+                                    </a>
+                                    <a href="{{ route('driftwatch.analytics') }}" class="dropdown-item p-0 text-center">
+                                        <span class="material-symbols-outlined text-success mb-1" style="font-size: 24px;">analytics</span>
+                                        <span>Analytics</span>
+                                    </a>
+                                    <a href="{{ route('driftwatch.settings') }}" class="dropdown-item p-0 text-center">
+                                        <span class="material-symbols-outlined text-secondary mb-1" style="font-size: 24px;">settings</span>
+                                        <span>Settings</span>
+                                    </a>
+                                    <a href="{{ route('driftwatch.agents.archaeologist') }}" class="dropdown-item p-0 text-center">
+                                        <span class="material-symbols-outlined text-danger mb-1" style="font-size: 24px;">smart_toy</span>
+                                        <span>Agents</span>
+                                    </a>
                                 </div>
                             </div>
                         </div>
                     </li>
-                    <li class="header-right-item">
-                        <button
-                            class="fullscreen-btn bg-transparent p-0 border-0"
-                            id="fullscreen-button"
-                        >
-                            <i
-                                class="material-symbols-outlined text-body"
-                                >fullscreen</i
-                            >
+
+                    {{-- Notifications (recent PR activity) --}}
+                    <li>
+                        <div class="dropdown notifications">
+                            <button class="btn btn-secondary border-0 p-0 position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="material-symbols-outlined">notifications</span>
+                                @php
+                                    $pendingCount = \App\Models\DeploymentDecision::where('decision', 'pending_review')->count();
+                                @endphp
+                                @if($pendingCount > 0)
+                                    <div class="notify position-absolute rounded-circle bg-danger" style="width: 8px; height: 8px; top: 0; right: 0;"></div>
+                                @endif
+                            </button>
+                            <div class="dropdown-menu dropdown-lg p-0 border-0">
+                                <div class="p-3 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="fw-bold mb-0">Notifications</h6>
+                                        @if($pendingCount > 0)
+                                            <span class="badge bg-danger">{{ $pendingCount }} pending</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="p-3" style="max-height: 300px; overflow-y: auto;" data-simplebar>
+                                    @php
+                                        $recentPRs = \App\Models\PullRequest::with('riskAssessment')
+                                            ->latest()
+                                            ->limit(5)
+                                            ->get();
+                                    @endphp
+                                    @forelse($recentPRs as $pr)
+                                        <a href="{{ route('driftwatch.show', $pr) }}" class="dropdown-item d-flex align-items-center gap-3 py-2 px-2 rounded">
+                                            <div class="wh-35 rounded-circle bg-{{ $pr->status_color }} bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0">
+                                                <span class="material-symbols-outlined text-{{ $pr->status_color }}" style="font-size: 18px;">merge_type</span>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <span class="fw-medium d-block fs-14">PR #{{ $pr->pr_number }}</span>
+                                                <small class="text-secondary">{{ Str::limit($pr->pr_title, 30) }}</small>
+                                            </div>
+                                            @if($pr->riskAssessment)
+                                                <span class="badge bg-{{ $pr->risk_color }} bg-opacity-10 text-{{ $pr->risk_color }}">
+                                                    {{ $pr->riskAssessment->risk_score }}
+                                                </span>
+                                            @endif
+                                        </a>
+                                    @empty
+                                        <p class="text-center text-secondary py-3 mb-0 fs-14">No recent activity</p>
+                                    @endforelse
+                                </div>
+                                <div class="p-2 border-top text-center">
+                                    <a href="{{ route('driftwatch.pull-requests') }}" class="text-decoration-none fs-14">View All PRs</a>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+
+                    {{-- Theme Settings Toggle --}}
+                    <li>
+                        <button class="btn btn-secondary border-0 p-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasScrolling" aria-controls="offcanvasScrolling">
+                            <span class="material-symbols-outlined">settings</span>
                         </button>
                     </li>
-                    <li class="header-right-item">
-                        <div
-                            class="dropdown notifications noti"
-                        >
-                            <button
-                                class="btn btn-secondary border-0 p-0 position-relative badge"
-                                type="button"
-                                data-bs-toggle="dropdown"
-                                aria-expanded="false"
-                            >
-                                <span
-                                    class="material-symbols-outlined"
-                                    >notifications</span
-                                >
-                            </button>
-                            <div
-                                class="dropdown-menu dropdown-lg p-0 border-0 p-0 dropdown-menu-end"
-                            >
-                                <div
-                                    class="d-flex justify-content-between align-items-center title"
-                                >
-                                    <span
-                                        class="fw-semibold fs-15 text-secondary"
-                                        >Notifications
-                                        <span
-                                            class="fw-normal text-body fs-14"
-                                            >(03)</span
-                                        ></span
-                                    >
-                                    <button
-                                        class="p-0 m-0 bg-transparent border-0 fs-14 text-primary"
-                                    >
-                                        Clear All
-                                    </button>
-                                </div>
 
-                                <div
-                                    class="max-h-217"
-                                    data-simplebar
-                                >
-                                    <div
-                                        class="notification-menu"
-                                    >
-                                        <a
-                                            href="/notification"
-                                            class="dropdown-item"
-                                        >
-                                            <div
-                                                class="d-flex align-items-center"
-                                            >
-                                                <div
-                                                    class="flex-shrink-0"
-                                                >
-                                                    <i
-                                                        class="material-symbols-outlined text-primary"
-                                                        >sms</i
-                                                    >
-                                                </div>
-                                                <div
-                                                    class="flex-grow-1 ms-3"
-                                                >
-                                                    <p>
-                                                        You have
-                                                        requested
-                                                        to
-                                                        <span
-                                                            class="fw-semibold"
-                                                            >withdrawal</span
-                                                        >
-                                                    </p>
-                                                    <span
-                                                        class="fs-13"
-                                                        >2 hrs
-                                                        ago</span
-                                                    >
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <div
-                                        class="notification-menu unseen"
-                                    >
-                                        <a
-                                            href="/notification"
-                                            class="dropdown-item"
-                                        >
-                                            <div
-                                                class="d-flex align-items-center"
-                                            >
-                                                <div
-                                                    class="flex-shrink-0"
-                                                >
-                                                    <i
-                                                        class="material-symbols-outlined text-info"
-                                                        >person</i
-                                                    >
-                                                </div>
-                                                <div
-                                                    class="flex-grow-1 ms-3"
-                                                >
-                                                    <p>
-                                                        A new
-                                                        user
-                                                        added in
-                                                        Trezo
-                                                    </p>
-                                                    <span
-                                                        class="fs-13"
-                                                        >3 hrs
-                                                        ago</span
-                                                    >
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <div
-                                        class="notification-menu"
-                                    >
-                                        <a
-                                            href="/notification"
-                                            class="dropdown-item"
-                                        >
-                                            <div
-                                                class="d-flex align-items-center"
-                                            >
-                                                <div
-                                                    class="flex-shrink-0"
-                                                >
-                                                    <i
-                                                        class="material-symbols-outlined text-success"
-                                                        >mark_email_unread</i
-                                                    >
-                                                </div>
-                                                <div
-                                                    class="flex-grow-1 ms-3"
-                                                >
-                                                    <p>
-                                                        You have
-                                                        requested
-                                                        to
-                                                        <span
-                                                            class="fw-semibold"
-                                                            >withdrawal</span
-                                                        >
-                                                    </p>
-                                                    <span
-                                                        class="fs-13"
-                                                        >1 day
-                                                        ago</span
-                                                    >
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <div
-                                        class="notification-menu"
-                                    >
-                                        <a
-                                            href="/notification"
-                                            class="dropdown-item"
-                                        >
-                                            <div
-                                                class="d-flex align-items-center"
-                                            >
-                                                <div
-                                                    class="flex-shrink-0"
-                                                >
-                                                    <i
-                                                        class="material-symbols-outlined text-primary"
-                                                        >sms</i
-                                                    >
-                                                </div>
-                                                <div
-                                                    class="flex-grow-1 ms-3"
-                                                >
-                                                    <p>
-                                                        You have
-                                                        requested
-                                                        to
-                                                        <span
-                                                            class="fw-semibold"
-                                                            >withdrawal</span
-                                                        >
-                                                    </p>
-                                                    <span
-                                                        class="fs-13"
-                                                        >2 hrs
-                                                        ago</span
-                                                    >
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <div
-                                        class="notification-menu unseen"
-                                    >
-                                        <a
-                                            href="/notification"
-                                            class="dropdown-item"
-                                        >
-                                            <div
-                                                class="d-flex align-items-center"
-                                            >
-                                                <div
-                                                    class="flex-shrink-0"
-                                                >
-                                                    <i
-                                                        class="material-symbols-outlined text-info"
-                                                        >person</i
-                                                    >
-                                                </div>
-                                                <div
-                                                    class="flex-grow-1 ms-3"
-                                                >
-                                                    <p>
-                                                        A new
-                                                        user
-                                                        added in
-                                                        Trezo
-                                                    </p>
-                                                    <span
-                                                        class="fs-13"
-                                                        >3 hrs
-                                                        ago</span
-                                                    >
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <div
-                                        class="notification-menu"
-                                    >
-                                        <a
-                                            href="/notification"
-                                            class="dropdown-item"
-                                        >
-                                            <div
-                                                class="d-flex align-items-center"
-                                            >
-                                                <div
-                                                    class="flex-shrink-0"
-                                                >
-                                                    <i
-                                                        class="material-symbols-outlined text-success"
-                                                        >mark_email_unread</i
-                                                    >
-                                                </div>
-                                                <div
-                                                    class="flex-grow-1 ms-3"
-                                                >
-                                                    <p>
-                                                        You have
-                                                        requested
-                                                        to
-                                                        <span
-                                                            class="fw-semibold"
-                                                            >withdrawal</span
-                                                        >
-                                                    </p>
-                                                    <span
-                                                        class="fs-13"
-                                                        >1 day
-                                                        ago</span
-                                                    >
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                </div>
-
-                                <a
-                                    href="/notification"
-                                    class="dropdown-item text-center text-primary d-block view-all fw-medium rounded-bottom-3"
-                                >
-                                    <span
-                                        >See All Notifications
-                                    </span>
-                                </a>
-                            </div>
-                        </div>
-                    </li>
-                    <li class="header-right-item">
+                    {{-- User Profile --}}
+                    <li>
                         <div class="dropdown admin-profile">
-                            <div
-                                class="d-xxl-flex align-items-center bg-transparent border-0 text-start p-0 cursor dropdown-toggle"
-                                data-bs-toggle="dropdown"
-                            >
-                                <div class="flex-shrink-0">
-                                    <img
-                                        class="rounded-circle wh-40 administrator"
-                                        src="/assets/images/administrator.jpg"
-                                        alt="admin"
-                                    />
+                            <button class="btn btn-secondary border-0 p-0 d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="wh-30 rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center">
+                                    <span class="material-symbols-outlined text-primary" style="font-size: 18px;">person</span>
                                 </div>
-                                <div class="flex-grow-1 ms-2">
-                                    <div
-                                        class="d-flex align-items-center justify-content-between"
-                                    >
-                                        <div
-                                            class="d-none d-xxl-block"
-                                        >
-                                            <div
-                                                class="d-flex align-content-center"
-                                            >
-                                                <h3>Olivia</h3>
-                                            </div>
+                            </button>
+                            <ul class="dropdown-menu border-0 py-3 px-3" style="min-width: 200px;">
+                                <li class="mb-2">
+                                    <div class="d-flex align-items-center gap-2 mb-2 pb-2 border-bottom">
+                                        <div class="wh-35 rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center">
+                                            <span class="material-symbols-outlined text-primary" style="font-size: 20px;">person</span>
+                                        </div>
+                                        <div>
+                                            <span class="fw-bold d-block fs-14">DriftWatch</span>
+                                            <small class="text-secondary">Admin</small>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-
-                            <div
-                                class="dropdown-menu border-0 bg-white dropdown-menu-end"
-                            >
-                                <div
-                                    class="d-flex align-items-center info"
-                                >
-                                    <div class="flex-shrink-0">
-                                        <img
-                                            class="rounded-circle wh-30 administrator"
-                                            src="/assets/images/administrator.jpg"
-                                            alt="admin"
-                                        />
-                                    </div>
-                                    <div
-                                        class="flex-grow-1 ms-2"
-                                    >
-                                        <h3 class="fw-medium">
-                                            Olivia John
-                                        </h3>
-                                        <span class="fs-12"
-                                            >Marketing
-                                            Manager</span
-                                        >
-                                    </div>
-                                </div>
-                                <ul
-                                    class="admin-link ps-0 mb-0 list-unstyled"
-                                >
-                                    <li>
-                                        <a
-                                            class="dropdown-item d-flex align-items-center text-body"
-                                            href="/my-profile"
-                                        >
-                                            <i
-                                                class="material-symbols-outlined"
-                                                >account_circle</i
-                                            >
-                                            <span class="ms-2"
-                                                >My
-                                                Profile</span
-                                            >
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a
-                                            class="dropdown-item d-flex align-items-center text-body"
-                                            href="/chat"
-                                        >
-                                            <i
-                                                class="material-symbols-outlined"
-                                                >chat</i
-                                            >
-                                            <span class="ms-2"
-                                                >Messages</span
-                                            >
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a
-                                            class="dropdown-item d-flex align-items-center text-body"
-                                            href="/to-do-list"
-                                        >
-                                            <i
-                                                class="material-symbols-outlined"
-                                                >format_list_bulleted
-                                            </i>
-                                            <span class="ms-2"
-                                                >My Task</span
-                                            >
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a
-                                            class="dropdown-item d-flex align-items-center text-body"
-                                            href="/my-profile"
-                                        >
-                                            <i
-                                                class="material-symbols-outlined"
-                                                >credit_card
-                                            </i>
-                                            <span class="ms-2"
-                                                >Billing</span
-                                            >
-                                        </a>
-                                    </li>
-                                </ul>
-                                <ul
-                                    class="admin-link ps-0 mb-0 list-unstyled"
-                                >
-                                    <li>
-                                        <a
-                                            class="dropdown-item d-flex align-items-center text-body"
-                                            href="/settings"
-                                        >
-                                            <i
-                                                class="material-symbols-outlined"
-                                                >settings
-                                            </i>
-                                            <span class="ms-2"
-                                                >Settings</span
-                                            >
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a
-                                            class="dropdown-item d-flex align-items-center text-body"
-                                            href="/tickets"
-                                        >
-                                            <i
-                                                class="material-symbols-outlined"
-                                                >support</i
-                                            >
-                                            <span class="ms-2"
-                                                >Support</span
-                                            >
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a
-                                            class="dropdown-item d-flex align-items-center text-body"
-                                            href="/lock-screen"
-                                        >
-                                            <i
-                                                class="material-symbols-outlined"
-                                                >lock</i
-                                            >
-                                            <span class="ms-2"
-                                                >Lock
-                                                Screen</span
-                                            >
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a
-                                            class="dropdown-item d-flex align-items-center text-body"
-                                            href="/login"
-                                        >
-                                            <i
-                                                class="material-symbols-outlined"
-                                                >logout</i
-                                            >
-                                            <span class="ms-2"
-                                                >Logout</span
-                                            >
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-2 rounded" href="{{ route('driftwatch.settings') }}">
+                                        <span class="material-symbols-outlined fs-18">settings</span>
+                                        Settings
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-2 rounded text-danger" href="#">
+                                        <span class="material-symbols-outlined fs-18">logout</span>
+                                        Logout
+                                    </a>
+                                </li>
+                            </ul>
                         </div>
-                    </li>
-                    <li class="header-right-item">
-                        <button
-                            class="theme-settings-btn p-0 border-0 bg-transparent"
-                            type="button"
-                            data-bs-toggle="offcanvas"
-                            data-bs-target="#offcanvasScrolling"
-                            aria-controls="offcanvasScrolling"
-                        >
-                            <i
-                                class="material-symbols-outlined"
-                                data-bs-toggle="tooltip"
-                                data-bs-placement="left"
-                                data-bs-title="Click On Theme Settings"
-                                >settings</i
-                            >
-                        </button>
                     </li>
                 </ul>
             </div>

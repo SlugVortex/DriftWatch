@@ -37,6 +37,19 @@ return [
         'historian_url' => env('AGENT_HISTORIAN_URL'),
         'negotiator_url' => env('AGENT_NEGOTIATOR_URL'),
         'chronicler_url' => env('AGENT_CHRONICLER_URL'),
+        'function_key' => env('AZURE_FUNCTION_KEY'),
+    ],
+
+    // Azure OpenAI
+    'azure_openai' => [
+        'endpoint' => env('AZURE_OPENAI_ENDPOINT'),
+        'api_key' => env('AZURE_OPENAI_API_KEY'),
+        'deployment' => env('AZURE_OPENAI_DEPLOYMENT', 'gpt-4.1-mini'),
+    ],
+
+    // Application Insights
+    'app_insights' => [
+        'connection_string' => env('APPLICATIONINSIGHTS_CONNECTION_STRING'),
     ],
 
 ];

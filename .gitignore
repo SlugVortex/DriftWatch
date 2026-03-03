@@ -18,4 +18,9 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+/.cursor
 .DS_Store
+CLAUDE.md
+.claude/
+.mcp.json
+null

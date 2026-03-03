@@ -87,6 +87,14 @@ class GitHubWebhookController extends Controller
     }
 
     /**
+     * Public accessor for the agent pipeline (called from DriftWatchController).
+     */
+    public function runAgentPipelinePublic(PullRequest $pullRequest): void
+    {
+        $this->runAgentPipeline($pullRequest);
+    }
+
+    /**
      * Run the 4-agent pipeline with mock fallbacks.
      * Each agent tries to call the Azure Function first, falls back to mock data.
      */
@@ -122,13 +130,27 @@ class GitHubWebhookController extends Controller
         ]);
     }
 
+    /**
+     * Build an HTTP client with the Azure Function Key header.
+     */
+    private function agentHttp(): \Illuminate\Http\Client\PendingRequest
+    {
+        $headers = [];
+        $functionKey = config('services.agents.function_key');
+        if ($functionKey) {
+            $headers['x-functions-key'] = $functionKey;
+        }
+
+        return Http::timeout(60)->withHeaders($headers);
+    }
+
     private function runArchaeologist(PullRequest $pullRequest): array
     {
         $url = config('services.agents.archaeologist_url');
 
         try {
             if ($url) {
-                $response = Http::timeout(30)->post($url, [
+                $response = $this->agentHttp()->post($url, [
                     'repo_full_name' => $pullRequest->repo_full_name,
                     'pr_number' => $pullRequest->pr_number,
                     'base_branch' => $pullRequest->base_branch,
@@ -148,6 +170,11 @@ class GitHubWebhookController extends Controller
                         'summary' => $data['summary'] ?? 'Analysis complete.',
                     ];
                 }
+
+                Log::warning("[Agent:Archaeologist] Non-200 response.", [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
             }
         } catch (\Exception $e) {
             Log::warning("[Agent:Archaeologist] Agent call failed, using mock.", ['error' => $e->getMessage()]);
@@ -162,16 +189,23 @@ class GitHubWebhookController extends Controller
 
         try {
             if ($url) {
-                $response = Http::timeout(30)->post($url, [
+                $response = $this->agentHttp()->post($url, [
                     'affected_services' => $blastResult['affected_services'],
+                    'affected_files' => $blastResult['affected_files'],
                     'risk_indicators' => [],
                     'pr_number' => $pullRequest->pr_number,
+                    'repo_full_name' => $pullRequest->repo_full_name,
                 ]);
 
                 if ($response->successful()) {
                     Log::info("[Agent:Historian] Got response for PR #{$pullRequest->pr_number}.");
                     return $response->json();
                 }
+
+                Log::warning("[Agent:Historian] Non-200 response.", [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
             }
         } catch (\Exception $e) {
             Log::warning("[Agent:Historian] Agent call failed, using mock.", ['error' => $e->getMessage()]);
@@ -186,12 +220,13 @@ class GitHubWebhookController extends Controller
 
         try {
             if ($url) {
-                $response = Http::timeout(30)->post($url, [
+                $response = $this->agentHttp()->post($url, [
                     'risk_score' => $riskResult['risk_score'],
                     'risk_level' => $riskResult['risk_level'],
                     'repo_full_name' => $pullRequest->repo_full_name,
                     'pr_number' => $pullRequest->pr_number,
-                    'recommendation' => $riskResult['recommendation'],
+                    'recommendation' => $riskResult['recommendation'] ?? '',
+                    'contributing_factors' => $riskResult['contributing_factors'] ?? [],
                     'summary' => '',
                 ]);
 
@@ -199,6 +234,11 @@ class GitHubWebhookController extends Controller
                     Log::info("[Agent:Negotiator] Got response for PR #{$pullRequest->pr_number}.");
                     return $response->json();
                 }
+
+                Log::warning("[Agent:Negotiator] Non-200 response.", [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
             }
         } catch (\Exception $e) {
             Log::warning("[Agent:Negotiator] Agent call failed, using mock.", ['error' => $e->getMessage()]);

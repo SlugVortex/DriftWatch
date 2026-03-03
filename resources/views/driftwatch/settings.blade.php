@@ -77,11 +77,107 @@
                             </span>
                         </div>
                     @endforeach
+                    <div class="mt-3 pt-3 border-top">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-medium">Function Key</span>
+                                <br>
+                                <small class="text-secondary">{{ config('services.agents.function_key') ? '********' . substr(config('services.agents.function_key'), -4) : 'Not configured' }}</small>
+                            </div>
+                            <span class="badge bg-{{ config('services.agents.function_key') ? 'success' : 'danger' }} bg-opacity-10 text-{{ config('services.agents.function_key') ? 'success' : 'danger' }} px-3 py-2">
+                                {{ config('services.agents.function_key') ? 'Set' : 'Missing' }}
+                            </span>
+                        </div>
+                    </div>
                     <div class="mt-3">
                         <small class="text-secondary">
                             Configure agent URLs in <code>.env</code>: <code>AGENT_ARCHAEOLOGIST_URL</code>, etc.
                         </small>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        {{-- Azure OpenAI --}}
+        <div class="col-xl-6 mb-4">
+            <div class="card bg-white border-0 rounded-3 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">
+                        <span class="material-symbols-outlined align-middle me-1">psychology</span>
+                        Azure OpenAI
+                    </h5>
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <div>
+                            <span class="fw-medium">Endpoint</span>
+                            <br>
+                            <small class="text-secondary">{{ config('services.azure_openai.endpoint') ?: 'Not configured' }}</small>
+                        </div>
+                        <span class="badge bg-{{ config('services.azure_openai.endpoint') ? 'success' : 'warning' }} bg-opacity-10 text-{{ config('services.azure_openai.endpoint') ? 'success' : 'warning' }} px-3 py-2">
+                            {{ config('services.azure_openai.endpoint') ? 'Set' : 'Missing' }}
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <div>
+                            <span class="fw-medium">API Key</span>
+                            <br>
+                            <small class="text-secondary">{{ config('services.azure_openai.api_key') ? '********' . substr(config('services.azure_openai.api_key'), -4) : 'Not configured' }}</small>
+                        </div>
+                        <span class="badge bg-{{ config('services.azure_openai.api_key') ? 'success' : 'warning' }} bg-opacity-10 text-{{ config('services.azure_openai.api_key') ? 'success' : 'warning' }} px-3 py-2">
+                            {{ config('services.azure_openai.api_key') ? 'Set' : 'Missing' }}
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center py-2">
+                        <div>
+                            <span class="fw-medium">Deployment Model</span>
+                            <br>
+                            <small class="text-secondary">{{ config('services.azure_openai.deployment') ?: 'Not configured' }}</small>
+                        </div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
+                            {{ config('services.azure_openai.deployment') ?: '—' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Application Insights --}}
+        <div class="col-xl-6 mb-4">
+            <div class="card bg-white border-0 rounded-3 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">
+                        <span class="material-symbols-outlined align-middle me-1">monitoring</span>
+                        Application Insights
+                    </h5>
+                    @php
+                        $aiConnStr = config('services.app_insights.connection_string');
+                        $aiConfigured = !empty($aiConnStr);
+                    @endphp
+                    <div class="d-flex justify-content-between align-items-center py-2">
+                        <div>
+                            <span class="fw-medium">Connection String</span>
+                            <br>
+                            <small class="text-secondary">
+                                @if($aiConfigured)
+                                    InstrumentationKey=********{{ substr(explode(';', $aiConnStr)[0], -4) }}
+                                @else
+                                    Not configured
+                                @endif
+                            </small>
+                        </div>
+                        <span class="badge bg-{{ $aiConfigured ? 'success' : 'warning' }} bg-opacity-10 text-{{ $aiConfigured ? 'success' : 'warning' }} px-3 py-2">
+                            {{ $aiConfigured ? 'Connected' : 'Not Set' }}
+                        </span>
+                    </div>
+                    @if($aiConfigured)
+                        <div class="mt-3 p-3 bg-light rounded-3">
+                            <small class="text-secondary">
+                                <span class="material-symbols-outlined align-middle me-1" style="font-size: 14px;">check_circle</span>
+                                Using modern Connection String approach (recommended over legacy Instrumentation Key)
+                            </small>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -108,8 +204,8 @@
                     <span class="fw-medium">{{ phpversion() }}</span>
                 </div>
                 <div class="col-md-3">
-                    <span class="d-block text-secondary fs-14">Queue Driver</span>
-                    <span class="fw-medium">{{ config('queue.default') }}</span>
+                    <span class="d-block text-secondary fs-14">Database</span>
+                    <span class="fw-medium">{{ config('database.default') }} ({{ config('database.connections.' . config('database.default') . '.host') }})</span>
                 </div>
             </div>
         </div>

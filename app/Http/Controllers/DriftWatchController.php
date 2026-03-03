@@ -5,12 +5,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\GitHubWebhookController;
 use App\Models\DeploymentDecision;
 use App\Models\DeploymentOutcome;
 use App\Models\Incident;
 use App\Models\PullRequest;
 use App\Models\RiskAssessment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class DriftWatchController extends Controller
@@ -133,6 +135,96 @@ class DriftWatchController extends Controller
         ]);
 
         return back()->with('warning', "PR #{$pullRequest->pr_number} deployment blocked.");
+    }
+
+    /**
+     * Analyze a PR by URL - manual trigger from dashboard.
+     * Accepts a GitHub PR URL like https://github.com/owner/repo/pull/123
+     */
+    public function analyzePr(Request $request)
+    {
+        $request->validate([
+            'pr_url' => ['required', 'url', 'regex:#^https://github\.com/([^/]+)/([^/]+)/pull/(\d+)$#'],
+        ], [
+            'pr_url.regex' => 'Please enter a valid GitHub PR URL (e.g., https://github.com/owner/repo/pull/123)',
+        ]);
+
+        $url = $request->input('pr_url');
+        preg_match('#^https://github\.com/([^/]+)/([^/]+)/pull/(\d+)$#', $url, $matches);
+        $owner = $matches[1];
+        $repo = $matches[2];
+        $prNumber = (int) $matches[3];
+        $repoFullName = "{$owner}/{$repo}";
+
+        Log::info("[DriftWatch] Manual analysis requested.", [
+            'repo' => $repoFullName,
+            'pr_number' => $prNumber,
+        ]);
+
+        // Fetch PR data from GitHub API
+        try {
+            $ghToken = config('services.github.token');
+            $ghResponse = Http::withHeaders([
+                'Authorization' => "Bearer {$ghToken}",
+                'Accept' => 'application/vnd.github.v3+json',
+            ])->timeout(15)->get("https://api.github.com/repos/{$repoFullName}/pulls/{$prNumber}");
+
+            if (!$ghResponse->successful()) {
+                Log::warning('[DriftWatch] GitHub API returned error.', [
+                    'status' => $ghResponse->status(),
+                    'body' => $ghResponse->body(),
+                ]);
+                return back()->with('error', "Could not fetch PR from GitHub (HTTP {$ghResponse->status()}). Check the URL and ensure the repo is accessible.");
+            }
+
+            $prData = $ghResponse->json();
+        } catch (\Exception $e) {
+            Log::error('[DriftWatch] GitHub API call failed.', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Could not connect to GitHub API: ' . $e->getMessage());
+        }
+
+        // Create or update the PR record
+        $pullRequest = PullRequest::updateOrCreate(
+            ['github_pr_id' => (string) $prData['id']],
+            [
+                'repo_full_name' => $repoFullName,
+                'pr_number' => $prNumber,
+                'pr_title' => $prData['title'] ?? 'Untitled',
+                'pr_author' => $prData['user']['login'] ?? 'unknown',
+                'pr_url' => $prData['html_url'] ?? $url,
+                'base_branch' => $prData['base']['ref'] ?? 'main',
+                'head_branch' => $prData['head']['ref'] ?? 'unknown',
+                'files_changed' => $prData['changed_files'] ?? 0,
+                'additions' => $prData['additions'] ?? 0,
+                'deletions' => $prData['deletions'] ?? 0,
+                'status' => 'analyzing',
+            ]
+        );
+
+        // Run the agent pipeline
+        $webhookController = app(GitHubWebhookController::class);
+        $webhookController->runAgentPipelinePublic($pullRequest);
+
+        return redirect()
+            ->route('driftwatch.show', $pullRequest)
+            ->with('success', "PR #{$prNumber} from {$repoFullName} analyzed successfully by all agents!");
+    }
+
+    /**
+     * Re-analyze an existing PR through the agent pipeline.
+     */
+    public function reanalyze(PullRequest $pullRequest)
+    {
+        Log::info("[DriftWatch] Re-analysis requested for PR #{$pullRequest->pr_number}.");
+
+        $pullRequest->update(['status' => 'analyzing']);
+
+        $webhookController = app(GitHubWebhookController::class);
+        $webhookController->runAgentPipelinePublic($pullRequest);
+
+        return redirect()
+            ->route('driftwatch.show', $pullRequest)
+            ->with('success', "PR #{$pullRequest->pr_number} re-analyzed successfully!");
     }
 
     /**

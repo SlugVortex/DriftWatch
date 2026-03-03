@@ -26,6 +26,8 @@ Route::prefix('driftwatch')->name('driftwatch.')->group(function () {
     Route::get('/pr/{pullRequest}', [DriftWatchController::class, 'show'])->name('show');
     Route::post('/pr/{pullRequest}/approve', [DriftWatchController::class, 'approve'])->name('approve');
     Route::post('/pr/{pullRequest}/block', [DriftWatchController::class, 'block'])->name('block');
+    Route::post('/analyze', [DriftWatchController::class, 'analyzePr'])->name('analyze');
+    Route::post('/pr/{pullRequest}/reanalyze', [DriftWatchController::class, 'reanalyze'])->name('reanalyze');
     Route::get('/incidents', [DriftWatchController::class, 'incidents'])->name('incidents');
     Route::get('/analytics', [DriftWatchController::class, 'analytics'])->name('analytics');
     Route::get('/settings', [DriftWatchController::class, 'settings'])->name('settings');
