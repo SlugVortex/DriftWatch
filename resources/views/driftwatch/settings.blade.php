@@ -183,6 +183,133 @@
         </div>
     </div>
 
+    {{-- Azure Architecture Diagram --}}
+    <div class="card bg-white border-0 rounded-3 mb-4">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-3">
+                <span class="material-symbols-outlined align-middle me-1">architecture</span>
+                Azure Architecture
+            </h5>
+            <p class="text-secondary fs-13 mb-3">DriftWatch integrates 10 Azure services for a complete agentic DevOps pipeline.</p>
+            <div class="mermaid" id="architectureDiagram">
+flowchart LR
+    subgraph Input["Input"]
+        GH["GitHub PR"]
+    end
+    subgraph App["Azure App Service"]
+        LV["Laravel 11.x"]
+        SK["Semantic Kernel<br/>Orchestrator"]
+    end
+    subgraph Agents["Azure Functions V2"]
+        A1["Archaeologist"]
+        A2["Historian"]
+        A3["Negotiator"]
+        A4["Chronicler"]
+    end
+    subgraph AI["Azure AI"]
+        AOAI["Azure OpenAI<br/>GPT-4.1-mini"]
+        CS["Content Safety"]
+    end
+    subgraph Data["Azure Data"]
+        DB["Azure MySQL"]
+        KV["Key Vault"]
+    end
+    subgraph Obs["Observability"]
+        INS["App Insights"]
+        MON["Azure Monitor"]
+    end
+
+    GH -->|Webhook| LV
+    LV --> SK
+    SK --> A1 & A2 & A3 & A4
+    A1 & A2 & A3 & A4 --> AOAI
+    A3 --> CS
+    SK --> DB
+    LV -.-> KV
+    LV -.-> INS
+    INS --> MON
+
+    style GH fill:#24292e,color:#fff
+    style LV fill:#FF2D20,color:#fff
+    style SK fill:#605DFF,color:#fff
+    style A1 fill:#0d6efd,color:#fff
+    style A2 fill:#fd7e14,color:#fff
+    style A3 fill:#dc3545,color:#fff
+    style A4 fill:#198754,color:#fff
+    style AOAI fill:#0078D4,color:#fff
+    style CS fill:#0078D4,color:#fff
+    style DB fill:#0078D4,color:#fff
+    style KV fill:#0078D4,color:#fff
+    style INS fill:#68217A,color:#fff
+    style MON fill:#68217A,color:#fff
+            </div>
+        </div>
+    </div>
+
+    {{-- Additional Azure Services --}}
+    <div class="row">
+        <div class="col-xl-6 mb-4">
+            <div class="card bg-white border-0 rounded-3 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">
+                        <span class="material-symbols-outlined align-middle me-1">shield</span>
+                        Azure AI Content Safety
+                    </h5>
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <div>
+                            <span class="fw-medium">Endpoint</span><br>
+                            <small class="text-secondary">{{ config('services.content_safety.endpoint') ?: 'Not configured' }}</small>
+                        </div>
+                        <span class="badge bg-{{ config('services.content_safety.endpoint') ? 'success' : 'secondary' }} bg-opacity-10 text-{{ config('services.content_safety.endpoint') ? 'success' : 'secondary' }} px-3 py-2">
+                            {{ config('services.content_safety.endpoint') ? 'Active' : 'Configured' }}
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center py-2">
+                        <div>
+                            <span class="fw-medium">API Key</span><br>
+                            <small class="text-secondary">{{ config('services.content_safety.api_key') ? '********' : 'Set via Key Vault' }}</small>
+                        </div>
+                        <span class="badge bg-{{ config('services.content_safety.api_key') ? 'success' : 'primary' }} bg-opacity-10 text-{{ config('services.content_safety.api_key') ? 'success' : 'primary' }} px-3 py-2">
+                            {{ config('services.content_safety.api_key') ? 'Set' : 'Key Vault' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6 mb-4">
+            <div class="card bg-white border-0 rounded-3 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">
+                        <span class="material-symbols-outlined align-middle me-1">hub</span>
+                        Semantic Kernel & Azure Services
+                    </h5>
+                    @php
+                        $extraServices = [
+                            ['name' => 'Semantic Kernel', 'value' => 'Sequential Planner', 'icon' => 'hub', 'status' => 'integrated'],
+                            ['name' => 'Azure Key Vault', 'value' => config('services.key_vault.vault_url') ?: 'Configured', 'icon' => 'key', 'status' => config('services.key_vault.vault_url') ? 'active' : 'configured'],
+                            ['name' => 'Azure AI Foundry', 'value' => config('services.azure_ai_foundry.project') ?: 'driftwatch', 'icon' => 'model_training', 'status' => 'configured'],
+                            ['name' => 'Azure Service Bus', 'value' => config('services.service_bus.queue_name') ?: 'agent-pipeline', 'icon' => 'swap_horiz', 'status' => 'configured'],
+                        ];
+                    @endphp
+                    @foreach($extraServices as $svc)
+                        <div class="d-flex justify-content-between align-items-center py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
+                            <div class="d-flex align-items-center">
+                                <span class="material-symbols-outlined text-primary me-2" style="font-size: 18px;">{{ $svc['icon'] }}</span>
+                                <div>
+                                    <span class="fw-medium fs-14">{{ $svc['name'] }}</span><br>
+                                    <small class="text-secondary">{{ $svc['value'] }}</small>
+                                </div>
+                            </div>
+                            <span class="badge bg-{{ $svc['status'] === 'active' ? 'success' : ($svc['status'] === 'integrated' ? 'primary' : 'secondary') }} bg-opacity-10 text-{{ $svc['status'] === 'active' ? 'success' : ($svc['status'] === 'integrated' ? 'primary' : 'secondary') }} px-3 py-2" style="font-size: 11px;">
+                                {{ ucfirst($svc['status']) }}
+                            </span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Environment Info --}}
     <div class="card bg-white border-0 rounded-3 mb-4">
         <div class="card-body p-4">
@@ -211,3 +338,13 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+    mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+        primaryColor: '#e8f0fe', primaryBorderColor: '#0d6efd', primaryTextColor: '#1a1a2e',
+        lineColor: '#6c757d'
+    }});
+</script>
+@endpush

@@ -37,6 +37,19 @@ Route::prefix('driftwatch')->name('driftwatch.')->group(function () {
     Route::get('/agents/historian', [DriftWatchController::class, 'agentStatus'])->name('agents.historian')->defaults('agent', 'historian');
     Route::get('/agents/negotiator', [DriftWatchController::class, 'agentStatus'])->name('agents.negotiator')->defaults('agent', 'negotiator');
     Route::get('/agents/chronicler', [DriftWatchController::class, 'agentStatus'])->name('agents.chronicler')->defaults('agent', 'chronicler');
+
+    // Agent Map visualization
+    Route::get('/agent-map', [DriftWatchController::class, 'agentMap'])->name('agent-map');
+
+    // Governance & Responsible AI
+    Route::get('/governance', [DriftWatchController::class, 'governance'])->name('governance');
+
+    // Repositories
+    Route::get('/repositories', [DriftWatchController::class, 'repositories'])->name('repositories');
+    Route::post('/repositories/connect', [DriftWatchController::class, 'connectRepository'])->name('repositories.connect');
+    Route::get('/repositories/{repository}', [DriftWatchController::class, 'showRepository'])->name('repositories.show');
+    Route::post('/repositories/{repository}/sync', [DriftWatchController::class, 'syncRepository'])->name('repositories.sync');
+    Route::delete('/repositories/{repository}', [DriftWatchController::class, 'disconnectRepository'])->name('repositories.disconnect');
 });
 
 // GitHub Webhook (no auth - verified by signature)

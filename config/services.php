@@ -52,4 +52,34 @@ return [
         'connection_string' => env('APPLICATIONINSIGHTS_CONNECTION_STRING'),
     ],
 
+    // Azure AI Content Safety
+    'content_safety' => [
+        'endpoint' => env('AZURE_CONTENT_SAFETY_ENDPOINT'),
+        'api_key' => env('AZURE_CONTENT_SAFETY_KEY'),
+    ],
+
+    // Azure Key Vault
+    'key_vault' => [
+        'vault_url' => env('AZURE_KEY_VAULT_URL'),
+    ],
+
+    // Semantic Kernel (orchestration pattern config)
+    'semantic_kernel' => [
+        'planner' => 'sequential',
+        'memory_store' => 'azure_mysql',
+        'skills' => ['blast_radius', 'risk_scoring', 'deploy_gate', 'feedback_loop'],
+    ],
+
+    // Azure AI Foundry
+    'azure_ai_foundry' => [
+        'endpoint' => env('AZURE_AI_FOUNDRY_ENDPOINT'),
+        'project' => env('AZURE_AI_FOUNDRY_PROJECT', 'driftwatch'),
+    ],
+
+    // Azure Service Bus
+    'service_bus' => [
+        'connection_string' => env('AZURE_SERVICE_BUS_CONNECTION'),
+        'queue_name' => env('AZURE_SERVICE_BUS_QUEUE', 'agent-pipeline'),
+    ],
+
 ];

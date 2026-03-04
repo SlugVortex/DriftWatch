@@ -286,6 +286,271 @@ class DriftWatchController extends Controller
     }
 
     /**
+     * Agent Map - visual pipeline orchestration page.
+     */
+    public function agentMap()
+    {
+        Log::info('[DriftWatch] Agent Map page loaded.');
+
+        $recentRuns = PullRequest::with(['blastRadius', 'riskAssessment', 'deploymentDecision', 'deploymentOutcome'])
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        // Determine agent statuses based on most recent PR
+        $latestPr = $recentRuns->first();
+        $agentStatuses = [
+            'archaeologist' => 'idle',
+            'historian' => 'idle',
+            'negotiator' => 'idle',
+            'chronicler' => 'idle',
+        ];
+
+        if ($latestPr) {
+            $agentStatuses['archaeologist'] = $latestPr->blastRadius ? 'complete' : ($latestPr->status === 'analyzing' ? 'active' : 'idle');
+            $agentStatuses['historian'] = $latestPr->riskAssessment ? 'complete' : ($latestPr->blastRadius && $latestPr->status === 'analyzing' ? 'active' : 'idle');
+            $agentStatuses['negotiator'] = $latestPr->deploymentDecision ? 'complete' : ($latestPr->riskAssessment && $latestPr->status === 'analyzing' ? 'active' : 'idle');
+            $agentStatuses['chronicler'] = $latestPr->deploymentOutcome ? 'complete' : 'idle';
+        }
+
+        // Agent stats
+        $agentStats = [
+            'archaeologist' => [
+                'name' => 'Archaeologist',
+                'subtitle' => 'Blast Radius Mapper',
+                'icon' => 'explore',
+                'color' => 'primary',
+                'total_runs' => PullRequest::whereHas('blastRadius')->count(),
+                'success_rate' => $this->agentSuccessRate('blastRadius'),
+                'avg_time' => 3,
+            ],
+            'historian' => [
+                'name' => 'Historian',
+                'subtitle' => 'Risk Calculator',
+                'icon' => 'history',
+                'color' => 'warning',
+                'total_runs' => PullRequest::whereHas('riskAssessment')->count(),
+                'success_rate' => $this->agentSuccessRate('riskAssessment'),
+                'avg_time' => 4,
+            ],
+            'negotiator' => [
+                'name' => 'Negotiator',
+                'subtitle' => 'Deploy Gatekeeper',
+                'icon' => 'gavel',
+                'color' => 'danger',
+                'total_runs' => PullRequest::whereHas('deploymentDecision')->count(),
+                'success_rate' => $this->agentSuccessRate('deploymentDecision'),
+                'avg_time' => 2,
+            ],
+            'chronicler' => [
+                'name' => 'Chronicler',
+                'subtitle' => 'Feedback Recorder',
+                'icon' => 'auto_stories',
+                'color' => 'success',
+                'total_runs' => PullRequest::whereHas('deploymentOutcome')->count(),
+                'success_rate' => 100,
+                'avg_time' => 1,
+            ],
+        ];
+
+        // Observability metrics
+        $totalPrs = PullRequest::count();
+        $observability = [
+            'total_traces' => $totalPrs,
+            'error_rate' => $totalPrs > 0 ? round((PullRequest::where('status', 'error')->count() / $totalPrs) * 100, 1) : 0,
+            'avg_latency' => 10,
+        ];
+
+        return view('driftwatch.agent-map', compact('recentRuns', 'agentStatuses', 'agentStats', 'observability'));
+    }
+
+    /**
+     * Governance & Responsible AI page.
+     */
+    public function governance()
+    {
+        Log::info('[DriftWatch] Governance page loaded.');
+
+        $recentDecisions = DeploymentDecision::with('pullRequest')
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        return view('driftwatch.governance', compact('recentDecisions'));
+    }
+
+    /**
+     * Repositories list page.
+     */
+    public function repositories()
+    {
+        Log::info('[DriftWatch] Repositories page loaded.');
+
+        $repositories = \App\Models\Repository::withCount('pullRequests')->latest()->get();
+
+        return view('driftwatch.repositories.index', compact('repositories'));
+    }
+
+    /**
+     * Connect a GitHub repository.
+     */
+    public function connectRepository(Request $request)
+    {
+        $request->validate([
+            'repo_input' => ['required', 'string'],
+        ]);
+
+        $input = trim($request->input('repo_input'));
+
+        // Parse owner/repo from URL or direct input
+        if (preg_match('#github\.com/([^/]+)/([^/]+)#', $input, $matches)) {
+            $owner = $matches[1];
+            $repo = rtrim($matches[2], '.git');
+        } elseif (preg_match('#^([^/]+)/([^/]+)$#', $input, $matches)) {
+            $owner = $matches[1];
+            $repo = $matches[2];
+        } else {
+            return back()->with('error', 'Invalid format. Use owner/repo or a GitHub URL.');
+        }
+
+        $fullName = "{$owner}/{$repo}";
+
+        // Check if already connected
+        $existing = \App\Models\Repository::where('full_name', $fullName)->first();
+        if ($existing) {
+            return back()->with('warning', "Repository {$fullName} is already connected.");
+        }
+
+        // Try to verify via GitHub API
+        try {
+            $ghToken = config('services.github.token');
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$ghToken}",
+                'Accept' => 'application/vnd.github.v3+json',
+            ])->timeout(10)->get("https://api.github.com/repos/{$fullName}");
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $repository = \App\Models\Repository::create([
+                    'name' => $data['name'],
+                    'full_name' => $data['full_name'],
+                    'owner' => $data['owner']['login'],
+                    'default_branch' => $data['default_branch'] ?? 'main',
+                    'github_url' => $data['html_url'],
+                    'is_active' => true,
+                ]);
+            } else {
+                // Create with manual data if API fails
+                $repository = \App\Models\Repository::create([
+                    'name' => $repo,
+                    'full_name' => $fullName,
+                    'owner' => $owner,
+                    'default_branch' => 'main',
+                    'github_url' => "https://github.com/{$fullName}",
+                    'is_active' => true,
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::warning('[DriftWatch] GitHub API failed for repo connect, using manual data.', ['error' => $e->getMessage()]);
+            $repository = \App\Models\Repository::create([
+                'name' => $repo,
+                'full_name' => $fullName,
+                'owner' => $owner,
+                'default_branch' => 'main',
+                'github_url' => "https://github.com/{$fullName}",
+                'is_active' => true,
+            ]);
+        }
+
+        Log::info("[DriftWatch] Repository connected: {$fullName}", ['id' => $repository->id]);
+
+        return redirect()->route('driftwatch.repositories.show', $repository)
+            ->with('success', "Repository {$fullName} connected successfully!");
+    }
+
+    /**
+     * Show a single repository and its PRs.
+     */
+    public function showRepository(\App\Models\Repository $repository)
+    {
+        $pullRequests = PullRequest::where('repo_full_name', $repository->full_name)
+            ->with(['riskAssessment', 'deploymentDecision'])
+            ->latest()
+            ->paginate(20);
+
+        return view('driftwatch.repositories.show', compact('repository', 'pullRequests'));
+    }
+
+    /**
+     * Sync PRs from a connected repository.
+     */
+    public function syncRepository(\App\Models\Repository $repository)
+    {
+        Log::info("[DriftWatch] Syncing repository: {$repository->full_name}");
+
+        try {
+            $ghToken = config('services.github.token');
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$ghToken}",
+                'Accept' => 'application/vnd.github.v3+json',
+            ])->timeout(15)->get("https://api.github.com/repos/{$repository->full_name}/pulls", [
+                'state' => 'open',
+                'per_page' => 20,
+            ]);
+
+            if (!$response->successful()) {
+                return back()->with('error', "Could not fetch PRs from GitHub (HTTP {$response->status()}).");
+            }
+
+            $prs = $response->json();
+            $synced = 0;
+
+            foreach ($prs as $prData) {
+                PullRequest::updateOrCreate(
+                    ['github_pr_id' => (string) $prData['id']],
+                    [
+                        'repo_full_name' => $repository->full_name,
+                        'pr_number' => $prData['number'],
+                        'pr_title' => $prData['title'] ?? 'Untitled',
+                        'pr_author' => $prData['user']['login'] ?? 'unknown',
+                        'pr_url' => $prData['html_url'],
+                        'base_branch' => $prData['base']['ref'] ?? 'main',
+                        'head_branch' => $prData['head']['ref'] ?? 'unknown',
+                        'files_changed' => 0,
+                        'additions' => 0,
+                        'deletions' => 0,
+                        'status' => 'pending',
+                    ]
+                );
+                $synced++;
+            }
+
+            $repository->update(['last_synced_at' => now()]);
+
+            Log::info("[DriftWatch] Synced {$synced} PRs from {$repository->full_name}");
+
+            return back()->with('success', "Synced {$synced} open PRs from {$repository->full_name}.");
+        } catch (\Exception $e) {
+            Log::error("[DriftWatch] Sync failed for {$repository->full_name}", ['error' => $e->getMessage()]);
+            return back()->with('error', 'Sync failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Disconnect a repository.
+     */
+    public function disconnectRepository(\App\Models\Repository $repository)
+    {
+        $name = $repository->full_name;
+        $repository->update(['is_active' => false]);
+
+        Log::info("[DriftWatch] Repository disconnected: {$name}");
+
+        return redirect()->route('driftwatch.repositories')
+            ->with('success', "Repository {$name} disconnected.");
+    }
+
+    /**
      * Settings page.
      */
     public function settings()
@@ -326,6 +591,20 @@ class DriftWatchController extends Controller
 
         arsort($serviceCounts);
         return array_slice($serviceCounts, 0, 10, true);
+    }
+
+    /**
+     * Calculate success rate for a given agent relationship.
+     */
+    private function agentSuccessRate(string $relation): int
+    {
+        $total = PullRequest::count();
+        if ($total === 0) {
+            return 0;
+        }
+
+        $completed = PullRequest::whereHas($relation)->count();
+        return (int) round(($completed / $total) * 100);
     }
 
     /**

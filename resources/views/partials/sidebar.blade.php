@@ -46,13 +46,28 @@
                 </a>
             </li>
 
+            <li class="menu-item">
+                <a href="{{ route('driftwatch.repositories') }}" class="menu-link {{ Request::is('driftwatch/repositories*') ? 'active' : '' }}">
+                    <span class="material-symbols-outlined menu-icon">source</span>
+                    <span class="title">Repositories</span>
+                </a>
+            </li>
+
             {{-- AI AGENTS --}}
             <li class="menu-title small text-uppercase">
                 <span class="menu-title-text">AI AGENTS</span>
             </li>
 
             <li class="menu-item">
-                <a href="javascript:void(0);" class="menu-link menu-toggle {{ Request::is('driftwatch/agents*') ? 'active' : '' }}">
+                <a href="{{ route('driftwatch.agent-map') }}" class="menu-link {{ Request::is('driftwatch/agent-map') ? 'active' : '' }}">
+                    <span class="material-symbols-outlined menu-icon">hub</span>
+                    <span class="title">Agent Map</span>
+                    <span class="hot tag">Live</span>
+                </a>
+            </li>
+
+            <li class="menu-item">
+                <a href="javascript:void(0);" class="menu-link menu-toggle {{ Request::is('driftwatch/agents/*') ? 'active' : '' }}">
                     <span class="material-symbols-outlined menu-icon">smart_toy</span>
                     <span class="title">Agent Pipeline</span>
                 </a>
@@ -80,9 +95,16 @@
                 </ul>
             </li>
 
-            {{-- SETTINGS --}}
+            {{-- GOVERNANCE & SETTINGS --}}
             <li class="menu-title small text-uppercase">
-                <span class="menu-title-text">SETTINGS</span>
+                <span class="menu-title-text">GOVERNANCE</span>
+            </li>
+
+            <li class="menu-item">
+                <a href="{{ route('driftwatch.governance') }}" class="menu-link {{ Request::is('driftwatch/governance*') ? 'active' : '' }}">
+                    <span class="material-symbols-outlined menu-icon">verified_user</span>
+                    <span class="title">Responsible AI</span>
+                </a>
             </li>
 
             <li class="menu-item">

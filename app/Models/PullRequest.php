@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class PullRequest extends Model
@@ -53,6 +54,11 @@ class PullRequest extends Model
     public function deploymentOutcome(): HasOne
     {
         return $this->hasOne(DeploymentOutcome::class);
+    }
+
+    public function repository(): BelongsTo
+    {
+        return $this->belongsTo(Repository::class, 'repo_full_name', 'full_name');
     }
 
     // --- Accessors ---
