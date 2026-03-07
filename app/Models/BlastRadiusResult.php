@@ -18,6 +18,7 @@ class BlastRadiusResult extends Model
         'affected_services',
         'affected_endpoints',
         'dependency_graph',
+        'file_descriptions',
         'total_affected_files',
         'total_affected_services',
         'summary',
@@ -28,6 +29,7 @@ class BlastRadiusResult extends Model
         'affected_services' => 'array',
         'affected_endpoints' => 'array',
         'dependency_graph' => 'array',
+        'file_descriptions' => 'array',
         'total_affected_files' => 'integer',
         'total_affected_services' => 'integer',
     ];

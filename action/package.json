@@ -1,0 +1,18 @@
+{
+  "name": "driftwatch-analyze",
+  "version": "1.0.0",
+  "description": "DriftWatch pre-deployment risk analysis GitHub Action",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "ncc build src/index.js -o dist",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@actions/core": "^1.10.1",
+    "@actions/github": "^6.0.0"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.38.1"
+  },
+  "license": "MIT"
+}

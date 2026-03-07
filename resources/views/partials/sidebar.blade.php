@@ -66,12 +66,12 @@
                 </a>
             </li>
 
-            <li class="menu-item">
-                <a href="javascript:void(0);" class="menu-link menu-toggle {{ Request::is('driftwatch/agents/*') ? 'active' : '' }}">
+            <li class="menu-item {{ Request::is('driftwatch/agents/*') ? 'open' : '' }}">
+                <a href="javascript:void(0);" class="menu-link menu-toggle">
                     <span class="material-symbols-outlined menu-icon">smart_toy</span>
                     <span class="title">Agent Pipeline</span>
                 </a>
-                <ul class="menu-sub">
+                <ul class="menu-sub" {!! Request::is('driftwatch/agents/*') ? 'style="display: block;"' : '' !!}>
                     <li class="menu-item">
                         <a href="{{ route('driftwatch.agents.archaeologist') }}" class="menu-link {{ Request::is('driftwatch/agents/archaeologist') ? 'active' : '' }}">
                             Archaeologist

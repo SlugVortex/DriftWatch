@@ -65,6 +65,7 @@ class DriftWatchController extends Controller
 
     /**
      * PR detail page - blast radius, risk assessment, deployment decision, timeline.
+     * Generates AI file descriptions on first view if not yet present.
      */
     public function show(PullRequest $pullRequest)
     {
@@ -73,12 +74,22 @@ class DriftWatchController extends Controller
             'riskAssessment',
             'deploymentDecision',
             'deploymentOutcome',
+            'agentRuns',
         ]);
 
         Log::info("[DriftWatch] Viewing PR #{$pullRequest->pr_number} detail.", [
             'pr_id' => $pullRequest->id,
             'status' => $pullRequest->status,
         ]);
+
+        // Generate AI file descriptions if not yet present
+        if ($pullRequest->blastRadius && empty($pullRequest->blastRadius->file_descriptions)) {
+            $descriptions = $this->generateFileDescriptions($pullRequest);
+            if (!empty($descriptions)) {
+                $pullRequest->blastRadius->update(['file_descriptions' => $descriptions]);
+                $pullRequest->load('blastRadius');
+            }
+        }
 
         return view('driftwatch.show', compact('pullRequest'));
     }
@@ -671,5 +682,236 @@ class DriftWatchController extends Controller
                 ->whereHas('deploymentOutcome')
                 ->latest()->limit(10)->get(),
         };
+    }
+
+    /**
+     * Generate AI-powered file descriptions by fetching code from GitHub
+     * and analyzing with Azure OpenAI. Returns associative array of file => description.
+     *
+     * @return array<string, array{summary: string, role: string, risk: string, affects: string}>
+     */
+    private function generateFileDescriptions(PullRequest $pullRequest): array
+    {
+        $blastRadius = $pullRequest->blastRadius;
+        if (!$blastRadius) {
+            return [];
+        }
+
+        $affectedFiles = $blastRadius->affected_files ?? [];
+        $depGraph = $blastRadius->dependency_graph ?? [];
+        $ghToken = config('services.github.token');
+        $repo = $pullRequest->repo_full_name;
+        $branch = $pullRequest->head_branch;
+
+        // Collect file snippets from GitHub (first 80 lines of each)
+        $fileSnippets = [];
+        foreach (array_slice($affectedFiles, 0, 25) as $filePath) {
+            try {
+                $response = Http::withHeaders([
+                    'Authorization' => "Bearer {$ghToken}",
+                    'Accept' => 'application/vnd.github.v3.raw',
+                ])->timeout(8)->get("https://api.github.com/repos/{$repo}/contents/{$filePath}", [
+                    'ref' => $branch,
+                ]);
+
+                if ($response->successful()) {
+                    $content = $response->body();
+                    $lines = explode("\n", $content);
+                    $fileSnippets[$filePath] = implode("\n", array_slice($lines, 0, 80));
+                }
+            } catch (\Exception $e) {
+                Log::debug("[DriftWatch] Could not fetch file {$filePath}: {$e->getMessage()}");
+            }
+        }
+
+        // Also add dep graph source files not in affected_files
+        foreach (array_keys($depGraph) as $srcFile) {
+            if (!isset($fileSnippets[$srcFile]) && count($fileSnippets) < 25) {
+                try {
+                    $response = Http::withHeaders([
+                        'Authorization' => "Bearer {$ghToken}",
+                        'Accept' => 'application/vnd.github.v3.raw',
+                    ])->timeout(8)->get("https://api.github.com/repos/{$repo}/contents/{$srcFile}", [
+                        'ref' => $branch,
+                    ]);
+
+                    if ($response->successful()) {
+                        $content = $response->body();
+                        $lines = explode("\n", $content);
+                        $fileSnippets[$srcFile] = implode("\n", array_slice($lines, 0, 80));
+                    }
+                } catch (\Exception $e) {
+                    Log::debug("[DriftWatch] Could not fetch source file {$srcFile}: {$e->getMessage()}");
+                }
+            }
+        }
+
+        if (empty($fileSnippets)) {
+            Log::info("[DriftWatch] No file snippets fetched from GitHub for PR #{$pullRequest->pr_number}. Using heuristic descriptions.");
+            return $this->generateHeuristicDescriptions($affectedFiles, $depGraph);
+        }
+
+        // Build the prompt for Azure OpenAI
+        $depGraphJson = json_encode($depGraph);
+        $filesBlock = '';
+        foreach ($fileSnippets as $path => $snippet) {
+            $deps = isset($depGraph[$path]) ? json_encode($depGraph[$path]) : '[]';
+            $filesBlock .= "---\nFILE: {$path}\nDEPENDENTS: {$deps}\n```\n{$snippet}\n```\n\n";
+        }
+
+        $prompt = <<<PROMPT
+You are a DevOps risk analyst AI. Analyze these source code files from a GitHub pull request and generate a JSON object describing each file.
+
+For each file, provide:
+- "summary": 1-2 sentence plain-English description of what this file does (non-technical, a PM should understand)
+- "role": The file's role in the system (e.g., "API Controller", "Data Model", "View Template", "Configuration", "Service Layer", "Middleware", "Database Migration", "Test Suite", "Utility", "Worker/Job")
+- "risk": Why changing this file is risky, or "Low risk" if safe (1 sentence)
+- "affects": How changes to this file could impact other files that depend on it (1 sentence). Reference specific dependents if known.
+
+Dependency graph (source file → files that depend on it):
+{$depGraphJson}
+
+Files to analyze:
+{$filesBlock}
+
+Respond with ONLY a valid JSON object where keys are file paths and values are objects with {summary, role, risk, affects}. No markdown, no explanation, just the JSON.
+PROMPT;
+
+        // Call Azure OpenAI
+        try {
+            $endpoint = config('services.azure_openai.endpoint');
+            $apiKey = config('services.azure_openai.api_key');
+            $deployment = config('services.azure_openai.deployment');
+
+            if (!$endpoint || !$apiKey) {
+                Log::warning('[DriftWatch] Azure OpenAI not configured. Using heuristic descriptions.');
+                return $this->generateHeuristicDescriptions($affectedFiles, $depGraph);
+            }
+
+            $url = rtrim($endpoint, '/') . "/openai/deployments/{$deployment}/chat/completions?api-version=2024-12-01-preview";
+
+            $response = Http::withHeaders([
+                'api-key' => $apiKey,
+                'Content-Type' => 'application/json',
+            ])->timeout(30)->post($url, [
+                'messages' => [
+                    ['role' => 'system', 'content' => 'You are a DevOps risk analyst. Respond only with valid JSON.'],
+                    ['role' => 'user', 'content' => $prompt],
+                ],
+                'temperature' => 0.3,
+                'max_tokens' => 4000,
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $content = $data['choices'][0]['message']['content'] ?? '';
+
+                // Strip markdown code fence if present
+                $content = preg_replace('/^```json\s*\n?/', '', $content);
+                $content = preg_replace('/\n?```\s*$/', '', $content);
+
+                $descriptions = json_decode($content, true);
+
+                if (is_array($descriptions) && !empty($descriptions)) {
+                    Log::info("[DriftWatch] AI generated descriptions for " . count($descriptions) . " files in PR #{$pullRequest->pr_number}.");
+                    return $descriptions;
+                }
+
+                Log::warning('[DriftWatch] Azure OpenAI returned invalid JSON for file descriptions.', [
+                    'content' => substr($content, 0, 500),
+                ]);
+            } else {
+                Log::warning('[DriftWatch] Azure OpenAI API error for file descriptions.', [
+                    'status' => $response->status(),
+                    'body' => substr($response->body(), 0, 500),
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('[DriftWatch] Azure OpenAI call failed for file descriptions.', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return $this->generateHeuristicDescriptions($affectedFiles, $depGraph);
+    }
+
+    /**
+     * Fallback: generate heuristic descriptions when AI is unavailable.
+     *
+     * @return array<string, array{summary: string, role: string, risk: string, affects: string}>
+     */
+    private function generateHeuristicDescriptions(array $files, array $depGraph): array
+    {
+        $descriptions = [];
+
+        foreach ($files as $filePath) {
+            $name = basename($filePath);
+            $dir = dirname($filePath);
+            $ext = pathinfo($filePath, PATHINFO_EXTENSION);
+            $nameLower = strtolower($name);
+            $deps = $depGraph[$filePath] ?? [];
+            $depCount = is_array($deps) ? count($deps) : 0;
+
+            // Determine role
+            $role = match (true) {
+                str_contains($nameLower, 'controller') => 'API Controller',
+                str_contains($nameLower, 'route') || str_contains($nameLower, 'router') => 'Routing Configuration',
+                str_contains($nameLower, 'model') || str_contains($nameLower, 'schema') => 'Data Model',
+                str_contains($nameLower, 'migration') => 'Database Migration',
+                str_contains($nameLower, 'middleware') => 'Middleware',
+                str_contains($nameLower, 'service') || str_contains($nameLower, 'provider') => 'Service Layer',
+                str_contains($nameLower, 'test') || str_contains($nameLower, 'spec') => 'Test Suite',
+                str_contains($nameLower, 'util') || str_contains($nameLower, 'helper') => 'Utility',
+                str_contains($nameLower, 'worker') || str_contains($nameLower, 'job') || str_contains($nameLower, 'queue') => 'Background Worker',
+                str_contains($dir, 'view') || str_contains($dir, 'template') || $ext === 'blade.php' => 'View Template',
+                in_array($ext, ['json', 'yaml', 'yml', 'toml', 'ini', 'env']) || str_contains($nameLower, 'config') => 'Configuration',
+                in_array($ext, ['css', 'scss', 'less']) => 'Styles',
+                default => ucfirst($ext) . ' Module',
+            };
+
+            // Build summary
+            $summary = "Handles {$role} logic in the " . basename($dir) . " directory.";
+
+            // Build risk assessment
+            $risk = match (true) {
+                str_contains($nameLower, 'migration') => 'Database changes are irreversible in production and affect all environments.',
+                str_contains($nameLower, 'auth') || str_contains($nameLower, 'security') => 'Security-sensitive file — changes could create authentication or authorization vulnerabilities.',
+                str_contains($nameLower, 'config') || in_array($ext, ['json', 'yaml', 'yml', 'env']) => 'Configuration changes propagate to all environments and can cause widespread failures.',
+                $depCount >= 5 => "High-impact file with {$depCount} downstream dependencies. A breaking change here cascades widely.",
+                $depCount >= 2 => "Moderate risk — {$depCount} other files depend on this module.",
+                str_contains($nameLower, 'controller') || str_contains($nameLower, 'route') => 'API-facing file — changes may break client contracts or external integrations.',
+                default => 'Low risk — isolated changes with limited downstream impact.',
+            };
+
+            // Build affects description
+            $affects = $depCount > 0
+                ? "Changes here directly impact {$depCount} downstream file(s): " . implode(', ', array_map('basename', array_slice($deps, 0, 4))) . (count($deps) > 4 ? ' and more' : '') . '.'
+                : 'No known downstream dependencies — changes are relatively isolated.';
+
+            $descriptions[$filePath] = [
+                'summary' => $summary,
+                'role' => $role,
+                'risk' => $risk,
+                'affects' => $affects,
+            ];
+        }
+
+        // Also add descriptions for source files in dep graph not in affected_files
+        foreach (array_keys($depGraph) as $srcFile) {
+            if (!isset($descriptions[$srcFile])) {
+                $deps = $depGraph[$srcFile] ?? [];
+                $depCount = is_array($deps) ? count($deps) : 0;
+                $descriptions[$srcFile] = [
+                    'summary' => 'Source file that was directly changed in this PR.',
+                    'role' => ucfirst(pathinfo($srcFile, PATHINFO_EXTENSION)) . ' Module',
+                    'risk' => $depCount >= 3 ? "High fan-out: {$depCount} files depend on this." : 'Moderate — directly changed.',
+                    'affects' => $depCount > 0
+                        ? "Impacts {$depCount} downstream files: " . implode(', ', array_map('basename', array_slice($deps, 0, 4))) . '.'
+                        : 'No known downstream dependencies.',
+                ];
+            }
+        }
+
+        return $descriptions;
     }
 }

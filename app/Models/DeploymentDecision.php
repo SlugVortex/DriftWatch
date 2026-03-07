@@ -20,15 +20,24 @@ class DeploymentDecision extends Model
         'in_freeze_window',
         'notified_oncall',
         'notification_message',
+        'mrp_payload',
+        'mrp_version',
+        'weather_score',
         'decided_at',
     ];
 
-    protected $casts = [
-        'has_concurrent_deploys' => 'boolean',
-        'in_freeze_window' => 'boolean',
-        'notified_oncall' => 'boolean',
-        'decided_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'has_concurrent_deploys' => 'boolean',
+            'in_freeze_window' => 'boolean',
+            'notified_oncall' => 'boolean',
+            'mrp_payload' => 'array',
+            'mrp_version' => 'integer',
+            'weather_score' => 'integer',
+            'decided_at' => 'datetime',
+        ];
+    }
 
     public function pullRequest(): BelongsTo
     {

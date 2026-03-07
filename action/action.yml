@@ -1,0 +1,56 @@
+# action/action.yml
+# DriftWatch GitHub Action — driftwatch-analyze@v1
+# Integrates DriftWatch pre-deployment risk analysis directly into CI/CD pipelines.
+# Supports two modes: "full" (calls DriftWatch backend) and "lightweight" (runs in-runner with Azure OpenAI).
+
+name: 'DriftWatch Risk Analysis'
+description: 'Analyze pull request deployment risk using DriftWatch multi-agent intelligence'
+author: 'DriftWatch'
+
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  mode:
+    description: 'Analysis mode: "full" (requires DriftWatch backend) or "lightweight" (runs entirely in-runner with Azure OpenAI key)'
+    required: false
+    default: 'full'
+  driftwatch-url:
+    description: 'DriftWatch API base URL (required for full mode)'
+    required: false
+  api-token:
+    description: 'DriftWatch API authentication token (required for full mode)'
+    required: false
+  risk-threshold:
+    description: 'Risk score threshold (0-100) above which the action fails the check'
+    required: false
+    default: '70'
+  block-on-critical:
+    description: 'Whether to fail the GitHub Action when risk exceeds threshold'
+    required: false
+    default: 'true'
+  azure-openai-endpoint:
+    description: 'Azure OpenAI endpoint URL (required for lightweight mode)'
+    required: false
+  azure-openai-api-key:
+    description: 'Azure OpenAI API key (required for lightweight mode)'
+    required: false
+  azure-openai-deployment:
+    description: 'Azure OpenAI deployment/model name'
+    required: false
+    default: 'gpt-4.1-mini'
+
+outputs:
+  risk-score:
+    description: 'The computed risk score (0-100)'
+  risk-level:
+    description: 'Risk level classification (low, medium, high, critical)'
+  decision:
+    description: 'Deployment decision (approved, pending_review, blocked)'
+  summary:
+    description: 'Human-readable risk summary'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'

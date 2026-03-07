@@ -2,7 +2,18 @@
   "permissions": {
     "allow": [
       "Bash(php artisan route:list --columns=method,uri,name)",
-      "Bash(php artisan view:cache)"
+      "Bash(php artisan view:cache)",
+      "Bash(\"c:/xampp/htdocs/DriftWatch/README.md\":*)",
+      "Bash(php artisan config:clear)",
+      "Bash(curl -s -w \"\\\\nHTTP Status: %{http_code}\" \"https://driftwatch-agents.azurewebsites.net/api/health\")",
+      "Bash(php artisan make:migration add_change_type_to_incidents_table --no-interaction)",
+      "Bash(php artisan make:migration create_agent_runs_table --no-interaction)",
+      "Bash(php artisan route:list --columns=method,uri)",
+      "Bash(test -f /c/xampp/htdocs/DriftWatch/docs/STAGE_PROGRESS.md)",
+      "Bash(php artisan make:migration add_mrp_payload_to_deployment_decisions_table --no-interaction)",
+      "Bash(php -l app/Http/Controllers/GitHubWebhookController.php)",
+      "Bash(php -l app/Models/DeploymentDecision.php)",
+      "Bash(php -l routes/api.php)"
     ]
   }
 }

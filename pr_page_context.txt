@@ -1,3 +1,2625 @@
+==========================================================
+DriftWatch Project Tree (Directories)
+==========================================================
+Folder PATH listing
+Volume serial number is EC75-0E0A
+C:.
++---.claude
++---.cursor
+|   \---rules
++---.vscode
++---action
+|   \---src
++---agents
++---app
+|   +---Http
+|   |   \---Controllers
+|   +---Models
+|   \---Providers
++---bootstrap
+|   \---cache
++---config
++---database
+|   +---factories
+|   +---migrations
+|   \---seeders
++---docs
++---public
+|   \---assets
+|       +---css
+|       +---fonts
+|       +---images
+|       |   \---agents
+|       +---js
+|       |   \---custom
+|       \---scss
+|           \---components
++---resources
+|   +---css
+|   +---js
+|   \---views
+|       +---driftwatch
+|       |   +---agents
+|       |   \---repositories
+|       +---layouts
+|       \---partials
++---routes
++---storage
+|   +---app
+|   |   \---public
+|   +---framework
+|   |   +---cache
+|   |   |   \---data
+|   |   +---sessions
+|   |   +---testing
+|   |   \---views
+|   \---logs
++---tests
+|   +---Feature
+|   \---Unit
+\---vendor
+    +---bin
+    +---brianium
+    |   \---paratest
+    |       +---bin
+    |       \---src
+    |           +---Coverage
+    |           +---JUnit
+    |           +---Util
+    |           \---WrapperRunner
+    +---brick
+    |   \---math
+    |       \---src
+    |           +---Exception
+    |           \---Internal
+    |               \---Calculator
+    +---carbonphp
+    |   \---carbon-doctrine-types
+    |       \---src
+    |           \---Carbon
+    |               \---Doctrine
+    +---composer
+    +---dflydev
+    |   \---dot-access-data
+    |       \---src
+    |           \---Exception
+    +---doctrine
+    |   +---deprecations
+    |   |   \---lib
+    |   |       \---Doctrine
+    |   |           \---Deprecations
+    |   |               \---PHPUnit
+    |   +---inflector
+    |   |   +---docs
+    |   |   |   \---en
+    |   |   \---lib
+    |   |       \---Doctrine
+    |   |           \---Inflector
+    |   |               \---Rules
+    |   |                   +---English
+    |   |                   +---French
+    |   |                   +---NorwegianBokmal
+    |   |                   +---Portuguese
+    |   |                   +---Spanish
+    |   |                   \---Turkish
+    |   \---lexer
+    |       \---src
+    +---dragonmantank
+    |   \---cron-expression
+    |       \---src
+    |           \---Cron
+    +---egulias
+    |   \---email-validator
+    |       \---src
+    |           +---Parser
+    |           |   \---CommentStrategy
+    |           +---Result
+    |           |   \---Reason
+    |           +---Validation
+    |           |   +---Exception
+    |           |   \---Extra
+    |           \---Warning
+    +---fakerphp
+    |   \---faker
+    |       \---src
+    |           \---Faker
+    |               +---Calculator
+    |               +---Container
+    |               +---Core
+    |               +---Extension
+    |               +---Guesser
+    |               +---ORM
+    |               |   +---CakePHP
+    |               |   +---Doctrine
+    |               |   +---Mandango
+    |               |   +---Propel
+    |               |   +---Propel2
+    |               |   \---Spot
+    |               \---Provider
+    |                   +---ar_EG
+    |                   +---ar_JO
+    |                   +---ar_SA
+    |                   +---at_AT
+    |                   +---bg_BG
+    |                   +---bn_BD
+    |                   +---cs_CZ
+    |                   +---da_DK
+    |                   +---de_AT
+    |                   +---de_CH
+    |                   +---de_DE
+    |                   +---el_CY
+    |                   +---el_GR
+    |                   +---en_AU
+    |                   +---en_CA
+    |                   +---en_GB
+    |                   +---en_HK
+    |                   +---en_IN
+    |                   +---en_NG
+    |                   +---en_NZ
+    |                   +---en_PH
+    |                   +---en_SG
+    |                   +---en_UG
+    |                   +---en_US
+    |                   +---en_ZA
+    |                   +---es_AR
+    |                   +---es_ES
+    |                   +---es_PE
+    |                   +---es_VE
+    |                   +---et_EE
+    |                   +---fa_IR
+    |                   +---fi_FI
+    |                   +---fr_BE
+    |                   +---fr_CA
+    |                   +---fr_CH
+    |                   +---fr_FR
+    |                   +---he_IL
+    |                   +---hr_HR
+    |                   +---hu_HU
+    |                   +---hy_AM
+    |                   +---id_ID
+    |                   +---is_IS
+    |                   +---it_CH
+    |                   +---it_IT
+    |                   +---ja_JP
+    |                   +---ka_GE
+    |                   +---kk_KZ
+    |                   +---ko_KR
+    |                   +---lt_LT
+    |                   +---lv_LV
+    |                   +---me_ME
+    |                   +---mn_MN
+    |                   +---ms_MY
+    |                   +---nb_NO
+    |                   +---ne_NP
+    |                   +---nl_BE
+    |                   +---nl_NL
+    |                   +---pl_PL
+    |                   +---pt_BR
+    |                   +---pt_PT
+    |                   +---ro_MD
+    |                   +---ro_RO
+    |                   +---ru_RU
+    |                   +---sk_SK
+    |                   +---sl_SI
+    |                   +---sr_Cyrl_RS
+    |                   +---sr_Latn_RS
+    |                   +---sr_RS
+    |                   +---sv_SE
+    |                   +---th_TH
+    |                   +---tr_TR
+    |                   +---uk_UA
+    |                   +---vi_VN
+    |                   +---zh_CN
+    |                   \---zh_TW
+    +---fidry
+    |   \---cpu-core-counter
+    |       +---bin
+    |       \---src
+    |           +---Executor
+    |           \---Finder
+    +---filp
+    |   \---whoops
+    |       \---src
+    |           \---Whoops
+    |               +---Exception
+    |               +---Handler
+    |               +---Inspector
+    |               +---Resources
+    |               |   +---css
+    |               |   +---js
+    |               |   \---views
+    |               \---Util
+    +---fruitcake
+    |   \---php-cors
+    |       \---src
+    |           \---Exceptions
+    +---graham-campbell
+    |   \---result-type
+    |       \---src
+    +---guzzlehttp
+    |   +---guzzle
+    |   |   \---src
+    |   |       +---Cookie
+    |   |       +---Exception
+    |   |       \---Handler
+    |   +---promises
+    |   |   \---src
+    |   +---psr7
+    |   |   \---src
+    |   |       \---Exception
+    |   \---uri-template
+    |       \---src
+    +---hamcrest
+    |   \---hamcrest-php
+    |       +---.github
+    |       |   \---workflows
+    |       +---generator
+    |       |   \---parts
+    |       +---hamcrest
+    |       |   \---Hamcrest
+    |       |       +---Arrays
+    |       |       +---Collection
+    |       |       +---Core
+    |       |       +---Internal
+    |       |       +---Number
+    |       |       +---Text
+    |       |       +---Type
+    |       |       \---Xml
+    |       \---tests
+    |           \---Hamcrest
+    |               +---Array
+    |               +---Collection
+    |               +---Core
+    |               +---Number
+    |               +---Text
+    |               +---Type
+    |               \---Xml
+    +---jean85
+    |   \---pretty-package-versions
+    |       \---src
+    |           \---Exception
+    +---laravel
+    |   +---boost
+    |   |   +---.ai
+    |   |   |   +---boost
+    |   |   |   +---filament
+    |   |   |   |   +---2
+    |   |   |   |   +---3
+    |   |   |   |   \---4
+    |   |   |   +---fluxui-free
+    |   |   |   +---fluxui-pro
+    |   |   |   +---folio
+    |   |   |   +---herd
+    |   |   |   +---inertia-laravel
+    |   |   |   |   +---1
+    |   |   |   |   \---2
+    |   |   |   +---inertia-react
+    |   |   |   |   +---1
+    |   |   |   |   \---2
+    |   |   |   +---inertia-vue
+    |   |   |   |   +---1
+    |   |   |   |   \---2
+    |   |   |   +---laravel
+    |   |   |   |   +---10
+    |   |   |   |   +---11
+    |   |   |   |   \---12
+    |   |   |   +---livewire
+    |   |   |   |   +---2
+    |   |   |   |   +---3
+    |   |   |   |   \---4
+    |   |   |   +---pennant
+    |   |   |   +---pest
+    |   |   |   |   \---4
+    |   |   |   +---php
+    |   |   |   |   +---8.1
+    |   |   |   |   +---8.2
+    |   |   |   |   +---8.3
+    |   |   |   |   \---8.4
+    |   |   |   +---phpunit
+    |   |   |   +---pint
+    |   |   |   +---tailwindcss
+    |   |   |   |   +---3
+    |   |   |   |   \---4
+    |   |   |   \---volt
+    |   |   +---config
+    |   |   \---src
+    |   |       +---Concerns
+    |   |       +---Console
+    |   |       +---Contracts
+    |   |       +---Install
+    |   |       |   +---Cli
+    |   |       |   +---CodeEnvironment
+    |   |       |   +---Contracts
+    |   |       |   +---Detection
+    |   |       |   \---Enums
+    |   |       +---Mcp
+    |   |       |   +---Methods
+    |   |       |   +---Prompts
+    |   |       |   +---Resources
+    |   |       |   \---Tools
+    |   |       |       \---DatabaseSchema
+    |   |       +---Middleware
+    |   |       \---Services
+    |   +---framework
+    |   |   +---config
+    |   |   +---config-stubs
+    |   |   \---src
+    |   |       \---Illuminate
+    |   |           +---Auth
+    |   |           |   +---Access
+    |   |           |   |   \---Events
+    |   |           |   +---Console
+    |   |           |   |   \---stubs
+    |   |           |   |       \---make
+    |   |           |   |           \---views
+    |   |           |   |               \---layouts
+    |   |           |   +---Events
+    |   |           |   +---Listeners
+    |   |           |   +---Middleware
+    |   |           |   +---Notifications
+    |   |           |   \---Passwords
+    |   |           +---Broadcasting
+    |   |           |   \---Broadcasters
+    |   |           +---Bus
+    |   |           |   \---Events
+    |   |           +---Cache
+    |   |           |   +---Console
+    |   |           |   |   \---stubs
+    |   |           |   +---Events
+    |   |           |   \---RateLimiting
+    |   |           +---Collections
+    |   |           |   \---Traits
+    |   |           +---Conditionable
+    |   |           |   \---Traits
+    |   |           +---Config
+    |   |           +---Console
+    |   |           |   +---Concerns
+    |   |           |   +---Contracts
+    |   |           |   +---Events
+    |   |           |   +---resources
+    |   |           |   |   \---views
+    |   |           |   |       \---components
+    |   |           |   +---Scheduling
+    |   |           |   \---View
+    |   |           |       \---Components
+    |   |           |           \---Mutators
+    |   |           +---Container
+    |   |           |   \---Attributes
+    |   |           +---Contracts
+    |   |           |   +---Auth
+    |   |           |   |   +---Access
+    |   |           |   |   \---Middleware
+    |   |           |   +---Broadcasting
+    |   |           |   +---Bus
+    |   |           |   +---Cache
+    |   |           |   +---Config
+    |   |           |   +---Console
+    |   |           |   +---Container
+    |   |           |   +---Cookie
+    |   |           |   +---Database
+    |   |           |   |   +---Eloquent
+    |   |           |   |   +---Events
+    |   |           |   |   \---Query
+    |   |           |   +---Debug
+    |   |           |   +---Encryption
+    |   |           |   +---Events
+    |   |           |   +---Filesystem
+    |   |           |   +---Foundation
+    |   |           |   +---Hashing
+    |   |           |   +---Http
+    |   |           |   +---Mail
+    |   |           |   +---Notifications
+    |   |           |   +---Pagination
+    |   |           |   +---Pipeline
+    |   |           |   +---Process
+    |   |           |   +---Queue
+    |   |           |   +---Redis
+    |   |           |   +---Routing
+    |   |           |   +---Session
+    |   |           |   |   \---Middleware
+    |   |           |   +---Support
+    |   |           |   +---Translation
+    |   |           |   +---Validation
+    |   |           |   \---View
+    |   |           +---Cookie
+    |   |           |   \---Middleware
+    |   |           +---Database
+    |   |           |   +---Capsule
+    |   |           |   +---Concerns
+    |   |           |   +---Connectors
+    |   |           |   +---Console
+    |   |           |   |   +---Factories
+    |   |           |   |   |   \---stubs
+    |   |           |   |   +---Migrations
+    |   |           |   |   \---Seeds
+    |   |           |   |       \---stubs
+    |   |           |   +---Eloquent
+    |   |           |   |   +---Attributes
+    |   |           |   |   +---Casts
+    |   |           |   |   +---Concerns
+    |   |           |   |   +---Factories
+    |   |           |   |   \---Relations
+    |   |           |   |       \---Concerns
+    |   |           |   +---Events
+    |   |           |   +---Migrations
+    |   |           |   |   \---stubs
+    |   |           |   +---Query
+    |   |           |   |   +---Grammars
+    |   |           |   |   \---Processors
+    |   |           |   \---Schema
+    |   |           |       \---Grammars
+    |   |           +---Encryption
+    |   |           +---Events
+    |   |           +---Filesystem
+    |   |           +---Foundation
+    |   |           |   +---Auth
+    |   |           |   |   \---Access
+    |   |           |   +---Bootstrap
+    |   |           |   +---Bus
+    |   |           |   +---Concerns
+    |   |           |   +---Configuration
+    |   |           |   +---Console
+    |   |           |   |   \---stubs
+    |   |           |   +---Events
+    |   |           |   +---Exceptions
+    |   |           |   |   +---Renderer
+    |   |           |   |   |   \---Mappers
+    |   |           |   |   +---views
+    |   |           |   |   \---Whoops
+    |   |           |   +---Http
+    |   |           |   |   +---Events
+    |   |           |   |   \---Middleware
+    |   |           |   |       \---Concerns
+    |   |           |   +---Providers
+    |   |           |   +---Queue
+    |   |           |   +---resources
+    |   |           |   |   \---exceptions
+    |   |           |   |       \---renderer
+    |   |           |   |           +---components
+    |   |           |   |           |   \---icons
+    |   |           |   |           \---dist
+    |   |           |   +---Routing
+    |   |           |   +---stubs
+    |   |           |   +---Support
+    |   |           |   |   \---Providers
+    |   |           |   +---Testing
+    |   |           |   |   +---Concerns
+    |   |           |   |   \---Traits
+    |   |           |   \---Validation
+    |   |           +---Hashing
+    |   |           +---Http
+    |   |           |   +---Client
+    |   |           |   |   +---Concerns
+    |   |           |   |   \---Events
+    |   |           |   +---Concerns
+    |   |           |   +---Exceptions
+    |   |           |   +---Middleware
+    |   |           |   +---Resources
+    |   |           |   |   \---Json
+    |   |           |   \---Testing
+    |   |           +---Log
+    |   |           |   +---Context
+    |   |           |   |   \---Events
+    |   |           |   \---Events
+    |   |           +---Macroable
+    |   |           |   \---Traits
+    |   |           +---Mail
+    |   |           |   +---Events
+    |   |           |   +---Mailables
+    |   |           |   +---resources
+    |   |           |   |   \---views
+    |   |           |   |       +---html
+    |   |           |   |       |   \---themes
+    |   |           |   |       \---text
+    |   |           |   \---Transport
+    |   |           +---Notifications
+    |   |           |   +---Channels
+    |   |           |   +---Console
+    |   |           |   |   \---stubs
+    |   |           |   +---Events
+    |   |           |   +---Messages
+    |   |           |   \---resources
+    |   |           |       \---views
+    |   |           +---Pagination
+    |   |           |   \---resources
+    |   |           |       \---views
+    |   |           +---Pipeline
+    |   |           +---Process
+    |   |           |   \---Exceptions
+    |   |           +---Queue
+    |   |           |   +---Attributes
+    |   |           |   +---Capsule
+    |   |           |   +---Connectors
+    |   |           |   +---Console
+    |   |           |   |   \---stubs
+    |   |           |   +---Events
+    |   |           |   +---Failed
+    |   |           |   +---Jobs
+    |   |           |   \---Middleware
+    |   |           +---Redis
+    |   |           |   +---Connections
+    |   |           |   +---Connectors
+    |   |           |   +---Events
+    |   |           |   \---Limiters
+    |   |           +---Routing
+    |   |           |   +---Console
+    |   |           |   |   \---stubs
+    |   |           |   +---Contracts
+    |   |           |   +---Controllers
+    |   |           |   +---Events
+    |   |           |   +---Exceptions
+    |   |           |   +---Matching
+    |   |           |   \---Middleware
+    |   |           +---Session
+    |   |           |   +---Console
+    |   |           |   |   \---stubs
+    |   |           |   \---Middleware
+    |   |           +---Support
+    |   |           |   +---Exceptions
+    |   |           |   +---Facades
+    |   |           |   +---Testing
+    |   |           |   |   \---Fakes
+    |   |           |   \---Traits
+    |   |           +---Testing
+    |   |           |   +---Concerns
+    |   |           |   +---Constraints
+    |   |           |   +---Exceptions
+    |   |           |   \---Fluent
+    |   |           |       \---Concerns
+    |   |           +---Translation
+    |   |           |   \---lang
+    |   |           |       \---en
+    |   |           +---Validation
+    |   |           |   +---Concerns
+    |   |           |   \---Rules
+    |   |           \---View
+    |   |               +---Compilers
+    |   |               |   \---Concerns
+    |   |               +---Concerns
+    |   |               +---Engines
+    |   |               \---Middleware
+    |   +---mcp
+    |   |   +---.cursor
+    |   |   |   \---rules
+    |   |   +---.github
+    |   |   |   +---ISSUE_TEMPLATE
+    |   |   |   \---workflows
+    |   |   +---routes
+    |   |   +---src
+    |   |   |   +---Console
+    |   |   |   |   \---Commands
+    |   |   |   \---Server
+    |   |   |       +---Contracts
+    |   |   |       |   +---Methods
+    |   |   |       |   +---Resources
+    |   |   |       |   +---Tools
+    |   |   |       |   \---Transport
+    |   |   |       +---Exceptions
+    |   |   |       +---Facades
+    |   |   |       +---Methods
+    |   |   |       +---Pagination
+    |   |   |       +---Prompts
+    |   |   |       +---Resources
+    |   |   |       |   \---Content
+    |   |   |       +---Tools
+    |   |   |       |   \---Annotations
+    |   |   |       \---Transport
+    |   |   +---stubs
+    |   |   +---tests
+    |   |   |   +---Feature
+    |   |   |   +---Fixtures
+    |   |   |   \---Unit
+    |   |   |       +---Methods
+    |   |   |       +---Pagination
+    |   |   |       +---Prompts
+    |   |   |       +---Resources
+    |   |   |       +---Tools
+    |   |   |       \---Transport
+    |   |   \---workbench
+    |   |       \---app
+    |   |           \---Providers
+    |   +---pint
+    |   |   \---builds
+    |   +---prompts
+    |   |   \---src
+    |   |       +---Concerns
+    |   |       +---Exceptions
+    |   |       +---Output
+    |   |       \---Themes
+    |   |           +---Contracts
+    |   |           \---Default
+    |   |               \---Concerns
+    |   +---roster
+    |   |   \---src
+    |   |       +---Console
+    |   |       +---Enums
+    |   |       \---Scanners
+    |   +---sail
+    |   |   +---bin
+    |   |   +---database
+    |   |   |   +---mariadb
+    |   |   |   +---mysql
+    |   |   |   \---pgsql
+    |   |   +---runtimes
+    |   |   |   +---8.0
+    |   |   |   +---8.1
+    |   |   |   +---8.2
+    |   |   |   \---8.3
+    |   |   +---src
+    |   |   |   \---Console
+    |   |   |       \---Concerns
+    |   |   \---stubs
+    |   +---serializable-closure
+    |   |   \---src
+    |   |       +---Contracts
+    |   |       +---Exceptions
+    |   |       +---Serializers
+    |   |       +---Signers
+    |   |       \---Support
+    |   \---tinker
+    |       +---config
+    |       \---src
+    |           \---Console
+    +---league
+    |   +---commonmark
+    |   |   \---src
+    |   |       +---Delimiter
+    |   |       |   \---Processor
+    |   |       +---Environment
+    |   |       +---Event
+    |   |       +---Exception
+    |   |       +---Extension
+    |   |       |   +---Attributes
+    |   |       |   |   +---Event
+    |   |       |   |   +---Node
+    |   |       |   |   +---Parser
+    |   |       |   |   \---Util
+    |   |       |   +---Autolink
+    |   |       |   +---CommonMark
+    |   |       |   |   +---Delimiter
+    |   |       |   |   |   \---Processor
+    |   |       |   |   +---Node
+    |   |       |   |   |   +---Block
+    |   |       |   |   |   \---Inline
+    |   |       |   |   +---Parser
+    |   |       |   |   |   +---Block
+    |   |       |   |   |   \---Inline
+    |   |       |   |   \---Renderer
+    |   |       |   |       +---Block
+    |   |       |   |       \---Inline
+    |   |       |   +---DefaultAttributes
+    |   |       |   +---DescriptionList
+    |   |       |   |   +---Event
+    |   |       |   |   +---Node
+    |   |       |   |   +---Parser
+    |   |       |   |   \---Renderer
+    |   |       |   +---DisallowedRawHtml
+    |   |       |   +---Embed
+    |   |       |   |   \---Bridge
+    |   |       |   +---ExternalLink
+    |   |       |   +---Footnote
+    |   |       |   |   +---Event
+    |   |       |   |   +---Node
+    |   |       |   |   +---Parser
+    |   |       |   |   \---Renderer
+    |   |       |   +---FrontMatter
+    |   |       |   |   +---Data
+    |   |       |   |   +---Exception
+    |   |       |   |   +---Input
+    |   |       |   |   +---Listener
+    |   |       |   |   \---Output
+    |   |       |   +---HeadingPermalink
+    |   |       |   +---InlinesOnly
+    |   |       |   +---Mention
+    |   |       |   |   \---Generator
+    |   |       |   +---SmartPunct
+    |   |       |   +---Strikethrough
+    |   |       |   +---Table
+    |   |       |   +---TableOfContents
+    |   |       |   |   +---Node
+    |   |       |   |   \---Normalizer
+    |   |       |   \---TaskList
+    |   |       +---Input
+    |   |       +---Node
+    |   |       |   +---Block
+    |   |       |   +---Inline
+    |   |       |   \---Query
+    |   |       +---Normalizer
+    |   |       +---Output
+    |   |       +---Parser
+    |   |       |   +---Block
+    |   |       |   \---Inline
+    |   |       +---Reference
+    |   |       +---Renderer
+    |   |       |   +---Block
+    |   |       |   \---Inline
+    |   |       +---Util
+    |   |       \---Xml
+    |   +---config
+    |   |   \---src
+    |   |       \---Exception
+    |   +---flysystem
+    |   |   \---src
+    |   |       +---UnixVisibility
+    |   |       \---UrlGeneration
+    |   +---flysystem-local
+    |   \---mime-type-detection
+    |       \---src
+    +---mockery
+    |   \---mockery
+    |       +---docs
+    |       |   +---cookbook
+    |       |   +---getting_started
+    |       |   +---mockery
+    |       |   +---reference
+    |       |   \---_static
+    |       \---library
+    |           \---Mockery
+    |               +---Adapter
+    |               |   \---Phpunit
+    |               +---CountValidator
+    |               +---Exception
+    |               +---Generator
+    |               |   \---StringManipulation
+    |               |       \---Pass
+    |               +---Loader
+    |               \---Matcher
+    +---monolog
+    |   \---monolog
+    |       \---src
+    |           \---Monolog
+    |               +---Attribute
+    |               +---Formatter
+    |               +---Handler
+    |               |   +---Curl
+    |               |   +---FingersCrossed
+    |               |   +---Slack
+    |               |   \---SyslogUdp
+    |               +---Processor
+    |               \---Test
+    +---myclabs
+    |   \---deep-copy
+    |       \---src
+    |           \---DeepCopy
+    |               +---Exception
+    |               +---Filter
+    |               |   \---Doctrine
+    |               +---Matcher
+    |               |   \---Doctrine
+    |               +---Reflection
+    |               +---TypeFilter
+    |               |   +---Date
+    |               |   \---Spl
+    |               \---TypeMatcher
+    +---nesbot
+    |   \---carbon
+    |       +---bin
+    |       +---lazy
+    |       |   \---Carbon
+    |       |       +---MessageFormatter
+    |       |       \---PHPStan
+    |       \---src
+    |           \---Carbon
+    |               +---Cli
+    |               +---Exceptions
+    |               +---Lang
+    |               +---Laravel
+    |               +---List
+    |               +---MessageFormatter
+    |               +---PHPStan
+    |               \---Traits
+    +---nette
+    |   +---schema
+    |   |   \---src
+    |   |       \---Schema
+    |   |           \---Elements
+    |   \---utils
+    |       \---src
+    |           +---Iterators
+    |           \---Utils
+    +---nikic
+    |   \---php-parser
+    |       +---bin
+    |       \---lib
+    |           \---PhpParser
+    |               +---Builder
+    |               +---Comment
+    |               +---ErrorHandler
+    |               +---Internal
+    |               +---Lexer
+    |               |   \---TokenEmulator
+    |               +---Node
+    |               |   +---Expr
+    |               |   |   +---AssignOp
+    |               |   |   +---BinaryOp
+    |               |   |   \---Cast
+    |               |   +---Name
+    |               |   +---Scalar
+    |               |   |   \---MagicConst
+    |               |   \---Stmt
+    |               |       \---TraitUseAdaptation
+    |               +---NodeVisitor
+    |               +---Parser
+    |               \---PrettyPrinter
+    +---nunomaduro
+    |   +---collision
+    |   |   +---.temp
+    |   |   \---src
+    |   |       +---Adapters
+    |   |       |   +---Laravel
+    |   |       |   |   +---Commands
+    |   |       |   |   \---Exceptions
+    |   |       |   \---Phpunit
+    |   |       |       +---Printers
+    |   |       |       +---Subscribers
+    |   |       |       \---Support
+    |   |       +---Contracts
+    |   |       |   \---Adapters
+    |   |       |       \---Phpunit
+    |   |       +---Exceptions
+    |   |       \---SolutionsRepositories
+    |   \---termwind
+    |       \---src
+    |           +---Actions
+    |           +---Components
+    |           +---Enums
+    |           +---Exceptions
+    |           +---Helpers
+    |           +---Html
+    |           +---Laravel
+    |           +---Repositories
+    |           \---ValueObjects
+    +---pestphp
+    |   +---pest
+    |   |   +---.temp
+    |   |   +---bin
+    |   |   +---overrides
+    |   |   |   +---Event
+    |   |   |   |   \---Value
+    |   |   |   +---Logging
+    |   |   |   |   \---JUnit
+    |   |   |   +---Runner
+    |   |   |   |   +---Filter
+    |   |   |   |   \---ResultCache
+    |   |   |   \---TextUI
+    |   |   |       +---Command
+    |   |   |       |   \---Commands
+    |   |   |       \---Output
+    |   |   |           \---Default
+    |   |   |               \---ProgressPrinter
+    |   |   |                   \---Subscriber
+    |   |   +---resources
+    |   |   |   \---views
+    |   |   |       \---components
+    |   |   +---src
+    |   |   |   +---Bootstrappers
+    |   |   |   +---Concerns
+    |   |   |   |   \---Logging
+    |   |   |   +---Console
+    |   |   |   +---Contracts
+    |   |   |   |   \---Plugins
+    |   |   |   +---Exceptions
+    |   |   |   +---Expectations
+    |   |   |   +---Factories
+    |   |   |   |   +---Annotations
+    |   |   |   |   +---Attributes
+    |   |   |   |   +---Concerns
+    |   |   |   |   \---Covers
+    |   |   |   +---Logging
+    |   |   |   |   \---TeamCity
+    |   |   |   |       \---Subscriber
+    |   |   |   +---Matchers
+    |   |   |   +---Mixins
+    |   |   |   +---PendingCalls
+    |   |   |   |   \---Concerns
+    |   |   |   +---Plugins
+    |   |   |   |   +---Actions
+    |   |   |   |   +---Concerns
+    |   |   |   |   \---Parallel
+    |   |   |   |       +---Contracts
+    |   |   |   |       +---Handlers
+    |   |   |   |       +---Paratest
+    |   |   |   |       \---Support
+    |   |   |   +---Repositories
+    |   |   |   +---Subscribers
+    |   |   |   +---Support
+    |   |   |   +---TestCaseFilters
+    |   |   |   +---TestCaseMethodFilters
+    |   |   |   \---TestCases
+    |   |   \---stubs
+    |   |       +---init
+    |   |       |   +---Feature
+    |   |       |   \---Unit
+    |   |       \---init-laravel
+    |   |           +---Feature
+    |   |           \---Unit
+    |   +---pest-plugin
+    |   |   +---.temp
+    |   |   \---src
+    |   |       \---Commands
+    |   +---pest-plugin-arch
+    |   |   \---src
+    |   |       +---Collections
+    |   |       +---Concerns
+    |   |       +---Contracts
+    |   |       +---Exceptions
+    |   |       +---Expectations
+    |   |       +---Factories
+    |   |       +---Objects
+    |   |       +---Options
+    |   |       +---Repositories
+    |   |       +---Support
+    |   |       \---ValueObjects
+    |   \---pest-plugin-laravel
+    |       +---resources
+    |       |   +---database
+    |       |   |   \---migrations
+    |       |   \---views
+    |       +---src
+    |       |   \---Commands
+    |       \---stubs
+    |           \---Laravel
+    +---phar-io
+    |   +---manifest
+    |   |   +---.github
+    |   |   |   \---workflows
+    |   |   +---src
+    |   |   |   +---exceptions
+    |   |   |   +---values
+    |   |   |   \---xml
+    |   |   \---tools
+    |   |       \---php-cs-fixer.d
+    |   \---version
+    |       \---src
+    |           +---constraints
+    |           \---exceptions
+    +---phpdocumentor
+    |   +---reflection-common
+    |   |   +---.github
+    |   |   |   \---workflows
+    |   |   \---src
+    |   +---reflection-docblock
+    |   |   \---src
+    |   |       +---DocBlock
+    |   |       |   \---Tags
+    |   |       |       +---Factory
+    |   |       |       +---Formatter
+    |   |       |       \---Reference
+    |   |       \---Exception
+    |   \---type-resolver
+    |       \---src
+    |           +---PseudoTypes
+    |           \---Types
+    +---phpoption
+    |   \---phpoption
+    |       \---src
+    |           \---PhpOption
+    +---phpstan
+    |   \---phpdoc-parser
+    |       \---src
+    |           +---Ast
+    |           |   +---ConstExpr
+    |           |   +---NodeVisitor
+    |           |   +---PhpDoc
+    |           |   |   \---Doctrine
+    |           |   \---Type
+    |           +---Lexer
+    |           +---Parser
+    |           \---Printer
+    +---phpunit
+    |   +---php-code-coverage
+    |   |   \---src
+    |   |       +---Data
+    |   |       +---Driver
+    |   |       +---Exception
+    |   |       +---Node
+    |   |       +---Report
+    |   |       |   +---Html
+    |   |       |   |   \---Renderer
+    |   |       |   |       \---Template
+    |   |       |   |           +---css
+    |   |       |   |           +---icons
+    |   |       |   |           \---js
+    |   |       |   \---Xml
+    |   |       +---StaticAnalysis
+    |   |       +---TestSize
+    |   |       +---TestStatus
+    |   |       \---Util
+    |   +---php-file-iterator
+    |   |   \---src
+    |   +---php-invoker
+    |   |   +---.psalm
+    |   |   \---src
+    |   |       \---exceptions
+    |   +---php-text-template
+    |   |   \---src
+    |   |       \---exceptions
+    |   +---php-timer
+    |   |   \---src
+    |   |       \---exceptions
+    |   \---phpunit
+    |       +---schema
+    |       \---src
+    |           +---Event
+    |           |   +---Dispatcher
+    |           |   +---Emitter
+    |           |   +---Events
+    |           |   |   +---Application
+    |           |   |   +---Test
+    |           |   |   |   +---Assertion
+    |           |   |   |   +---HookMethod
+    |           |   |   |   +---Issue
+    |           |   |   |   +---Lifecycle
+    |           |   |   |   +---Outcome
+    |           |   |   |   \---TestDouble
+    |           |   |   +---TestRunner
+    |           |   |   \---TestSuite
+    |           |   +---Exception
+    |           |   \---Value
+    |           |       +---Runtime
+    |           |       +---Telemetry
+    |           |       +---Test
+    |           |       |   \---TestData
+    |           |       \---TestSuite
+    |           +---Framework
+    |           |   +---Assert
+    |           |   +---Attributes
+    |           |   +---Constraint
+    |           |   |   +---Boolean
+    |           |   |   +---Cardinality
+    |           |   |   +---Equality
+    |           |   |   +---Exception
+    |           |   |   +---Filesystem
+    |           |   |   +---Math
+    |           |   |   +---Object
+    |           |   |   +---Operator
+    |           |   |   +---String
+    |           |   |   +---Traversable
+    |           |   |   \---Type
+    |           |   +---Exception
+    |           |   |   +---Incomplete
+    |           |   |   +---ObjectEquals
+    |           |   |   \---Skipped
+    |           |   +---MockObject
+    |           |   |   +---Exception
+    |           |   |   +---Generator
+    |           |   |   |   +---Exception
+    |           |   |   |   \---templates
+    |           |   |   \---Runtime
+    |           |   |       +---Api
+    |           |   |       +---Builder
+    |           |   |       +---Interface
+    |           |   |       +---Rule
+    |           |   |       \---Stub
+    |           |   +---TestSize
+    |           |   \---TestStatus
+    |           +---Logging
+    |           |   +---JUnit
+    |           |   |   \---Subscriber
+    |           |   +---TeamCity
+    |           |   |   \---Subscriber
+    |           |   \---TestDox
+    |           |       \---TestResult
+    |           |           \---Subscriber
+    |           +---Metadata
+    |           |   +---Api
+    |           |   +---Exception
+    |           |   +---Parser
+    |           |   |   \---Annotation
+    |           |   \---Version
+    |           +---Runner
+    |           |   +---Baseline
+    |           |   |   +---Exception
+    |           |   |   \---Subscriber
+    |           |   +---Exception
+    |           |   +---Extension
+    |           |   +---Filter
+    |           |   +---GarbageCollection
+    |           |   |   \---Subscriber
+    |           |   +---ResultCache
+    |           |   |   \---Subscriber
+    |           |   \---TestResult
+    |           |       \---Subscriber
+    |           +---TextUI
+    |           |   +---Command
+    |           |   |   \---Commands
+    |           |   +---Configuration
+    |           |   |   +---Cli
+    |           |   |   +---Exception
+    |           |   |   +---Value
+    |           |   |   \---Xml
+    |           |   |       +---CodeCoverage
+    |           |   |       |   \---Report
+    |           |   |       +---Logging
+    |           |   |       |   \---TestDox
+    |           |   |       +---Migration
+    |           |   |       |   \---Migrations
+    |           |   |       +---SchemaDetector
+    |           |   |       \---Validator
+    |           |   +---Exception
+    |           |   \---Output
+    |           |       +---Default
+    |           |       |   \---ProgressPrinter
+    |           |       |       \---Subscriber
+    |           |       +---Printer
+    |           |       \---TestDox
+    |           \---Util
+    |               +---Exception
+    |               +---PHP
+    |               |   \---Template
+    |               \---Xml
+    +---psr
+    |   +---clock
+    |   |   \---src
+    |   +---container
+    |   |   \---src
+    |   +---event-dispatcher
+    |   |   \---src
+    |   +---http-client
+    |   |   \---src
+    |   +---http-factory
+    |   |   \---src
+    |   +---http-message
+    |   |   +---docs
+    |   |   \---src
+    |   +---log
+    |   |   \---src
+    |   \---simple-cache
+    |       \---src
+    +---psy
+    |   \---psysh
+    |       +---bin
+    |       \---src
+    |           +---CodeCleaner
+    |           +---Command
+    |           |   +---ListCommand
+    |           |   \---TimeitCommand
+    |           +---Exception
+    |           +---ExecutionLoop
+    |           +---Formatter
+    |           +---Input
+    |           +---Output
+    |           +---Readline
+    |           |   \---Hoa
+    |           |       \---Terminfo
+    |           |           +---77
+    |           |           \---78
+    |           +---Reflection
+    |           +---Sudo
+    |           +---TabCompletion
+    |           |   \---Matcher
+    |           +---Util
+    |           +---VarDumper
+    |           \---VersionUpdater
+    |               \---Downloader
+    +---ralouphie
+    |   \---getallheaders
+    |       \---src
+    +---ramsey
+    |   +---collection
+    |   |   \---src
+    |   |       +---Exception
+    |   |       +---Map
+    |   |       \---Tool
+    |   \---uuid
+    |       \---src
+    |           +---Builder
+    |           +---Codec
+    |           +---Converter
+    |           |   +---Number
+    |           |   \---Time
+    |           +---Exception
+    |           +---Fields
+    |           +---Generator
+    |           +---Guid
+    |           +---Lazy
+    |           +---Math
+    |           +---Nonstandard
+    |           +---Provider
+    |           |   +---Dce
+    |           |   +---Node
+    |           |   \---Time
+    |           +---Rfc4122
+    |           +---Type
+    |           \---Validator
+    +---sebastian
+    |   +---cli-parser
+    |   |   \---src
+    |   |       \---exceptions
+    |   +---code-unit
+    |   |   \---src
+    |   |       \---exceptions
+    |   +---code-unit-reverse-lookup
+    |   |   +---.psalm
+    |   |   \---src
+    |   +---comparator
+    |   |   \---src
+    |   |       \---exceptions
+    |   +---complexity
+    |   |   \---src
+    |   |       +---Complexity
+    |   |       +---Exception
+    |   |       \---Visitor
+    |   +---diff
+    |   |   \---src
+    |   |       +---Exception
+    |   |       \---Output
+    |   +---environment
+    |   |   \---src
+    |   +---exporter
+    |   |   \---src
+    |   +---global-state
+    |   |   \---src
+    |   |       \---exceptions
+    |   +---lines-of-code
+    |   |   \---src
+    |   |       \---Exception
+    |   +---object-enumerator
+    |   |   \---src
+    |   +---object-reflector
+    |   |   \---src
+    |   +---recursion-context
+    |   |   \---src
+    |   +---type
+    |   |   \---src
+    |   |       +---exception
+    |   |       \---type
+    |   \---version
+    |       \---src
+    +---symfony
+    |   +---clock
+    |   |   +---Resources
+    |   |   \---Test
+    |   +---console
+    |   |   +---Attribute
+    |   |   +---CI
+    |   |   +---Command
+    |   |   +---CommandLoader
+    |   |   +---Completion
+    |   |   |   \---Output
+    |   |   +---DataCollector
+    |   |   +---Debug
+    |   |   +---DependencyInjection
+    |   |   +---Descriptor
+    |   |   +---Event
+    |   |   +---EventListener
+    |   |   +---Exception
+    |   |   +---Formatter
+    |   |   +---Helper
+    |   |   +---Input
+    |   |   +---Logger
+    |   |   +---Messenger
+    |   |   +---Output
+    |   |   +---Question
+    |   |   +---Resources
+    |   |   |   \---bin
+    |   |   +---SignalRegistry
+    |   |   +---Style
+    |   |   \---Tester
+    |   |       \---Constraint
+    |   +---css-selector
+    |   |   +---Exception
+    |   |   +---Node
+    |   |   +---Parser
+    |   |   |   +---Handler
+    |   |   |   +---Shortcut
+    |   |   |   \---Tokenizer
+    |   |   \---XPath
+    |   |       \---Extension
+    |   +---deprecation-contracts
+    |   +---error-handler
+    |   |   +---Error
+    |   |   +---ErrorEnhancer
+    |   |   +---ErrorRenderer
+    |   |   +---Exception
+    |   |   +---Internal
+    |   |   \---Resources
+    |   |       +---assets
+    |   |       |   +---css
+    |   |       |   +---images
+    |   |       |   \---js
+    |   |       +---bin
+    |   |       \---views
+    |   +---event-dispatcher
+    |   |   +---Attribute
+    |   |   +---Debug
+    |   |   \---DependencyInjection
+    |   +---event-dispatcher-contracts
+    |   +---finder
+    |   |   +---Comparator
+    |   |   +---Exception
+    |   |   \---Iterator
+    |   +---http-foundation
+    |   |   +---Exception
+    |   |   +---File
+    |   |   |   \---Exception
+    |   |   +---RateLimiter
+    |   |   +---RequestMatcher
+    |   |   +---Session
+    |   |   |   +---Attribute
+    |   |   |   +---Flash
+    |   |   |   \---Storage
+    |   |   |       +---Handler
+    |   |   |       \---Proxy
+    |   |   \---Test
+    |   |       \---Constraint
+    |   +---http-kernel
+    |   |   +---Attribute
+    |   |   +---Bundle
+    |   |   +---CacheClearer
+    |   |   +---CacheWarmer
+    |   |   +---Config
+    |   |   +---Controller
+    |   |   |   \---ArgumentResolver
+    |   |   +---ControllerMetadata
+    |   |   +---DataCollector
+    |   |   +---Debug
+    |   |   +---DependencyInjection
+    |   |   +---Event
+    |   |   +---EventListener
+    |   |   +---Exception
+    |   |   +---Fragment
+    |   |   +---HttpCache
+    |   |   +---Log
+    |   |   +---Profiler
+    |   |   \---Resources
+    |   +---mailer
+    |   |   +---Command
+    |   |   +---DataCollector
+    |   |   +---Event
+    |   |   +---EventListener
+    |   |   +---Exception
+    |   |   +---Header
+    |   |   +---Messenger
+    |   |   +---Test
+    |   |   |   \---Constraint
+    |   |   \---Transport
+    |   |       \---Smtp
+    |   |           +---Auth
+    |   |           \---Stream
+    |   +---mime
+    |   |   +---Crypto
+    |   |   +---DependencyInjection
+    |   |   +---Encoder
+    |   |   +---Exception
+    |   |   +---Header
+    |   |   +---HtmlToTextConverter
+    |   |   +---Part
+    |   |   |   \---Multipart
+    |   |   +---Resources
+    |   |   |   \---bin
+    |   |   \---Test
+    |   |       \---Constraint
+    |   +---polyfill-ctype
+    |   +---polyfill-intl-grapheme
+    |   +---polyfill-intl-idn
+    |   |   \---Resources
+    |   |       \---unidata
+    |   +---polyfill-intl-normalizer
+    |   |   \---Resources
+    |   |       +---stubs
+    |   |       \---unidata
+    |   +---polyfill-mbstring
+    |   |   \---Resources
+    |   |       \---unidata
+    |   +---polyfill-php72
+    |   +---polyfill-php80
+    |   |   \---Resources
+    |   |       \---stubs
+    |   +---polyfill-php83
+    |   |   \---Resources
+    |   |       \---stubs
+    |   +---polyfill-uuid
+    |   +---process
+    |   |   +---Exception
+    |   |   +---Messenger
+    |   |   \---Pipes
+    |   +---routing
+    |   |   +---Annotation
+    |   |   +---Attribute
+    |   |   +---DependencyInjection
+    |   |   +---Exception
+    |   |   +---Generator
+    |   |   |   \---Dumper
+    |   |   +---Loader
+    |   |   |   +---Configurator
+    |   |   |   |   \---Traits
+    |   |   |   \---schema
+    |   |   |       \---routing
+    |   |   +---Matcher
+    |   |   |   \---Dumper
+    |   |   \---Requirement
+    |   +---service-contracts
+    |   |   +---Attribute
+    |   |   \---Test
+    |   +---string
+    |   |   +---Exception
+    |   |   +---Inflector
+    |   |   +---Resources
+    |   |   |   +---bin
+    |   |   |   \---data
+    |   |   \---Slugger
+    |   +---translation
+    |   |   +---Catalogue
+    |   |   +---Command
+    |   |   +---DataCollector
+    |   |   +---DependencyInjection
+    |   |   +---Dumper
+    |   |   +---Exception
+    |   |   +---Extractor
+    |   |   |   \---Visitor
+    |   |   +---Formatter
+    |   |   +---Loader
+    |   |   +---Provider
+    |   |   +---Reader
+    |   |   +---Resources
+    |   |   |   +---bin
+    |   |   |   +---data
+    |   |   |   \---schemas
+    |   |   +---Test
+    |   |   +---Util
+    |   |   \---Writer
+    |   +---translation-contracts
+    |   |   \---Test
+    |   +---uid
+    |   |   +---Command
+    |   |   \---Factory
+    |   +---var-dumper
+    |   |   +---Caster
+    |   |   +---Cloner
+    |   |   |   \---Internal
+    |   |   +---Command
+    |   |   |   \---Descriptor
+    |   |   +---Dumper
+    |   |   |   \---ContextProvider
+    |   |   +---Exception
+    |   |   +---Resources
+    |   |   |   +---bin
+    |   |   |   +---css
+    |   |   |   +---functions
+    |   |   |   \---js
+    |   |   +---Server
+    |   |   \---Test
+    |   \---yaml
+    |       +---Command
+    |       +---Exception
+    |       +---Resources
+    |       |   \---bin
+    |       \---Tag
+    +---ta-tikoma
+    |   \---phpunit-architecture-test
+    |       \---src
+    |           +---Asserts
+    |           |   +---Dependencies
+    |           |   |   \---Elements
+    |           |   +---Inheritance
+    |           |   +---Iterator
+    |           |   +---Methods
+    |           |   |   \---Elements
+    |           |   \---Properties
+    |           |       \---Elements
+    |           +---Builders
+    |           +---Elements
+    |           |   \---Layer
+    |           +---Enums
+    |           +---Services
+    |           \---Storage
+    +---theseer
+    |   \---tokenizer
+    |       \---src
+    +---tijsverkoyen
+    |   \---css-to-inline-styles
+    |       \---src
+    |           \---Css
+    |               +---Property
+    |               \---Rule
+    +---vlucas
+    |   \---phpdotenv
+    |       \---src
+    |           +---Exception
+    |           +---Loader
+    |           +---Parser
+    |           +---Repository
+    |           |   \---Adapter
+    |           +---Store
+    |           |   \---File
+    |           \---Util
+    +---voku
+    |   \---portable-ascii
+    |       \---src
+    |           \---voku
+    |               \---helper
+    |                   \---data
+    \---webmozart
+        \---assert
+            \---src
+
+==========================================================
+FILE: app\Http\Controllers\DriftWatchController.php
+==========================================================
+<?php
+// app/Http/Controllers/DriftWatchController.php
+// Main dashboard controller for DriftWatch - handles all dashboard pages,
+// PR detail views, approve/block actions, and analytics.
+
+namespace App\Http\Controllers;
+
+use App\Http\Controllers\GitHubWebhookController;
+use App\Models\DeploymentDecision;
+use App\Models\DeploymentOutcome;
+use App\Models\Incident;
+use App\Models\PullRequest;
+use App\Models\RiskAssessment;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class DriftWatchController extends Controller
+{
+    /**
+     * Main dashboard - summary stats and recent PR list.
+     */
+    public function index()
+    {
+        Log::info('[DriftWatch] Dashboard loaded.');
+
+        $pullRequests = PullRequest::with(['riskAssessment', 'deploymentDecision'])
+            ->latest()
+            ->paginate(20);
+
+        $stats = [
+            'total_analyzed' => PullRequest::count(),
+            'avg_risk_score' => round(RiskAssessment::avg('risk_score') ?? 0),
+            'incidents_prevented' => DeploymentDecision::where('decision', 'blocked')->count(),
+            'prediction_accuracy' => $this->calculateAccuracy(),
+        ];
+
+        return view('driftwatch.index', compact('pullRequests', 'stats'));
+    }
+
+    /**
+     * Pull requests list page with filtering.
+     */
+    public function pullRequests(Request $request)
+    {
+        $query = PullRequest::with(['riskAssessment', 'deploymentDecision'])->latest();
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('pr_title', 'like', "%{$search}%")
+                  ->orWhere('pr_author', 'like', "%{$search}%")
+                  ->orWhere('repo_full_name', 'like', "%{$search}%");
+            });
+        }
+
+        $pullRequests = $query->paginate(20)->withQueryString();
+
+        return view('driftwatch.pull-requests', compact('pullRequests'));
+    }
+
+    /**
+     * PR detail page - blast radius, risk assessment, deployment decision, timeline.
+     * Generates AI file descriptions on first view if not yet present.
+     */
+    public function show(PullRequest $pullRequest)
+    {
+        $pullRequest->load([
+            'blastRadius',
+            'riskAssessment',
+            'deploymentDecision',
+            'deploymentOutcome',
+            'agentRuns',
+        ]);
+
+        Log::info("[DriftWatch] Viewing PR #{$pullRequest->pr_number} detail.", [
+            'pr_id' => $pullRequest->id,
+            'status' => $pullRequest->status,
+        ]);
+
+        // Generate AI file descriptions if not yet present
+        if ($pullRequest->blastRadius && empty($pullRequest->blastRadius->file_descriptions)) {
+            $descriptions = $this->generateFileDescriptions($pullRequest);
+            if (!empty($descriptions)) {
+                $pullRequest->blastRadius->update(['file_descriptions' => $descriptions]);
+                $pullRequest->load('blastRadius');
+            }
+        }
+
+        return view('driftwatch.show', compact('pullRequest'));
+    }
+
+    /**
+     * Approve a PR deployment.
+     */
+    public function approve(PullRequest $pullRequest)
+    {
+        $pullRequest->load('deploymentDecision');
+
+        if (!$pullRequest->deploymentDecision) {
+            return back()->with('error', 'No deployment decision found for this PR.');
+        }
+
+        $pullRequest->deploymentDecision->update([
+            'decision' => 'approved',
+            'decided_by' => 'Manual Override',
+            'decided_at' => now(),
+        ]);
+
+        $pullRequest->update(['status' => 'approved']);
+
+        Log::info("[DriftWatch] PR #{$pullRequest->pr_number} APPROVED manually.", [
+            'pr_id' => $pullRequest->id,
+            'decided_by' => 'Manual Override',
+        ]);
+
+        return back()->with('success', "PR #{$pullRequest->pr_number} deployment approved.");
+    }
+
+    /**
+     * Block a PR deployment.
+     */
+    public function block(PullRequest $pullRequest)
+    {
+        $pullRequest->load('deploymentDecision');
+
+        if (!$pullRequest->deploymentDecision) {
+            return back()->with('error', 'No deployment decision found for this PR.');
+        }
+
+        $pullRequest->deploymentDecision->update([
+            'decision' => 'blocked',
+            'decided_by' => 'Manual Override',
+            'decided_at' => now(),
+        ]);
+
+        $pullRequest->update(['status' => 'blocked']);
+
+        Log::info("[DriftWatch] PR #{$pullRequest->pr_number} BLOCKED manually.", [
+            'pr_id' => $pullRequest->id,
+            'decided_by' => 'Manual Override',
+        ]);
+
+        return back()->with('warning', "PR #{$pullRequest->pr_number} deployment blocked.");
+    }
+
+    /**
+     * Analyze a PR by URL - manual trigger from dashboard.
+     * Accepts a GitHub PR URL like https://github.com/owner/repo/pull/123
+     */
+    public function analyzePr(Request $request)
+    {
+        $request->validate([
+            'pr_url' => ['required', 'url', 'regex:#^https://github\.com/([^/]+)/([^/]+)/pull/(\d+)$#'],
+        ], [
+            'pr_url.regex' => 'Please enter a valid GitHub PR URL (e.g., https://github.com/owner/repo/pull/123)',
+        ]);
+
+        $url = $request->input('pr_url');
+        preg_match('#^https://github\.com/([^/]+)/([^/]+)/pull/(\d+)$#', $url, $matches);
+        $owner = $matches[1];
+        $repo = $matches[2];
+        $prNumber = (int) $matches[3];
+        $repoFullName = "{$owner}/{$repo}";
+
+        Log::info("[DriftWatch] Manual analysis requested.", [
+            'repo' => $repoFullName,
+            'pr_number' => $prNumber,
+        ]);
+
+        // Fetch PR data from GitHub API
+        try {
+            $ghToken = config('services.github.token');
+            $ghResponse = Http::withHeaders([
+                'Authorization' => "Bearer {$ghToken}",
+                'Accept' => 'application/vnd.github.v3+json',
+            ])->timeout(15)->get("https://api.github.com/repos/{$repoFullName}/pulls/{$prNumber}");
+
+            if (!$ghResponse->successful()) {
+                Log::warning('[DriftWatch] GitHub API returned error.', [
+                    'status' => $ghResponse->status(),
+                    'body' => $ghResponse->body(),
+                ]);
+                return back()->with('error', "Could not fetch PR from GitHub (HTTP {$ghResponse->status()}). Check the URL and ensure the repo is accessible.");
+            }
+
+            $prData = $ghResponse->json();
+        } catch (\Exception $e) {
+            Log::error('[DriftWatch] GitHub API call failed.', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Could not connect to GitHub API: ' . $e->getMessage());
+        }
+
+        // Create or update the PR record
+        $pullRequest = PullRequest::updateOrCreate(
+            ['github_pr_id' => (string) $prData['id']],
+            [
+                'repo_full_name' => $repoFullName,
+                'pr_number' => $prNumber,
+                'pr_title' => $prData['title'] ?? 'Untitled',
+                'pr_author' => $prData['user']['login'] ?? 'unknown',
+                'pr_url' => $prData['html_url'] ?? $url,
+                'base_branch' => $prData['base']['ref'] ?? 'main',
+                'head_branch' => $prData['head']['ref'] ?? 'unknown',
+                'files_changed' => $prData['changed_files'] ?? 0,
+                'additions' => $prData['additions'] ?? 0,
+                'deletions' => $prData['deletions'] ?? 0,
+                'status' => 'analyzing',
+            ]
+        );
+
+        // Run the agent pipeline
+        $webhookController = app(GitHubWebhookController::class);
+        $webhookController->runAgentPipelinePublic($pullRequest);
+
+        return redirect()
+            ->route('driftwatch.show', $pullRequest)
+            ->with('success', "PR #{$prNumber} from {$repoFullName} analyzed successfully by all agents!");
+    }
+
+    /**
+     * Re-analyze an existing PR through the agent pipeline.
+     */
+    public function reanalyze(PullRequest $pullRequest)
+    {
+        Log::info("[DriftWatch] Re-analysis requested for PR #{$pullRequest->pr_number}.");
+
+        $pullRequest->update(['status' => 'analyzing']);
+
+        $webhookController = app(GitHubWebhookController::class);
+        $webhookController->runAgentPipelinePublic($pullRequest);
+
+        return redirect()
+            ->route('driftwatch.show', $pullRequest)
+            ->with('success', "PR #{$pullRequest->pr_number} re-analyzed successfully!");
+    }
+
+    /**
+     * Incidents list page.
+     */
+    public function incidents()
+    {
+        $incidents = Incident::orderByDesc('occurred_at')->paginate(20);
+
+        return view('driftwatch.incidents', compact('incidents'));
+    }
+
+    /**
+     * Analytics page - risk distribution, accuracy trends, risky services.
+     */
+    public function analytics()
+    {
+        $riskDistribution = RiskAssessment::selectRaw('risk_level, COUNT(*) as count')
+            ->groupBy('risk_level')
+            ->pluck('count', 'risk_level')
+            ->toArray();
+
+        $recentAssessments = RiskAssessment::with('pullRequest')
+            ->latest()
+            ->limit(20)
+            ->get();
+
+        $topRiskyServices = $this->getTopRiskyServices();
+
+        $accuracy = $this->calculateAccuracy();
+
+        $totalBlocked = DeploymentDecision::where('decision', 'blocked')->count();
+        $totalApproved = DeploymentDecision::where('decision', 'approved')->count();
+
+        return view('driftwatch.analytics', compact(
+            'riskDistribution',
+            'recentAssessments',
+            'topRiskyServices',
+            'accuracy',
+            'totalBlocked',
+            'totalApproved'
+        ));
+    }
+
+    /**
+     * Agent status pages - show what each agent does and recent results.
+     */
+    public function agentStatus(string $agent)
+    {
+        $validAgents = ['archaeologist', 'historian', 'negotiator', 'chronicler'];
+        if (!in_array($agent, $validAgents)) {
+            abort(404);
+        }
+
+        $agentInfo = $this->getAgentInfo($agent);
+        $recentResults = $this->getAgentRecentResults($agent);
+
+        return view('driftwatch.agents.show', compact('agent', 'agentInfo', 'recentResults'));
+    }
+
+    /**
+     * Agent Map - visual pipeline orchestration page.
+     */
+    public function agentMap()
+    {
+        Log::info('[DriftWatch] Agent Map page loaded.');
+
+        $recentRuns = PullRequest::with(['blastRadius', 'riskAssessment', 'deploymentDecision', 'deploymentOutcome'])
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        // Determine agent statuses based on most recent PR
+        $latestPr = $recentRuns->first();
+        $agentStatuses = [
+            'archaeologist' => 'idle',
+            'historian' => 'idle',
+            'negotiator' => 'idle',
+            'chronicler' => 'idle',
+        ];
+
+        if ($latestPr) {
+            $agentStatuses['archaeologist'] = $latestPr->blastRadius ? 'complete' : ($latestPr->status === 'analyzing' ? 'active' : 'idle');
+            $agentStatuses['historian'] = $latestPr->riskAssessment ? 'complete' : ($latestPr->blastRadius && $latestPr->status === 'analyzing' ? 'active' : 'idle');
+            $agentStatuses['negotiator'] = $latestPr->deploymentDecision ? 'complete' : ($latestPr->riskAssessment && $latestPr->status === 'analyzing' ? 'active' : 'idle');
+            $agentStatuses['chronicler'] = $latestPr->deploymentOutcome ? 'complete' : 'idle';
+        }
+
+        // Agent stats
+        $agentStats = [
+            'archaeologist' => [
+                'name' => 'Archaeologist',
+                'subtitle' => 'Blast Radius Mapper',
+                'icon' => 'explore',
+                'color' => 'primary',
+                'total_runs' => PullRequest::whereHas('blastRadius')->count(),
+                'success_rate' => $this->agentSuccessRate('blastRadius'),
+                'avg_time' => 3,
+            ],
+            'historian' => [
+                'name' => 'Historian',
+                'subtitle' => 'Risk Calculator',
+                'icon' => 'history',
+                'color' => 'warning',
+                'total_runs' => PullRequest::whereHas('riskAssessment')->count(),
+                'success_rate' => $this->agentSuccessRate('riskAssessment'),
+                'avg_time' => 4,
+            ],
+            'negotiator' => [
+                'name' => 'Negotiator',
+                'subtitle' => 'Deploy Gatekeeper',
+                'icon' => 'gavel',
+                'color' => 'danger',
+                'total_runs' => PullRequest::whereHas('deploymentDecision')->count(),
+                'success_rate' => $this->agentSuccessRate('deploymentDecision'),
+                'avg_time' => 2,
+            ],
+            'chronicler' => [
+                'name' => 'Chronicler',
+                'subtitle' => 'Feedback Recorder',
+                'icon' => 'auto_stories',
+                'color' => 'success',
+                'total_runs' => PullRequest::whereHas('deploymentOutcome')->count(),
+                'success_rate' => 100,
+                'avg_time' => 1,
+            ],
+        ];
+
+        // Observability metrics
+        $totalPrs = PullRequest::count();
+        $observability = [
+            'total_traces' => $totalPrs,
+            'error_rate' => $totalPrs > 0 ? round((PullRequest::where('status', 'error')->count() / $totalPrs) * 100, 1) : 0,
+            'avg_latency' => 10,
+        ];
+
+        return view('driftwatch.agent-map', compact('recentRuns', 'agentStatuses', 'agentStats', 'observability'));
+    }
+
+    /**
+     * Governance & Responsible AI page.
+     */
+    public function governance()
+    {
+        Log::info('[DriftWatch] Governance page loaded.');
+
+        $recentDecisions = DeploymentDecision::with('pullRequest')
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        return view('driftwatch.governance', compact('recentDecisions'));
+    }
+
+    /**
+     * Repositories list page.
+     */
+    public function repositories()
+    {
+        Log::info('[DriftWatch] Repositories page loaded.');
+
+        $repositories = \App\Models\Repository::withCount('pullRequests')->latest()->get();
+
+        return view('driftwatch.repositories.index', compact('repositories'));
+    }
+
+    /**
+     * Connect a GitHub repository.
+     */
+    public function connectRepository(Request $request)
+    {
+        $request->validate([
+            'repo_input' => ['required', 'string'],
+        ]);
+
+        $input = trim($request->input('repo_input'));
+
+        // Parse owner/repo from URL or direct input
+        if (preg_match('#github\.com/([^/]+)/([^/]+)#', $input, $matches)) {
+            $owner = $matches[1];
+            $repo = rtrim($matches[2], '.git');
+        } elseif (preg_match('#^([^/]+)/([^/]+)$#', $input, $matches)) {
+            $owner = $matches[1];
+            $repo = $matches[2];
+        } else {
+            return back()->with('error', 'Invalid format. Use owner/repo or a GitHub URL.');
+        }
+
+        $fullName = "{$owner}/{$repo}";
+
+        // Check if already connected
+        $existing = \App\Models\Repository::where('full_name', $fullName)->first();
+        if ($existing) {
+            return back()->with('warning', "Repository {$fullName} is already connected.");
+        }
+
+        // Try to verify via GitHub API
+        try {
+            $ghToken = config('services.github.token');
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$ghToken}",
+                'Accept' => 'application/vnd.github.v3+json',
+            ])->timeout(10)->get("https://api.github.com/repos/{$fullName}");
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $repository = \App\Models\Repository::create([
+                    'name' => $data['name'],
+                    'full_name' => $data['full_name'],
+                    'owner' => $data['owner']['login'],
+                    'default_branch' => $data['default_branch'] ?? 'main',
+                    'github_url' => $data['html_url'],
+                    'is_active' => true,
+                ]);
+            } else {
+                // Create with manual data if API fails
+                $repository = \App\Models\Repository::create([
+                    'name' => $repo,
+                    'full_name' => $fullName,
+                    'owner' => $owner,
+                    'default_branch' => 'main',
+                    'github_url' => "https://github.com/{$fullName}",
+                    'is_active' => true,
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::warning('[DriftWatch] GitHub API failed for repo connect, using manual data.', ['error' => $e->getMessage()]);
+            $repository = \App\Models\Repository::create([
+                'name' => $repo,
+                'full_name' => $fullName,
+                'owner' => $owner,
+                'default_branch' => 'main',
+                'github_url' => "https://github.com/{$fullName}",
+                'is_active' => true,
+            ]);
+        }
+
+        Log::info("[DriftWatch] Repository connected: {$fullName}", ['id' => $repository->id]);
+
+        return redirect()->route('driftwatch.repositories.show', $repository)
+            ->with('success', "Repository {$fullName} connected successfully!");
+    }
+
+    /**
+     * Show a single repository and its PRs.
+     */
+    public function showRepository(\App\Models\Repository $repository)
+    {
+        $pullRequests = PullRequest::where('repo_full_name', $repository->full_name)
+            ->with(['riskAssessment', 'deploymentDecision'])
+            ->latest()
+            ->paginate(20);
+
+        return view('driftwatch.repositories.show', compact('repository', 'pullRequests'));
+    }
+
+    /**
+     * Sync PRs from a connected repository.
+     */
+    public function syncRepository(\App\Models\Repository $repository)
+    {
+        Log::info("[DriftWatch] Syncing repository: {$repository->full_name}");
+
+        try {
+            $ghToken = config('services.github.token');
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$ghToken}",
+                'Accept' => 'application/vnd.github.v3+json',
+            ])->timeout(15)->get("https://api.github.com/repos/{$repository->full_name}/pulls", [
+                'state' => 'open',
+                'per_page' => 20,
+            ]);
+
+            if (!$response->successful()) {
+                return back()->with('error', "Could not fetch PRs from GitHub (HTTP {$response->status()}).");
+            }
+
+            $prs = $response->json();
+            $synced = 0;
+
+            foreach ($prs as $prData) {
+                PullRequest::updateOrCreate(
+                    ['github_pr_id' => (string) $prData['id']],
+                    [
+                        'repo_full_name' => $repository->full_name,
+                        'pr_number' => $prData['number'],
+                        'pr_title' => $prData['title'] ?? 'Untitled',
+                        'pr_author' => $prData['user']['login'] ?? 'unknown',
+                        'pr_url' => $prData['html_url'],
+                        'base_branch' => $prData['base']['ref'] ?? 'main',
+                        'head_branch' => $prData['head']['ref'] ?? 'unknown',
+                        'files_changed' => 0,
+                        'additions' => 0,
+                        'deletions' => 0,
+                        'status' => 'pending',
+                    ]
+                );
+                $synced++;
+            }
+
+            $repository->update(['last_synced_at' => now()]);
+
+            Log::info("[DriftWatch] Synced {$synced} PRs from {$repository->full_name}");
+
+            return back()->with('success', "Synced {$synced} open PRs from {$repository->full_name}.");
+        } catch (\Exception $e) {
+            Log::error("[DriftWatch] Sync failed for {$repository->full_name}", ['error' => $e->getMessage()]);
+            return back()->with('error', 'Sync failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Disconnect a repository.
+     */
+    public function disconnectRepository(\App\Models\Repository $repository)
+    {
+        $name = $repository->full_name;
+        $repository->update(['is_active' => false]);
+
+        Log::info("[DriftWatch] Repository disconnected: {$name}");
+
+        return redirect()->route('driftwatch.repositories')
+            ->with('success', "Repository {$name} disconnected.");
+    }
+
+    /**
+     * Settings page.
+     */
+    public function settings()
+    {
+        return view('driftwatch.settings');
+    }
+
+    // --- Private helpers ---
+
+    /**
+     * Calculate prediction accuracy from deployment outcomes.
+     */
+    private function calculateAccuracy(): float
+    {
+        $total = DeploymentOutcome::count();
+        if ($total === 0) {
+            return 0;
+        }
+
+        $accurate = DeploymentOutcome::where('prediction_accurate', true)->count();
+        return round(($accurate / $total) * 100, 1);
+    }
+
+    /**
+     * Aggregate which services appear most in high-risk assessments.
+     */
+    private function getTopRiskyServices(): array
+    {
+        $incidents = Incident::all();
+        $serviceCounts = [];
+
+        foreach ($incidents as $incident) {
+            $services = is_array($incident->affected_services) ? $incident->affected_services : [];
+            foreach ($services as $service) {
+                $serviceCounts[$service] = ($serviceCounts[$service] ?? 0) + 1;
+            }
+        }
+
+        arsort($serviceCounts);
+        return array_slice($serviceCounts, 0, 10, true);
+    }
+
+    /**
+     * Calculate success rate for a given agent relationship.
+     */
+    private function agentSuccessRate(string $relation): int
+    {
+        $total = PullRequest::count();
+        if ($total === 0) {
+            return 0;
+        }
+
+        $completed = PullRequest::whereHas($relation)->count();
+        return (int) round(($completed / $total) * 100);
+    }
+
+    /**
+     * Returns metadata about each agent for display.
+     */
+    private function getAgentInfo(string $agent): array
+    {
+        return match ($agent) {
+            'archaeologist' => [
+                'name' => 'The Archaeologist',
+                'subtitle' => 'Blast Radius Mapper',
+                'description' => 'Analyzes PR diffs to map which services, endpoints, and files are affected. Traces dependency graphs to find downstream impact.',
+                'icon' => 'explore',
+                'color' => 'primary',
+                'inputs' => 'GitHub PR diff, file changes, repository structure',
+                'outputs' => 'Affected files, services, endpoints, dependency graph, summary',
+            ],
+            'historian' => [
+                'name' => 'The Historian',
+                'subtitle' => 'Risk Score Calculator',
+                'description' => 'Correlates the blast radius with 90 days of historical incident data to produce a risk score (0-100) and identify patterns.',
+                'icon' => 'history',
+                'color' => 'warning',
+                'inputs' => 'Blast radius results, historical incidents database',
+                'outputs' => 'Risk score (0-100), risk level, historical correlations, contributing factors, recommendation',
+            ],
+            'negotiator' => [
+                'name' => 'The Negotiator',
+                'subtitle' => 'Deployment Gatekeeper',
+                'description' => 'Makes the deploy/block/review decision based on risk score, concurrent deployments, freeze windows, and team context. Posts PR comments.',
+                'icon' => 'gavel',
+                'color' => 'danger',
+                'inputs' => 'Risk assessment, deployment context, team schedules',
+                'outputs' => 'Decision (approve/block/review), notifications, GitHub PR comment',
+            ],
+            'chronicler' => [
+                'name' => 'The Chronicler',
+                'subtitle' => 'Feedback Loop Recorder',
+                'description' => 'Runs after deployment to compare predictions vs reality. Records whether incidents occurred and feeds accuracy data back into the system.',
+                'icon' => 'auto_stories',
+                'color' => 'success',
+                'inputs' => 'Predicted risk score, actual deployment outcome, monitoring data',
+                'outputs' => 'Prediction accuracy, post-mortem notes, system learning data',
+            ],
+        };
+    }
+
+    /**
+     * Gets recent results for a specific agent.
+     */
+    private function getAgentRecentResults(string $agent): \Illuminate\Support\Collection
+    {
+        return match ($agent) {
+            'archaeologist' => PullRequest::with('blastRadius')
+                ->whereHas('blastRadius')
+                ->latest()->limit(10)->get(),
+            'historian' => PullRequest::with('riskAssessment')
+                ->whereHas('riskAssessment')
+                ->latest()->limit(10)->get(),
+            'negotiator' => PullRequest::with('deploymentDecision')
+                ->whereHas('deploymentDecision')
+                ->latest()->limit(10)->get(),
+            'chronicler' => PullRequest::with('deploymentOutcome')
+                ->whereHas('deploymentOutcome')
+                ->latest()->limit(10)->get(),
+        };
+    }
+
+    /**
+     * Generate AI-powered file descriptions by fetching code from GitHub
+     * and analyzing with Azure OpenAI. Returns associative array of file => description.
+     *
+     * @return array<string, array{summary: string, role: string, risk: string, affects: string}>
+     */
+    private function generateFileDescriptions(PullRequest $pullRequest): array
+    {
+        $blastRadius = $pullRequest->blastRadius;
+        if (!$blastRadius) {
+            return [];
+        }
+
+        $affectedFiles = $blastRadius->affected_files ?? [];
+        $depGraph = $blastRadius->dependency_graph ?? [];
+        $ghToken = config('services.github.token');
+        $repo = $pullRequest->repo_full_name;
+        $branch = $pullRequest->head_branch;
+
+        // Collect file snippets from GitHub (first 80 lines of each)
+        $fileSnippets = [];
+        foreach (array_slice($affectedFiles, 0, 25) as $filePath) {
+            try {
+                $response = Http::withHeaders([
+                    'Authorization' => "Bearer {$ghToken}",
+                    'Accept' => 'application/vnd.github.v3.raw',
+                ])->timeout(8)->get("https://api.github.com/repos/{$repo}/contents/{$filePath}", [
+                    'ref' => $branch,
+                ]);
+
+                if ($response->successful()) {
+                    $content = $response->body();
+                    $lines = explode("\n", $content);
+                    $fileSnippets[$filePath] = implode("\n", array_slice($lines, 0, 80));
+                }
+            } catch (\Exception $e) {
+                Log::debug("[DriftWatch] Could not fetch file {$filePath}: {$e->getMessage()}");
+            }
+        }
+
+        // Also add dep graph source files not in affected_files
+        foreach (array_keys($depGraph) as $srcFile) {
+            if (!isset($fileSnippets[$srcFile]) && count($fileSnippets) < 25) {
+                try {
+                    $response = Http::withHeaders([
+                        'Authorization' => "Bearer {$ghToken}",
+                        'Accept' => 'application/vnd.github.v3.raw',
+                    ])->timeout(8)->get("https://api.github.com/repos/{$repo}/contents/{$srcFile}", [
+                        'ref' => $branch,
+                    ]);
+
+                    if ($response->successful()) {
+                        $content = $response->body();
+                        $lines = explode("\n", $content);
+                        $fileSnippets[$srcFile] = implode("\n", array_slice($lines, 0, 80));
+                    }
+                } catch (\Exception $e) {
+                    Log::debug("[DriftWatch] Could not fetch source file {$srcFile}: {$e->getMessage()}");
+                }
+            }
+        }
+
+        if (empty($fileSnippets)) {
+            Log::info("[DriftWatch] No file snippets fetched from GitHub for PR #{$pullRequest->pr_number}. Using heuristic descriptions.");
+            return $this->generateHeuristicDescriptions($affectedFiles, $depGraph);
+        }
+
+        // Build the prompt for Azure OpenAI
+        $depGraphJson = json_encode($depGraph);
+        $filesBlock = '';
+        foreach ($fileSnippets as $path => $snippet) {
+            $deps = isset($depGraph[$path]) ? json_encode($depGraph[$path]) : '[]';
+            $filesBlock .= "---\nFILE: {$path}\nDEPENDENTS: {$deps}\n```\n{$snippet}\n```\n\n";
+        }
+
+        $prompt = <<<PROMPT
+You are a DevOps risk analyst AI. Analyze these source code files from a GitHub pull request and generate a JSON object describing each file.
+
+For each file, provide:
+- "summary": 1-2 sentence plain-English description of what this file does (non-technical, a PM should understand)
+- "role": The file's role in the system (e.g., "API Controller", "Data Model", "View Template", "Configuration", "Service Layer", "Middleware", "Database Migration", "Test Suite", "Utility", "Worker/Job")
+- "risk": Why changing this file is risky, or "Low risk" if safe (1 sentence)
+- "affects": How changes to this file could impact other files that depend on it (1 sentence). Reference specific dependents if known.
+
+Dependency graph (source file ? files that depend on it):
+{$depGraphJson}
+
+Files to analyze:
+{$filesBlock}
+
+Respond with ONLY a valid JSON object where keys are file paths and values are objects with {summary, role, risk, affects}. No markdown, no explanation, just the JSON.
+PROMPT;
+
+        // Call Azure OpenAI
+        try {
+            $endpoint = config('services.azure_openai.endpoint');
+            $apiKey = config('services.azure_openai.api_key');
+            $deployment = config('services.azure_openai.deployment');
+
+            if (!$endpoint || !$apiKey) {
+                Log::warning('[DriftWatch] Azure OpenAI not configured. Using heuristic descriptions.');
+                return $this->generateHeuristicDescriptions($affectedFiles, $depGraph);
+            }
+
+            $url = rtrim($endpoint, '/') . "/openai/deployments/{$deployment}/chat/completions?api-version=2024-12-01-preview";
+
+            $response = Http::withHeaders([
+                'api-key' => $apiKey,
+                'Content-Type' => 'application/json',
+            ])->timeout(30)->post($url, [
+                'messages' => [
+                    ['role' => 'system', 'content' => 'You are a DevOps risk analyst. Respond only with valid JSON.'],
+                    ['role' => 'user', 'content' => $prompt],
+                ],
+                'temperature' => 0.3,
+                'max_tokens' => 4000,
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $content = $data['choices'][0]['message']['content'] ?? '';
+
+                // Strip markdown code fence if present
+                $content = preg_replace('/^```json\s*\n?/', '', $content);
+                $content = preg_replace('/\n?```\s*$/', '', $content);
+
+                $descriptions = json_decode($content, true);
+
+                if (is_array($descriptions) && !empty($descriptions)) {
+                    Log::info("[DriftWatch] AI generated descriptions for " . count($descriptions) . " files in PR #{$pullRequest->pr_number}.");
+                    return $descriptions;
+                }
+
+                Log::warning('[DriftWatch] Azure OpenAI returned invalid JSON for file descriptions.', [
+                    'content' => substr($content, 0, 500),
+                ]);
+            } else {
+                Log::warning('[DriftWatch] Azure OpenAI API error for file descriptions.', [
+                    'status' => $response->status(),
+                    'body' => substr($response->body(), 0, 500),
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('[DriftWatch] Azure OpenAI call failed for file descriptions.', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return $this->generateHeuristicDescriptions($affectedFiles, $depGraph);
+    }
+
+    /**
+     * Fallback: generate heuristic descriptions when AI is unavailable.
+     *
+     * @return array<string, array{summary: string, role: string, risk: string, affects: string}>
+     */
+    private function generateHeuristicDescriptions(array $files, array $depGraph): array
+    {
+        $descriptions = [];
+
+        foreach ($files as $filePath) {
+            $name = basename($filePath);
+            $dir = dirname($filePath);
+            $ext = pathinfo($filePath, PATHINFO_EXTENSION);
+            $nameLower = strtolower($name);
+            $deps = $depGraph[$filePath] ?? [];
+            $depCount = is_array($deps) ? count($deps) : 0;
+
+            // Determine role
+            $role = match (true) {
+                str_contains($nameLower, 'controller') => 'API Controller',
+                str_contains($nameLower, 'route') || str_contains($nameLower, 'router') => 'Routing Configuration',
+                str_contains($nameLower, 'model') || str_contains($nameLower, 'schema') => 'Data Model',
+                str_contains($nameLower, 'migration') => 'Database Migration',
+                str_contains($nameLower, 'middleware') => 'Middleware',
+                str_contains($nameLower, 'service') || str_contains($nameLower, 'provider') => 'Service Layer',
+                str_contains($nameLower, 'test') || str_contains($nameLower, 'spec') => 'Test Suite',
+                str_contains($nameLower, 'util') || str_contains($nameLower, 'helper') => 'Utility',
+                str_contains($nameLower, 'worker') || str_contains($nameLower, 'job') || str_contains($nameLower, 'queue') => 'Background Worker',
+                str_contains($dir, 'view') || str_contains($dir, 'template') || $ext === 'blade.php' => 'View Template',
+                in_array($ext, ['json', 'yaml', 'yml', 'toml', 'ini', 'env']) || str_contains($nameLower, 'config') => 'Configuration',
+                in_array($ext, ['css', 'scss', 'less']) => 'Styles',
+                default => ucfirst($ext) . ' Module',
+            };
+
+            // Build summary
+            $summary = "Handles {$role} logic in the " . basename($dir) . " directory.";
+
+            // Build risk assessment
+            $risk = match (true) {
+                str_contains($nameLower, 'migration') => 'Database changes are irreversible in production and affect all environments.',
+                str_contains($nameLower, 'auth') || str_contains($nameLower, 'security') => 'Security-sensitive file ó changes could create authentication or authorization vulnerabilities.',
+                str_contains($nameLower, 'config') || in_array($ext, ['json', 'yaml', 'yml', 'env']) => 'Configuration changes propagate to all environments and can cause widespread failures.',
+                $depCount >= 5 => "High-impact file with {$depCount} downstream dependencies. A breaking change here cascades widely.",
+                $depCount >= 2 => "Moderate risk ó {$depCount} other files depend on this module.",
+                str_contains($nameLower, 'controller') || str_contains($nameLower, 'route') => 'API-facing file ó changes may break client contracts or external integrations.',
+                default => 'Low risk ó isolated changes with limited downstream impact.',
+            };
+
+            // Build affects description
+            $affects = $depCount > 0
+                ? "Changes here directly impact {$depCount} downstream file(s): " . implode(', ', array_map('basename', array_slice($deps, 0, 4))) . (count($deps) > 4 ? ' and more' : '') . '.'
+                : 'No known downstream dependencies ó changes are relatively isolated.';
+
+            $descriptions[$filePath] = [
+                'summary' => $summary,
+                'role' => $role,
+                'risk' => $risk,
+                'affects' => $affects,
+            ];
+        }
+
+        // Also add descriptions for source files in dep graph not in affected_files
+        foreach (array_keys($depGraph) as $srcFile) {
+            if (!isset($descriptions[$srcFile])) {
+                $deps = $depGraph[$srcFile] ?? [];
+                $depCount = is_array($deps) ? count($deps) : 0;
+                $descriptions[$srcFile] = [
+                    'summary' => 'Source file that was directly changed in this PR.',
+                    'role' => ucfirst(pathinfo($srcFile, PATHINFO_EXTENSION)) . ' Module',
+                    'risk' => $depCount >= 3 ? "High fan-out: {$depCount} files depend on this." : 'Moderate ó directly changed.',
+                    'affects' => $depCount > 0
+                        ? "Impacts {$depCount} downstream files: " . implode(', ', array_map('basename', array_slice($deps, 0, 4))) . '.'
+                        : 'No known downstream dependencies.',
+                ];
+            }
+        }
+
+        return $descriptions;
+    }
+}
+
+
+==========================================================
+FILE: app\Models\PullRequest.php
+==========================================================
+<?php
+// app/Models/PullRequest.php
+// Core model tracking every PR analyzed by DriftWatch's 4-agent pipeline.
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+
+class PullRequest extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'github_pr_id',
+        'repo_full_name',
+        'pr_number',
+        'pr_title',
+        'pr_author',
+        'pr_url',
+        'base_branch',
+        'head_branch',
+        'files_changed',
+        'additions',
+        'deletions',
+        'status',
+    ];
+
+    protected $casts = [
+        'files_changed' => 'integer',
+        'additions' => 'integer',
+        'deletions' => 'integer',
+    ];
+
+    // --- Relationships ---
+
+    public function blastRadius(): HasOne
+    {
+        return $this->hasOne(BlastRadiusResult::class);
+    }
+
+    public function riskAssessment(): HasOne
+    {
+        return $this->hasOne(RiskAssessment::class);
+    }
+
+    public function deploymentDecision(): HasOne
+    {
+        return $this->hasOne(DeploymentDecision::class);
+    }
+
+    public function deploymentOutcome(): HasOne
+    {
+        return $this->hasOne(DeploymentOutcome::class);
+    }
+
+    public function agentRuns(): HasMany
+    {
+        return $this->hasMany(AgentRun::class);
+    }
+
+    public function repository(): BelongsTo
+    {
+        return $this->belongsTo(Repository::class, 'repo_full_name', 'full_name');
+    }
+
+    // --- Accessors ---
+
+    /**
+     * Returns the Bootstrap color class for the current status badge.
+     */
+    public function getStatusColorAttribute(): string
+    {
+        return match ($this->status) {
+            'pending' => 'secondary',
+            'analyzing' => 'info',
+            'scored' => 'primary',
+            'approved' => 'success',
+            'blocked' => 'danger',
+            'deployed' => 'success',
+            'failed' => 'danger',
+            default => 'secondary',
+        };
+    }
+
+    /**
+     * Returns the risk score from the related assessment, or null.
+     */
+    public function getRiskScoreValueAttribute(): ?int
+    {
+        return $this->riskAssessment?->risk_score;
+    }
+
+    /**
+     * Returns the Bootstrap color class for risk score display.
+     */
+    public function getRiskColorAttribute(): string
+    {
+        $score = $this->risk_score_value;
+        if ($score === null) return 'secondary';
+        if ($score >= 76) return 'danger';
+        if ($score >= 51) return 'warning';
+        if ($score >= 26) return 'info';
+        return 'success';
+    }
+}
+
+
+==========================================================
+FILE: database\migrations\2026_03_02_191714_create_pull_requests_table.php
+==========================================================
+<?php
+// database/migrations/2026_03_02_191714_create_pull_requests_table.php
+// Tracks every PR that DriftWatch analyzes through the agent pipeline.
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('pull_requests', function (Blueprint $table) {
+            $table->id();
+            $table->string('github_pr_id')->unique();
+            $table->string('repo_full_name');
+            $table->integer('pr_number');
+            $table->string('pr_title');
+            $table->string('pr_author');
+            $table->string('pr_url');
+            $table->string('base_branch');
+            $table->string('head_branch');
+            $table->integer('files_changed')->default(0);
+            $table->integer('additions')->default(0);
+            $table->integer('deletions')->default(0);
+            $table->enum('status', [
+                'pending', 'analyzing', 'scored', 'approved',
+                'blocked', 'deployed', 'failed',
+            ])->default('pending');
+            $table->timestamps();
+
+            $table->index('repo_full_name');
+            $table->index('status');
+            $table->index('pr_author');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('pull_requests');
+    }
+};
+
+
+==========================================================
+FILE: resources\views\driftwatch\show.blade.php
+==========================================================
 {{-- resources/views/driftwatch/show.blade.php --}}
 {{-- PR detail page - consolidated view: summary, impact map, action items --}}
 @extends('layouts.app')
@@ -18,7 +2640,7 @@
 
 @push('styles')
 <style>
-    /* === PR Detail Page ‚Äî Glow Up Styles === */
+    /* === PR Detail Page ó Glow Up Styles === */
 
     /* Elevated cards with subtle shadow + hover lift */
     .card.dw-card {
@@ -116,7 +2738,8 @@
         border: 1px solid #e2e8f0 !important;
         border-radius: 10px !important;
         background: #f8fafc !important;
-    }[data-theme=dark] #blastRadiusDynamic {
+    }
+    [data-theme=dark] #blastRadiusDynamic {
         border-color: #334155 !important;
         background: #1e293b !important;
     }
@@ -151,8 +2774,11 @@
     .legend-btn { border: 1px solid #e2e8f0 !important; background: #fff; transition: all 0.2s; }
     .legend-btn:hover { border-color: #605DFF !important; }
     .legend-btn.dimmed { opacity: 0.35; background: #f8fafc; }
-    [data-theme=dark] .legend-btn { border-color: #334155 !important; background: #1e293b; color: #e2e8f0; }[data-theme=dark] .legend-btn.dimmed { background: #0f172a; }[data-theme=dark] #graphHoverCard .card { background: rgba(30,41,59,0.97) !important; }
-    [data-theme=dark] #graphHoverCard .fw-bold { color: #f1f5f9 !important; }[data-theme=dark] #graphHoverCard .text-secondary { color: #94a3b8 !important; }
+    [data-theme=dark] .legend-btn { border-color: #334155 !important; background: #1e293b; color: #e2e8f0; }
+    [data-theme=dark] .legend-btn.dimmed { background: #0f172a; }
+    [data-theme=dark] #graphHoverCard .card { background: rgba(30,41,59,0.97) !important; }
+    [data-theme=dark] #graphHoverCard .fw-bold { color: #f1f5f9 !important; }
+    [data-theme=dark] #graphHoverCard .text-secondary { color: #94a3b8 !important; }
     #blastRadiusDynamic canvas { border-radius: 10px; }
 
     /* Dominant Risk Score Circle */
@@ -193,7 +2819,8 @@
 
     /* Dependency Tree DAG */
     #dagTreeContainer { position: relative; }
-    [data-theme=dark] #dagTreeContainer { background: #1e293b !important; border-color: #334155 !important; }[data-theme=dark] #dagTreeSvg text { fill: #e2e8f0 !important; }
+    [data-theme=dark] #dagTreeContainer { background: #1e293b !important; border-color: #334155 !important; }
+    [data-theme=dark] #dagTreeSvg text { fill: #e2e8f0 !important; }
     #dagTreeSvg .edgePath path { fill: none; }
 
     /* Score Factor Accordion */
@@ -230,36 +2857,12 @@
     .review-item:hover { border-color: #605DFF !important; box-shadow: 0 2px 8px rgba(96,93,255,0.08); }
     .review-item .review-file-link { color: #605DFF; text-decoration: none; font-weight: 500; font-size: 12px; }
     .review-item .review-file-link:hover { text-decoration: underline; }
-    [data-theme=dark] .review-item { border-color: #334155 !important; }[data-theme=dark] .review-item:hover { border-color: #605DFF !important; }
+    [data-theme=dark] .review-item { border-color: #334155 !important; }
+    [data-theme=dark] .review-item:hover { border-color: #605DFF !important; }
 </style>
 @endpush
 
 @section('content')
-
-    {{-- DEPLOY DECISION BANNER ‚Äî full-width, top of page, impossible to miss --}}
-    @if($pullRequest->deploymentDecision)
-        @php
-            $bannerDecision = $pullRequest->deploymentDecision->decision;
-            $bannerConfig = match($bannerDecision) {
-                'approved' =>['bg' => 'bg-success', 'label' => '‚úÖ SAFE TO DEPLOY'],
-                'blocked' =>['bg' => 'bg-danger', 'label' => 'üö´ DEPLOYMENT BLOCKED'],
-                default =>['bg' => 'bg-warning text-dark', 'label' => '‚è≥ AWAITING HUMAN DECISION'],
-            };
-        @endphp
-        <div class="{{ $bannerConfig['bg'] }} rounded-3 mb-4 dw-banner shadow-sm" style="min-height: 80px; display: flex; align-items: center;">
-            <div class="d-flex align-items-center justify-content-center gap-3 p-4 w-100">
-                <span class="fw-bold fs-3 text-uppercase letter-spacing-1 @if($bannerDecision == 'pending_review') text-dark @else text-white @endif">
-                    {{ $bannerConfig['label'] }}
-                </span>
-                @if($pullRequest->deploymentDecision->decided_by)
-                    <span class="badge bg-white bg-opacity-25 fs-14 ms-3 p-2 shadow-sm @if($bannerDecision == 'pending_review') text-dark @else text-white @endif">
-                        Decision by: {{ $pullRequest->deploymentDecision->decided_by }}
-                    </span>
-                @endif
-            </div>
-        </div>
-    @endif
-
     {{-- PR Header + Pipeline --}}
     <div class="card bg-white border-0 rounded-3 mb-4 dw-card">
         <div class="card-body p-4">
@@ -279,7 +2882,7 @@
                         </span>
                         <span>
                             <span class="material-symbols-outlined align-middle fs-16">account_tree</span>
-                            {{ $pullRequest->head_branch }} ‚Üí {{ $pullRequest->base_branch }}
+                            {{ $pullRequest->head_branch }} ? {{ $pullRequest->base_branch }}
                         </span>
                         <span>
                             <span class="material-symbols-outlined align-middle fs-16">folder</span>
@@ -296,24 +2899,24 @@
                     @if($pullRequest->deploymentDecision && $pullRequest->deploymentDecision->decision === 'pending_review')
                         <form action="{{ route('driftwatch.approve', $pullRequest) }}" method="POST" class="d-inline">
                             @csrf
-                            <button type="submit" class="btn btn-sm btn-success shadow-sm" onclick="return confirm('Approve this deployment?')">
+                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Approve this deployment?')">
                                 <span class="material-symbols-outlined align-middle me-1 fs-16">check_circle</span> Approve
                             </button>
                         </form>
                         <form action="{{ route('driftwatch.block', $pullRequest) }}" method="POST" class="d-inline">
                             @csrf
-                            <button type="submit" class="btn btn-sm btn-danger shadow-sm" onclick="return confirm('Block this deployment?')">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Block this deployment?')">
                                 <span class="material-symbols-outlined align-middle me-1 fs-16">block</span> Block
                             </button>
                         </form>
                     @endif
                     <form action="{{ route('driftwatch.reanalyze', $pullRequest) }}" method="POST" class="d-inline">
                         @csrf
-                        <button type="submit" class="btn btn-sm btn-outline-warning shadow-sm" onclick="return confirm('Re-run all agents on this PR?')">
+                        <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('Re-run all agents on this PR?')">
                             <span class="material-symbols-outlined align-middle me-1 fs-16">refresh</span> Re-analyze
                         </button>
                     </form>
-                    <a href="{{ $pullRequest->pr_url }}" target="_blank" class="btn btn-sm btn-outline-primary shadow-sm">
+                    <a href="{{ $pullRequest->pr_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
                         <span class="material-symbols-outlined align-middle me-1 fs-16">open_in_new</span> GitHub
                     </a>
                 </div>
@@ -327,7 +2930,11 @@
                 if ($pullRequest->deploymentDecision) $stepsComplete++;
                 if ($pullRequest->deploymentOutcome) $stepsComplete++;
 
-                $agents = [['name' => 'Archaeologist', 'icon' => 'explore', 'color' => 'primary', 'done' => (bool) $pullRequest->blastRadius],['name' => 'Historian', 'icon' => 'history', 'color' => 'warning', 'done' => (bool) $pullRequest->riskAssessment],['name' => 'Negotiator', 'icon' => 'gavel', 'color' => 'danger', 'done' => (bool) $pullRequest->deploymentDecision],['name' => 'Chronicler', 'icon' => 'auto_stories', 'color' => 'success', 'done' => (bool) $pullRequest->deploymentOutcome],
+                $agents = [
+                    ['name' => 'Archaeologist', 'icon' => 'explore', 'color' => 'primary', 'done' => (bool) $pullRequest->blastRadius],
+                    ['name' => 'Historian', 'icon' => 'history', 'color' => 'warning', 'done' => (bool) $pullRequest->riskAssessment],
+                    ['name' => 'Negotiator', 'icon' => 'gavel', 'color' => 'danger', 'done' => (bool) $pullRequest->deploymentDecision],
+                    ['name' => 'Chronicler', 'icon' => 'auto_stories', 'color' => 'success', 'done' => (bool) $pullRequest->deploymentOutcome],
                 ];
             @endphp
             <div class="d-flex align-items-center gap-2 pt-3 border-top flex-wrap">
@@ -350,34 +2957,59 @@
         </div>
     </div>
 
-    {{-- Deployment Weather Forecast ‚Äî Risk Score Section --}}
+    {{-- DEPLOY DECISION BANNER ó full-width, top of page, impossible to miss --}}
+    @if($pullRequest->deploymentDecision)
+        @php
+            $bannerDecision = $pullRequest->deploymentDecision->decision;
+            $bannerConfig = match($bannerDecision) {
+                'approved' => ['bg' => 'bg-success', 'icon' => 'check_circle', 'label' => 'SAFE TO DEPLOY'],
+                'blocked' => ['bg' => 'bg-danger', 'icon' => 'block', 'label' => 'DEPLOYMENT BLOCKED'],
+                default => ['bg' => 'bg-warning', 'icon' => 'hourglass_top', 'label' => 'AWAITING HUMAN DECISION'],
+            };
+        @endphp
+        <div class="{{ $bannerConfig['bg'] }} rounded-3 mb-4 text-white dw-banner" style="min-height: 60px;">
+            <div class="d-flex align-items-center justify-content-center gap-3 p-3">
+                <span class="material-symbols-outlined" style="font-size: 32px;">{{ $bannerConfig['icon'] }}</span>
+                <span class="fw-bold fs-4 text-uppercase letter-spacing-1">
+                    {{ $bannerConfig['label'] }}
+                </span>
+                @if($pullRequest->deploymentDecision->decided_by)
+                    <span class="badge bg-white bg-opacity-25 fs-13 ms-2">
+                        by {{ $pullRequest->deploymentDecision->decided_by }}
+                    </span>
+                @endif
+            </div>
+        </div>
+    @endif
+
+    {{-- Deployment Weather Forecast ó the hero section --}}
     @if($pullRequest->riskAssessment)
         @php
             $score = $pullRequest->riskAssessment->risk_score;
             $color = $pullRequest->riskAssessment->risk_color;
-            $factors = $pullRequest->riskAssessment->contributing_factors ??[];
-            $hasHistory = count($pullRequest->riskAssessment->historical_incidents ??[]) > 0;
-            $historyCount = count($pullRequest->riskAssessment->historical_incidents ??[]);
+            $factors = $pullRequest->riskAssessment->contributing_factors ?? [];
+            $hasHistory = count($pullRequest->riskAssessment->historical_incidents ?? []) > 0;
+            $historyCount = count($pullRequest->riskAssessment->historical_incidents ?? []);
             $blastFiles = $pullRequest->blastRadius->total_affected_files ?? 0;
             $blastServices = $pullRequest->blastRadius->total_affected_services ?? 0;
-            $blastEndpoints = count($pullRequest->blastRadius->affected_endpoints ??[]);
+            $blastEndpoints = count($pullRequest->blastRadius->affected_endpoints ?? []);
 
             // Weather system
             if ($score <= 20) {
-                $weather = 'Clear Skies'; $weatherIcon = 'wb_sunny'; $weatherColor = 'success';
+                $weather = 'Clear Skies'; $weatherIcon = 'wb_sunny'; $weatherColor = 'success'; $weatherEmoji = '';
                 $forecast = "Conditions are favorable for deployment. Low incident history, isolated blast radius across {$blastFiles} files. The Historian agent found no significant risk patterns in your codebase history.";
                 $incidentChance = rand(3, 8);
             } elseif ($score <= 45) {
-                $weather = 'Partly Cloudy'; $weatherIcon = 'partly_cloudy_day'; $weatherColor = 'primary';
-                $forecast = "Moderate conditions. This PR touches {$blastFiles} files across {$blastServices} service(s). Some risk factors are present but manageable with standard review. " . ($hasHistory ? "The Historian found {$historyCount} related past incident(s) ‚Äî review them below." : "No related incidents found in history.");
+                $weather = 'Partly Cloudy'; $weatherIcon = 'partly_cloudy_day'; $weatherColor = 'primary'; $weatherEmoji = '';
+                $forecast = "Moderate conditions. This PR touches {$blastFiles} files across {$blastServices} service(s). Some risk factors are present but manageable with standard review. " . ($hasHistory ? "The Historian found {$historyCount} related past incident(s) ó review them below." : "No related incidents found in history.");
                 $incidentChance = rand(10, 22);
             } elseif ($score <= 70) {
-                $weather = 'Storm Warning'; $weatherIcon = 'thunderstorm'; $weatherColor = 'warning';
-                $forecast = "Elevated risk detected. This PR has a wide blast radius ({$blastFiles} files, {$blastServices} services, {$blastEndpoints} endpoints). " . ($hasHistory ? "WARNING: {$historyCount} related past incident(s) found ‚Äî similar changes have caused production issues before." : "Multiple risk factors suggest caution.") . " Consider canary deployment or staging validation first.";
+                $weather = 'Storm Warning'; $weatherIcon = 'thunderstorm'; $weatherColor = 'warning'; $weatherEmoji = '';
+                $forecast = "Elevated risk detected. This PR has a wide blast radius ({$blastFiles} files, {$blastServices} services, {$blastEndpoints} endpoints). " . ($hasHistory ? "WARNING: {$historyCount} related past incident(s) found ó similar changes have caused production issues before." : "Multiple risk factors suggest caution.") . " Consider canary deployment or staging validation first.";
                 $incidentChance = rand(25, 45);
             } else {
-                $weather = 'Severe Storm'; $weatherIcon = 'severe_cold'; $weatherColor = 'danger';
-                $forecast = "CRITICAL RISK. This PR scores {$score}/100 ‚Äî the Negotiator agent has flagged this for review or blocking. Blast radius spans {$blastFiles} files across {$blastServices} services with {$blastEndpoints} exposed endpoints. " . ($hasHistory ? "{$historyCount} related past incident(s) strongly correlate with this change pattern." : "The code complexity and blast radius alone warrant extreme caution.") . " Do NOT deploy without thorough review and a rollback plan.";
+                $weather = 'Severe Storm'; $weatherIcon = 'severe_cold'; $weatherColor = 'danger'; $weatherEmoji = '';
+                $forecast = "CRITICAL RISK. This PR scores {$score}/100 ó the Negotiator agent has flagged this for review or blocking. Blast radius spans {$blastFiles} files across {$blastServices} services with {$blastEndpoints} exposed endpoints. " . ($hasHistory ? "{$historyCount} related past incident(s) strongly correlate with this change pattern." : "The code complexity and blast radius alone warrant extreme caution.") . " Do NOT deploy without thorough review and a rollback plan.";
                 $incidentChance = rand(50, 75);
             }
 
@@ -432,7 +3064,7 @@
                         </h6>
                         <p class="fs-13 text-secondary lh-lg mb-3">{{ $forecast }}</p>
 
-                        {{-- Why this score ‚Äî key contributing factors --}}
+                        {{-- Why this score ó key contributing factors --}}
                         @if(count($factors) > 0)
                             <div class="border-top pt-2">
                                 <span class="fs-12 fw-bold text-uppercase text-secondary d-block mb-1">Why this score:</span>
@@ -446,7 +3078,7 @@
                         @endif
                     </div>
 
-                    {{-- Score Breakdown ‚Äî Expandable Accordions --}}
+                    {{-- Score Breakdown ó Expandable Accordion --}}
                     <div class="col-lg-4">
                         <span class="fs-12 fw-bold text-uppercase text-secondary d-block mb-2">Score Composition</span>
                         @php
@@ -460,13 +3092,13 @@
                         @endphp
                         <div id="riskNeedleBars">
                             {{-- Blast Radius Factor --}}
-                            <div class="mb-2 score-factor-row p-2" data-bs-toggle="collapse" data-bs-target="#factorBlast" aria-expanded="false" aria-controls="factorBlast">
+                            <div class="mb-2 score-factor-row p-2" data-bs-toggle="collapse" data-bs-target="#factorBlast">
                                 <div class="d-flex justify-content-between mb-1">
                                     <span class="fs-12 fw-medium"><span class="material-symbols-outlined align-middle text-danger" style="font-size:14px;">hub</span> Blast Radius</span>
                                     <span class="d-flex align-items-center gap-1">
                                         <span class="badge bg-{{ $confidenceColor($blastPts) }} bg-opacity-10 text-{{ $confidenceColor($blastPts) }} fs-10">{{ $confidenceLabel($blastPts) }}</span>
                                         <span class="fs-12 text-secondary fw-bold">+{{ $blastPts }} pts</span>
-                                        <span class="material-symbols-outlined text-secondary collapse-toggle" style="font-size:14px;">expand_more</span>
+                                        <span class="material-symbols-outlined text-secondary" style="font-size:14px;">expand_more</span>
                                     </span>
                                 </div>
                                 <div class="progress" style="height: 6px;">
@@ -475,32 +3107,23 @@
                                 <span class="fs-11 text-secondary">{{ $blastFiles }} files, {{ $blastServices }} services, {{ $blastEndpoints }} endpoints</span>
                             </div>
                             <div class="collapse mb-2" id="factorBlast">
-                                <div class="bg-light rounded-2 p-3 fs-12 border">
-                                    <strong class="text-dark d-block mb-1">Agent Reasoning:</strong>
+                                <div class="bg-light rounded-2 p-2 fs-12">
                                     @if($archaeologistRun && $archaeologistRun->reasoning)
-                                        <p class="mb-2 text-secondary">{{ $archaeologistRun->reasoning }}</p>
-                                    @else
-                                        <p class="mb-2 text-secondary">The Archaeologist mapped the upstream and downstream dependencies for this change.</p>
+                                        <p class="mb-1 text-secondary">{{ Str::limit($archaeologistRun->reasoning, 200) }}</p>
                                     @endif
-                                    <div class="d-flex align-items-center gap-1 mb-2">
-                                        <span class="material-symbols-outlined text-warning" style="font-size: 14px;">lightbulb</span>
-                                        <span class="text-secondary fw-medium">What would raise this score?</span>
-                                    </div>
-                                    <span class="text-secondary d-block mb-2">More downstream dependencies or modifying core shared utilities directly increases the calculated blast radius risk.</span>
-                                    <a href="{{ $pullRequest->pr_url }}/files" target="_blank" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 mt-1">
-                                        <span class="material-symbols-outlined" style="font-size: 14px;">code</span> View diff on GitHub
-                                    </a>
+                                    <span class="text-secondary fs-11">Raise this score: more downstream dependencies or shared utilities increase blast radius.</span>
+                                    <a href="{{ $pullRequest->pr_url }}/files" target="_blank" class="d-block mt-1 fs-11 text-primary">View diff on GitHub</a>
                                 </div>
                             </div>
 
                             {{-- Incident History Factor --}}
-                            <div class="mb-2 score-factor-row p-2" data-bs-toggle="collapse" data-bs-target="#factorHistory" aria-expanded="false" aria-controls="factorHistory">
+                            <div class="mb-2 score-factor-row p-2" data-bs-toggle="collapse" data-bs-target="#factorHistory">
                                 <div class="d-flex justify-content-between mb-1">
                                     <span class="fs-12 fw-medium"><span class="material-symbols-outlined align-middle text-warning" style="font-size:14px;">history</span> Incident History</span>
                                     <span class="d-flex align-items-center gap-1">
                                         <span class="badge bg-{{ $confidenceColor($historyPts) }} bg-opacity-10 text-{{ $confidenceColor($historyPts) }} fs-10">{{ $confidenceLabel($historyPts) }}</span>
                                         <span class="fs-12 text-secondary fw-bold">+{{ $historyPts }} pts</span>
-                                        <span class="material-symbols-outlined text-secondary collapse-toggle" style="font-size:14px;">expand_more</span>
+                                        <span class="material-symbols-outlined text-secondary" style="font-size:14px;">expand_more</span>
                                     </span>
                                 </div>
                                 <div class="progress" style="height: 6px;">
@@ -509,29 +3132,22 @@
                                 <span class="fs-11 text-secondary">{{ $hasHistory ? $historyCount . ' related past incidents' : 'No related incidents found' }}</span>
                             </div>
                             <div class="collapse mb-2" id="factorHistory">
-                                <div class="bg-light rounded-2 p-3 fs-12 border">
-                                    <strong class="text-dark d-block mb-1">Agent Reasoning:</strong>
+                                <div class="bg-light rounded-2 p-2 fs-12">
                                     @if($historianRun && $historianRun->reasoning)
-                                        <p class="mb-2 text-secondary">{{ $historianRun->reasoning }}</p>
-                                    @else
-                                        <p class="mb-2 text-secondary">The Historian found {{ $historyCount }} historical incidents strongly correlated with the current blast radius profile.</p>
+                                        <p class="mb-1 text-secondary">{{ Str::limit($historianRun->reasoning, 200) }}</p>
                                     @endif
-                                    <div class="d-flex align-items-center gap-1 mb-2">
-                                        <span class="material-symbols-outlined text-warning" style="font-size: 14px;">lightbulb</span>
-                                        <span class="text-secondary fw-medium">What would raise this score?</span>
-                                    </div>
-                                    <span class="text-secondary d-block">More matching incidents in the exact same service area or file paths over the last 90 days.</span>
+                                    <span class="text-secondary fs-11">Raise this score: more matching incidents in the same service area or file paths.</span>
                                 </div>
                             </div>
 
                             {{-- Code Complexity Factor --}}
-                            <div class="mb-2 score-factor-row p-2" data-bs-toggle="collapse" data-bs-target="#factorCode" aria-expanded="false" aria-controls="factorCode">
+                            <div class="mb-2 score-factor-row p-2" data-bs-toggle="collapse" data-bs-target="#factorCode">
                                 <div class="d-flex justify-content-between mb-1">
                                     <span class="fs-12 fw-medium"><span class="material-symbols-outlined align-middle text-primary" style="font-size:14px;">code</span> Code Complexity</span>
                                     <span class="d-flex align-items-center gap-1">
                                         <span class="badge bg-{{ $confidenceColor($codePts) }} bg-opacity-10 text-{{ $confidenceColor($codePts) }} fs-10">{{ $confidenceLabel($codePts) }}</span>
                                         <span class="fs-12 text-secondary fw-bold">+{{ $codePts }} pts</span>
-                                        <span class="material-symbols-outlined text-secondary collapse-toggle" style="font-size:14px;">expand_more</span>
+                                        <span class="material-symbols-outlined text-secondary" style="font-size:14px;">expand_more</span>
                                     </span>
                                 </div>
                                 <div class="progress" style="height: 6px;">
@@ -540,17 +3156,9 @@
                                 <span class="fs-11 text-secondary">{{ $pullRequest->files_changed }} files, +{{ $pullRequest->additions }}/-{{ $pullRequest->deletions }} lines</span>
                             </div>
                             <div class="collapse mb-2" id="factorCode">
-                                <div class="bg-light rounded-2 p-3 fs-12 border">
-                                    <strong class="text-dark d-block mb-1">Code Metrics Insight:</strong>
-                                    <p class="mb-2 text-secondary">Analysis of the sheer volume and complexity of the modified code chunks in this PR.</p>
-                                    <div class="d-flex align-items-center gap-1 mb-2">
-                                        <span class="material-symbols-outlined text-warning" style="font-size: 14px;">lightbulb</span>
-                                        <span class="text-secondary fw-medium">What would raise this score?</span>
-                                    </div>
-                                    <span class="text-secondary d-block mb-2">More changed files, larger raw diffs, deep cyclomatic complexity, or breaking function signatures.</span>
-                                    <a href="{{ $pullRequest->pr_url }}/files" target="_blank" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 mt-1">
-                                        <span class="material-symbols-outlined" style="font-size: 14px;">code</span> View diff on GitHub
-                                    </a>
+                                <div class="bg-light rounded-2 p-2 fs-12">
+                                    <span class="text-secondary fs-11">Raise this score: more changed files, larger diffs, or modifications to function signatures.</span>
+                                    <a href="{{ $pullRequest->pr_url }}/files" target="_blank" class="d-block mt-1 fs-11 text-primary">View diff on GitHub</a>
                                 </div>
                             </div>
                         </div>
@@ -560,35 +3168,35 @@
         </div>
     @endif
 
-    {{-- Time Bomb Detection --}}
+    {{-- Time Bomb Detection (promoted to top for visibility) --}}
     @if($pullRequest->blastRadius)
         @php
-            $timeBombs =[];
-            $depGraphData = $pullRequest->blastRadius->dependency_graph ??[];
+            $timeBombs = [];
+            $depGraphData = $pullRequest->blastRadius->dependency_graph ?? [];
             foreach ($depGraphData as $sourceFile => $deps) {
                 $depCount = is_array($deps) ? count($deps) : 0;
                 $isConfig = preg_match('/\.(json|yaml|yml|env|toml|ini|xml)$/i', $sourceFile) || str_contains($sourceFile, 'config');
                 $isMigration = str_contains($sourceFile, 'migration') || str_contains($sourceFile, 'schema');
                 $isCore = str_contains($sourceFile, 'auth') || str_contains($sourceFile, 'core') || str_contains($sourceFile, 'base') || str_contains($sourceFile, 'main');
                 $risk = 0;
-                $reasons =[];
+                $reasons = [];
                 if ($depCount >= 5) { $risk += 40; $reasons[] = "High fan-out: {$depCount} downstream files depend on this"; }
                 elseif ($depCount >= 3) { $risk += 20; $reasons[] = "{$depCount} downstream dependencies"; }
-                if ($isConfig) { $risk += 25; $reasons[] = "Configuration file ‚Äî affects all environments"; }
-                if ($isMigration) { $risk += 30; $reasons[] = "Database migration ‚Äî irreversible in production"; }
-                if ($isCore) { $risk += 20; $reasons[] = "Core module ‚Äî foundational to the system"; }
+                if ($isConfig) { $risk += 25; $reasons[] = "Configuration file ó affects all environments"; }
+                if ($isMigration) { $risk += 30; $reasons[] = "Database migration ó irreversible in production"; }
+                if ($isCore) { $risk += 20; $reasons[] = "Core module ó foundational to the system"; }
                 if ($risk >= 20) {
-                    $timeBombs[] =['file' => $sourceFile, 'risk' => $risk, 'deps' => $depCount, 'reasons' => $reasons];
+                    $timeBombs[] = ['file' => $sourceFile, 'risk' => $risk, 'deps' => $depCount, 'reasons' => $reasons];
                 }
             }
             usort($timeBombs, function($a, $b) { return $b['risk'] - $a['risk']; });
         @endphp
         @if(count($timeBombs) > 0)
-            <div class="card border-0 rounded-3 mb-4 shadow-sm" style="background: linear-gradient(135deg, #FEF3C7, #FDE68A); border-left: 5px solid #F59E0B !important;">
+            <div class="card border-0 rounded-3 mb-4" style="background: linear-gradient(135deg, #FEF3C7, #FDE68A); border-left: 4px solid #F59E0B !important;">
                 <div class="card-body p-4">
                     <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
-                        <span class="material-symbols-outlined text-warning" style="font-size: 28px;">timer</span>
-                        <span style="font-size: 18px;">Time Bomb Detection</span>
+                        <span class="material-symbols-outlined text-warning" style="font-size: 24px;">timer</span>
+                        Time Bomb Detection
                         <span class="badge bg-danger text-white ms-2">{{ count($timeBombs) }} flagged</span>
                     </h6>
                     <div class="row g-3">
@@ -599,22 +3207,22 @@
                             <div class="col-md-6">
                                 <div class="d-flex gap-3 h-100 dw-bomb-card border-start border-3 border-{{ $bombColor }}" style="border-top:0!important;border-right:0!important;border-bottom:0!important;">
                                     <div class="flex-shrink-0">
-                                        <div class="wh-40 bg-{{ $bombColor }} bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                        <div class="wh-40 bg-{{ $bombColor }} bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
                                             <span class="fw-bold fs-14 text-{{ $bombColor }}">{{ $bomb['risk'] }}</span>
                                         </div>
                                     </div>
                                     <div class="flex-grow-1">
                                         <div class="d-flex align-items-center gap-2 mb-1">
-                                            <code class="fs-13 fw-bold">{{ basename($bomb['file']) }}</code>
+                                            <code class="fs-12 fw-bold">{{ basename($bomb['file']) }}</code>
                                             @if($bomb['deps'] > 0)
                                                 <span class="badge bg-warning bg-opacity-10 text-warning fs-11">{{ $bomb['deps'] }} deps</span>
                                             @endif
                                         </div>
-                                        <div class="fs-12 text-secondary mb-2 text-truncate" style="max-width: 300px;">{{ $bomb['file'] }}</div>
+                                        <div class="fs-12 text-secondary mb-1 text-truncate" style="max-width: 300px;">{{ $bomb['file'] }}</div>
                                         @foreach($bomb['reasons'] as $reason)
                                             <div class="d-flex align-items-start gap-1">
-                                                <span class="material-symbols-outlined text-{{ $bombColor }} flex-shrink-0" style="font-size:14px; margin-top:2px;">warning</span>
-                                                <span class="fs-12 text-secondary fw-medium">{{ $reason }}</span>
+                                                <span class="material-symbols-outlined text-{{ $bombColor }} flex-shrink-0" style="font-size:12px; margin-top:3px;">warning</span>
+                                                <span class="fs-11 text-secondary">{{ $reason }}</span>
                                             </div>
                                         @endforeach
                                     </div>
@@ -627,33 +3235,7 @@
         @endif
     @endif
 
-    {{-- DevOps Action Items (MOVED UP FOR VISIBILITY) --}}
-    @if($pullRequest->blastRadius)
-        <div class="card bg-white border-0 rounded-3 mb-4 dw-card">
-            <div class="card-body p-4">
-                <h6 class="fw-bold mb-2 dw-section-title">
-                    <span class="material-symbols-outlined align-middle text-warning" style="font-size: 18px;">checklist</span>
-                    Action Items
-                </h6>
-                <p class="text-secondary fs-13 mb-3">Priority tasks your team should complete before deploying this PR.</p>
-                <div id="devopsActionItems"></div>
-            </div>
-        </div>
-
-        {{-- What to Review ‚Äî AI-powered review checklist (MOVED UP FOR VISIBILITY) --}}
-        <div class="card bg-white border-0 rounded-3 mb-4 dw-card">
-            <div class="card-body p-4">
-                <h6 class="fw-bold mb-3 dw-section-title">
-                    <span class="material-symbols-outlined align-middle text-primary" style="font-size: 18px;">rate_review</span>
-                    What to Review
-                    <span class="fs-12 fw-normal text-secondary ms-2">Prioritized checklist for this PR</span>
-                </h6>
-                <div id="reviewChecklist" class="mt-3"></div>
-            </div>
-        </div>
-    @endif
-
-    {{-- Summary Row: Blast Radius | Decision Audit Log | AI Recommendation --}}
+    {{-- Summary Row: Blast Radius | Deploy Decision | AI Recommendation --}}
     <div class="row">
         {{-- Blast Radius Summary --}}
         <div class="col-xl-4 col-lg-6 mb-4">
@@ -674,7 +3256,7 @@
                                 <span class="fs-12 text-secondary">Services</span>
                             </div>
                             <div class="text-center flex-fill dw-stat">
-                                <span class="d-block fs-4 fw-bold text-info">{{ count($pullRequest->blastRadius->affected_endpoints ??[]) }}</span>
+                                <span class="d-block fs-4 fw-bold text-info">{{ count($pullRequest->blastRadius->affected_endpoints ?? []) }}</span>
                                 <span class="fs-12 text-secondary">Endpoints</span>
                             </div>
                         </div>
@@ -689,48 +3271,40 @@
             </div>
         </div>
 
-        {{-- Decision Audit Log (Replaces redundant top banner decision duplicate) --}}
+        {{-- Deployment Decision --}}
         <div class="col-xl-4 col-lg-6 mb-4">
             <div class="card bg-white border-0 rounded-3 h-100 dw-card">
                 <div class="card-body p-4">
                     <h6 class="fw-bold mb-3 dw-section-title">
                         <span class="material-symbols-outlined align-middle text-primary" style="font-size: 18px;">gavel</span>
-                        Decision Audit Log
+                        Deploy Decision
                     </h6>
                     @if($pullRequest->deploymentDecision)
                         @php $decision = $pullRequest->deploymentDecision; @endphp
-                        
-                        <div class="bg-light rounded-3 p-3 mb-3 border">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <span class="fs-13 fw-bold text-dark">Current State:</span>
-                                <span class="badge bg-{{ $decision->decision_color }} text-{{ $decision->decision_color }} bg-opacity-10 px-2 py-1 fs-12 text-uppercase fw-bold">
-                                    {{ str_replace('_', ' ', $decision->decision) }}
-                                </span>
-                            </div>
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <span class="fs-13 text-secondary">Determined By:</span>
-                                <span class="fs-13 fw-medium text-dark">{{ $decision->decided_by ?: 'Negotiator Agent' }}</span>
-                            </div>
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <span class="fs-13 text-secondary">Timestamp:</span>
-                                <span class="fs-13 fw-medium text-dark">{{ $decision->decided_at ? $decision->decided_at->format('M j, g:i A') : now()->format('M j, g:i A') }}</span>
-                            </div>
+                        <div class="text-center mb-3">
+                            <span class="material-symbols-outlined text-{{ $decision->decision_color }} d-block mb-1" style="font-size: 44px;">
+                                {{ $decision->decision === 'approved' ? 'check_circle' : ($decision->decision === 'blocked' ? 'cancel' : 'pending') }}
+                            </span>
+                            <span class="badge bg-{{ $decision->decision_color }} bg-opacity-10 text-{{ $decision->decision_color }} px-3 py-2 fs-14 text-uppercase fw-bold">
+                                {{ str_replace('_', ' ', $decision->decision) }}
+                            </span>
                         </div>
-
                         @if($decision->notification_message)
-                            <div class="p-2 bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-3 mb-2">
-                                <p class="text-dark fs-12 mb-0 d-flex gap-2 align-items-start">
-                                    <span class="material-symbols-outlined text-primary fs-16">chat</span>
-                                    <span>{{ $decision->notification_message }}</span>
-                                </p>
-                            </div>
+                            <p class="text-secondary fs-13 bg-light rounded-3 p-2 mb-2">{{ $decision->notification_message }}</p>
                         @endif
-                        
+                        <div class="d-flex flex-wrap gap-3 fs-13 text-secondary">
+                            @if($decision->decided_by)
+                                <span><span class="fw-medium">By:</span> {{ $decision->decided_by }}</span>
+                            @endif
+                            @if($decision->decided_at)
+                                <span><span class="fw-medium">At:</span> {{ $decision->decided_at->format('M j, g:i A') }}</span>
+                            @endif
+                        </div>
                         @if($decision->notified_oncall)
                             <div class="mt-2">
-                                <span class="badge bg-warning bg-opacity-10 text-warning fs-12 d-flex align-items-center gap-1 w-fit-content">
-                                    <span class="material-symbols-outlined fs-14">notifications_active</span>
-                                    On-call engineer notified via Teams
+                                <span class="badge bg-warning bg-opacity-10 text-warning fs-12">
+                                    <span class="material-symbols-outlined align-middle fs-14">notifications_active</span>
+                                    On-call notified
                                 </span>
                             </div>
                         @endif
@@ -753,13 +3327,13 @@
                         AI Recommendation
                     </h6>
                     @if($pullRequest->riskAssessment && $pullRequest->riskAssessment->recommendation)
-                        <div class="p-3 bg-light rounded-3 mb-3 border">
+                        <div class="p-3 bg-light rounded-3 mb-3">
                             <p class="mb-0 fs-13 lh-lg">{{ $pullRequest->riskAssessment->recommendation }}</p>
                         </div>
                         @if($pullRequest->riskAssessment)
-                            <span class="fs-12 text-secondary d-flex gap-2">
-                                <span class="material-symbols-outlined text-primary" style="font-size:16px;">smart_toy</span>
-                                <span>Generated by the Historian agent (GPT-4.1-mini) based on blast radius analysis, {{ count($pullRequest->riskAssessment->historical_incidents ??[]) }} historical incident(s), and code complexity patterns.</span>
+                            <span class="fs-12 text-secondary">
+                                <span class="material-symbols-outlined align-middle" style="font-size:14px;">smart_toy</span>
+                                Generated by the Historian agent (GPT-4.1-mini) based on blast radius analysis, {{ count($pullRequest->riskAssessment->historical_incidents ?? []) }} historical incident(s), and code complexity patterns.
                             </span>
                         @endif
                     @else
@@ -794,7 +3368,7 @@
 
                 <div class="row g-3 mb-3">
                     {{-- Evidence cards --}}
-                    @php $evidence = $mrp['evidence'] ??[]; @endphp
+                    @php $evidence = $mrp['evidence'] ?? []; @endphp
                     <div class="col-md-4">
                         <div class="p-3 rounded-3 border h-100">
                             <div class="d-flex align-items-center gap-2 mb-2">
@@ -832,7 +3406,7 @@
                                 <span class="fw-bold fs-13">CI & Bots</span>
                                 @php
                                     $ciScore = ($evidence['ci_status']['ci_risk_addition'] ?? 0);
-                                    $botCount = count($evidence['bot_findings'] ??[]);
+                                    $botCount = count($evidence['bot_findings'] ?? []);
                                 @endphp
                                 <span class="badge bg-{{ $ciScore > 0 ? 'danger' : 'success' }} bg-opacity-10 text-{{ $ciScore > 0 ? 'danger' : 'success' }} fs-11 ms-auto">
                                     {{ ($evidence['ci_status']['status'] ?? 'unknown') === 'failing' ? 'Failing' : 'Passing' }}
@@ -899,7 +3473,7 @@
                     </div>
                 </div>
 
-                {{-- Dependency Tree ‚Äî hierarchical LR DAG (default tab) --}}
+                {{-- Dependency Tree ó hierarchical LR DAG (default tab) --}}
                 <div id="blastDependencyTree">
                     <div id="dagTreeContainer" style="width: 100%; min-height: 500px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc;">
                         <svg id="dagTreeSvg" width="100%" height="500"></svg>
@@ -908,7 +3482,7 @@
                     <div id="dagEdgeTooltip"></div>
                 </div>
 
-                {{-- File Detail Modal --}}
+                {{-- File Detail Modal ó proper modal instead of floating tooltip --}}
                 <div class="modal fade" id="fileDetailModal" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered modal-lg">
                         <div class="modal-content shadow-lg">
@@ -983,7 +3557,7 @@
                     <div id="impactSummaryContent"></div>
                 </div>
 
-                {{-- Blast Map ‚Äî bubble cluster visualization --}}
+                {{-- Blast Map ó bubble cluster visualization --}}
                 <div id="blastRadiusDynamic" style="height: 600px; display: none; position: relative;">
                     {{-- Floating info card on hover --}}
                     <div id="graphHoverCard" style="display:none; position:absolute; z-index:20; pointer-events:none; min-width:260px; max-width:340px;">
@@ -1055,10 +3629,34 @@
                 </div>
             </div>
         </div>
+
+        {{-- What to Review ó AI-powered review checklist --}}
+        <div class="card bg-white border-0 rounded-3 mb-4 dw-card">
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-3 dw-section-title">
+                    <span class="material-symbols-outlined align-middle text-primary" style="font-size: 18px;">rate_review</span>
+                    What to Review
+                    <span class="fs-12 fw-normal text-secondary ms-2">Prioritized checklist for this PR</span>
+                </h6>
+                <div id="reviewChecklist" class="mt-3"></div>
+            </div>
+        </div>
+
+        {{-- DevOps Action Items --}}
+        <div class="card bg-white border-0 rounded-3 mb-4 dw-card">
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-2 dw-section-title">
+                    <span class="material-symbols-outlined align-middle text-warning" style="font-size: 18px;">checklist</span>
+                    Action Items
+                </h6>
+                <p class="text-secondary fs-13 mb-3">What your team should do before deploying.</p>
+                <div id="devopsActionItems"></div>
+            </div>
+        </div>
     @endif
 
     {{-- Impact Treemap --}}
-    @if($pullRequest->blastRadius && count($pullRequest->blastRadius->affected_files ??[]) > 0)
+    @if($pullRequest->blastRadius && count($pullRequest->blastRadius->affected_files ?? []) > 0)
         <div class="card bg-white border-0 rounded-3 mb-4 dw-card">
             <div class="card-body p-4">
                 <h6 class="fw-bold mb-3 dw-section-title">
@@ -1076,19 +3674,19 @@
         @php
             // Find other open PRs that touch the same files
             $conflictingPRs = \App\Models\PullRequest::where('id', '!=', $pullRequest->id)
-                ->whereIn('status',['open', 'pending_review', 'analyzing'])
+                ->whereIn('status', ['open', 'pending_review', 'analyzing'])
                 ->whereHas('blastRadius')
                 ->with('blastRadius', 'riskAssessment')
                 ->get()
                 ->filter(function($otherPR) use ($pullRequest) {
-                    $myFiles = $pullRequest->blastRadius->affected_files ??[];
-                    $theirFiles = $otherPR->blastRadius->affected_files ??[];
+                    $myFiles = $pullRequest->blastRadius->affected_files ?? [];
+                    $theirFiles = $otherPR->blastRadius->affected_files ?? [];
                     $overlap = array_intersect($myFiles, $theirFiles);
                     return count($overlap) > 0;
                 })
                 ->map(function($otherPR) use ($pullRequest) {
-                    $myFiles = $pullRequest->blastRadius->affected_files ??[];
-                    $theirFiles = $otherPR->blastRadius->affected_files ??[];
+                    $myFiles = $pullRequest->blastRadius->affected_files ?? [];
+                    $theirFiles = $otherPR->blastRadius->affected_files ?? [];
                     $overlap = array_intersect($myFiles, $theirFiles);
                     $otherPR->overlap_files = array_values($overlap);
                     $otherPR->overlap_count = count($overlap);
@@ -1109,7 +3707,7 @@
                 @if($conflictingPRs->count() > 0)
                     <div class="alert alert-warning bg-warning bg-opacity-10 border-warning border-opacity-25 d-flex align-items-center gap-2 mb-3">
                         <span class="material-symbols-outlined text-warning">warning</span>
-                        <span class="fs-13"><strong>{{ $conflictingPRs->count() }} conflicting PR{{ $conflictingPRs->count() > 1 ? 's' : '' }}</strong> found ‚Äî merging these PRs together could cause integration issues or merge conflicts.</span>
+                        <span class="fs-13"><strong>{{ $conflictingPRs->count() }} conflicting PR{{ $conflictingPRs->count() > 1 ? 's' : '' }}</strong> found ó merging these PRs together could cause integration issues or merge conflicts.</span>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-sm align-middle mb-0">
@@ -1143,7 +3741,7 @@
                                                     {{ $cpr->riskAssessment->risk_score }}/100
                                                 </span>
                                             @else
-                                                <span class="text-secondary fs-12">‚Äî</span>
+                                                <span class="text-secondary fs-12">ó</span>
                                             @endif
                                         </td>
                                         <td>
@@ -1175,7 +3773,7 @@
     @endif
 
     {{-- Historical Incidents --}}
-    @if($pullRequest->riskAssessment && count($pullRequest->riskAssessment->historical_incidents ??[]) > 0)
+    @if($pullRequest->riskAssessment && count($pullRequest->riskAssessment->historical_incidents ?? []) > 0)
         <div class="card bg-white border-0 rounded-3 mb-4 dw-card">
             <div class="card-body p-4">
                 <h6 class="fw-bold mb-3 dw-section-title">
@@ -1196,7 +3794,7 @@
                         <tbody>
                             @foreach($pullRequest->riskAssessment->historical_incidents as $incident)
                                 <tr>
-                                    <td><code class="fs-12">{{ $incident['id'] ?? '‚Äî' }}</code></td>
+                                    <td><code class="fs-12">{{ $incident['id'] ?? 'ó' }}</code></td>
                                     <td class="fw-medium fs-13">{{ $incident['title'] ?? 'Unknown' }}</td>
                                     <td>
                                         @php $sev = $incident['severity'] ?? 3; @endphp
@@ -1304,7 +3902,7 @@
                                         @if($run->reasoning)
                                             <div class="mb-2">
                                                 <strong class="fs-12 text-secondary">Reasoning:</strong>
-                                                <p class="mb-1 fs-13">{{ $run->reasoning }}</p>
+                                                <p class="mb-1 fs-13">{{ Str::limit($run->reasoning, 500) }}</p>
                                             </div>
                                         @endif
                                         <div>
@@ -1340,7 +3938,7 @@
                 </div>
             </div>
             <div style="width:100%; max-width:520px;">
-                @foreach(['archaeologist' => ['Archaeologist', '#605DFF'], 'historian' =>['Historian', '#F59E0B'], 'negotiator' =>['Negotiator', '#EF4444'], 'chronicler' => ['Chronicler', '#10B981']] as $key => $info)
+                @foreach(['archaeologist' => ['Archaeologist', '#605DFF'], 'historian' => ['Historian', '#F59E0B'], 'negotiator' => ['Negotiator', '#EF4444'], 'chronicler' => ['Chronicler', '#10B981']] as $key => $info)
                 <div class="d-flex align-items-center gap-3 mb-3">
                     <div class="flex-shrink-0" style="width:40px; height:40px;">
                         <img src="{{ url('/assets/images/agents/' . ($key === 'negotiator' ? 'negotiation' : ($key === 'chronicler' ? 'chronicle' : $key)) . '.png') }}" alt="" class="rounded-circle" style="width:40px; height:40px; object-fit:cover; opacity:0.3; transition:all 0.5s;" id="img-{{ $key }}">
@@ -1439,17 +4037,17 @@ document.addEventListener('DOMContentLoaded', function() {
     @endif
 
     @if($pullRequest->blastRadius)
-    var services = @json($pullRequest->blastRadius->affected_services ??[]);
-    var files = @json($pullRequest->blastRadius->affected_files ??[]);
-    var endpoints = @json($pullRequest->blastRadius->affected_endpoints ??[]);
-    var depGraph = @json($pullRequest->blastRadius->dependency_graph ??[]);
+    var services = @json($pullRequest->blastRadius->affected_services ?? []);
+    var files = @json($pullRequest->blastRadius->affected_files ?? []);
+    var endpoints = @json($pullRequest->blastRadius->affected_endpoints ?? []);
+    var depGraph = @json($pullRequest->blastRadius->dependency_graph ?? []);
     var blastSummary = @json($pullRequest->blastRadius->summary ?? '');
-    var fileDescriptions = @json($pullRequest->blastRadius->file_descriptions ??[]);
+    var fileDescriptions = @json($pullRequest->blastRadius->file_descriptions ?? []);
     var changeClassifications = @json(
-        collect($pullRequest->agentRuns ??[])
+        collect($pullRequest->agentRuns ?? [])
             ->where('agent_name', 'archaeologist')
             ->pluck('output_payload')
-            ->first()['change_classifications'] ?? ($pullRequest->blastRadius->dependency_graph ? [] :[])
+            ->first()['change_classifications'] ?? ($pullRequest->blastRadius->dependency_graph ? [] : [])
     );
     var prUrl = @json($pullRequest->pr_url ?? '');
     var repoFullName = @json($pullRequest->repo_full_name ?? '');
@@ -1488,7 +4086,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var name = filePath.split('/').pop().toLowerCase();
         var dir = filePath.split('/').slice(0, -1).join('/');
         var depCount = (depGraph[filePath] && Array.isArray(depGraph[filePath])) ? depGraph[filePath].length : 0;
-        var desc =[];
+        var desc = [];
 
         // What it is
         if (name.includes('test') || name.includes('spec')) desc.push('Test file');
@@ -1511,7 +4109,7 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (isSource) desc.push('directly changed');
         else desc.push('in blast radius');
 
-        return desc.join(' ‚Äî ');
+        return desc.join(' ó ');
     }
 
     // Group files by directory
@@ -1526,7 +4124,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return groups;
     }
 
-    // === SUMMARY VIEW (default) ‚Äî directory-grouped, readable ===
+    // === SUMMARY VIEW (default) ó directory-grouped, readable ===
     (function() {
         var el = document.getElementById('impactSummaryContent');
         if (!el) return;
@@ -1558,7 +4156,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '</div></div>';
         }
 
-        // Changed Files ‚Äî grouped by directory
+        // Changed Files ó grouped by directory
         if (changedCount > 0) {
             var changedGroups = groupByDirectory(depKeys);
             html += '<div class="mb-4">';
@@ -1583,7 +4181,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '</div>';
         }
 
-        // Affected Files (not source) ‚Äî grouped by directory
+        // Affected Files (not source) ó grouped by directory
         var nonSourceFiles = files.filter(function(f) { return !sourceFiles[f]; });
         if (nonSourceFiles.length > 0) {
             var affGroups = groupByDirectory(nonSourceFiles);
@@ -1608,7 +4206,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Downstream Dependencies
-        var allDownstream =[];
+        var allDownstream = [];
         depKeys.forEach(function(k) {
             if (Array.isArray(depGraph[k])) {
                 depGraph[k].forEach(function(d) {
@@ -1619,7 +4217,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (allDownstream.length > 0) {
             var dsGroups = groupByDirectory(allDownstream);
             html += '<div class="mb-4">';
-            html += '<h6 class="fw-bold fs-14 mb-2"><span class="material-symbols-outlined align-middle me-1 text-warning" style="font-size:16px;">arrow_downward</span> Downstream Dependencies <span class="fs-12 text-secondary fw-normal">‚Äî may break if APIs change</span></h6>';
+            html += '<h6 class="fw-bold fs-14 mb-2"><span class="material-symbols-outlined align-middle me-1 text-warning" style="font-size:16px;">arrow_downward</span> Downstream Dependencies <span class="fs-12 text-secondary fw-normal">ó may break if APIs change</span></h6>';
 
             Object.keys(dsGroups).sort().forEach(function(dir) {
                 var dirFiles = dsGroups[dir];
@@ -1658,7 +4256,7 @@ document.addEventListener('DOMContentLoaded', function() {
         el.innerHTML = html;
     })();
 
-    // === Dependency Tree ‚Äî Hierarchical LR DAG using dagre-d3 ===
+    // === Dependency Tree ó Hierarchical LR DAG using dagre-d3 ===
     window._initDagTree = function() {
         var g = new dagreD3.graphlib.Graph().setGraph({
             rankdir: 'LR',
@@ -1702,7 +4300,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Determine score from change_classifications if available
             var fileScore = 0;
-            var classifications = @json($pullRequest->blastRadius->dependency_graph ??[]);
+            var classifications = @json($pullRequest->blastRadius->dependency_graph ?? []);
             var fillColor = '#FEE2E2';
             var strokeColor = '#EF4444';
 
@@ -1857,7 +4455,7 @@ document.addEventListener('DOMContentLoaded', function() {
         svg.call(zoom);
         svg.call(zoom.transform, d3.zoomIdentity.translate(xOffset + 20, 20).scale(scale));
 
-        // Rich node click ‚Äî open Bootstrap modal with AI summaries
+        // Rich node click ó open Bootstrap modal with AI summaries
         inner.selectAll('g.node').on('click', function(event, nodeId) {
             var nodeData = g.node(nodeId);
             if (!nodeData) return;
@@ -1930,34 +4528,19 @@ document.addEventListener('DOMContentLoaded', function() {
             var riskSection = document.getElementById('fdRiskSection');
             var riskBar = document.getElementById('fdRiskBar');
             var riskText = document.getElementById('fdRiskText');
-            
-            var hasDescRisk = desc && desc.risk;
-            var isLowRiskText = hasDescRisk && desc.risk.toLowerCase().includes('low risk');
-            
-            if (hasDescRisk) {
-                // Fix: if text says 'low risk', override the generic default to prevent confusing orange UI
-                var defaultScore = isLowRiskText ? 2 : 10;
-                var rScore = (classInfo && classInfo.risk_score !== undefined) ? classInfo.risk_score : defaultScore;
+            if (desc && desc.risk && desc.risk !== 'Low risk') {
+                var rScore = (classInfo && classInfo.risk_score) ? classInfo.risk_score : 10;
                 var rColor = rScore >= 25 ? '#EF4444' : rScore >= 15 ? '#F97316' : rScore >= 5 ? '#F59E0B' : '#10B981';
-                
-                var rIcon = isLowRiskText || rScore < 5 ? 'check_circle' : 'warning';
-                var rIconColor = isLowRiskText || rScore < 5 ? 'text-success' : 'text-warning';
-                if(rScore >= 25) rIconColor = 'text-danger';
-                
                 riskBar.style.width = Math.min(rScore * 2.5, 100) + '%';
                 riskBar.style.background = rColor;
-                riskText.innerHTML = '<span class="material-symbols-outlined align-middle ' + rIconColor + '" style="font-size:14px;">' + rIcon + '</span> <span class="text-secondary">' + desc.risk + '</span>';
+                riskText.innerHTML = '<span class="material-symbols-outlined align-middle text-warning" style="font-size:14px;">warning</span> ' + desc.risk;
                 riskSection.style.display = 'block';
             } else if (classInfo && classInfo.reasoning) {
                 var rScore2 = classInfo.risk_score || 10;
                 var rColor2 = rScore2 >= 25 ? '#EF4444' : rScore2 >= 15 ? '#F97316' : rScore2 >= 5 ? '#F59E0B' : '#10B981';
-                
-                var rIcon2 = rScore2 < 5 ? 'check_circle' : 'warning';
-                var rIconColor2 = rScore2 >= 25 ? 'text-danger' : rScore2 >= 15 ? 'text-warning' : rScore2 >= 5 ? 'text-warning' : 'text-success';
-                
                 riskBar.style.width = Math.min(rScore2 * 2.5, 100) + '%';
                 riskBar.style.background = rColor2;
-                riskText.innerHTML = '<span class="material-symbols-outlined align-middle ' + rIconColor2 + '" style="font-size:14px;">' + rIcon2 + '</span> <span class="text-secondary">' + classInfo.reasoning + '</span>';
+                riskText.innerHTML = '<span class="material-symbols-outlined align-middle text-warning" style="font-size:14px;">warning</span> ' + classInfo.reasoning;
                 riskSection.style.display = 'block';
             } else {
                 riskSection.style.display = 'none';
@@ -2097,7 +4680,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 500);
 
-    // === Blast Map ‚Äî physics-based bubble cluster (lazy loaded) ===
+    // === Blast Map ó physics-based bubble cluster (lazy loaded) ===
     window._graphNetwork = null;
     window._graphNodeMeta = {};
     window._graphNodesDS = null;
@@ -2105,7 +4688,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window._initVisGraph = function() {
         var nodes = [];
-        var edges =[];
+        var edges = [];
         var nodeId = 1;
         var nodeMap = {};
         var meta = {};
@@ -2114,7 +4697,7 @@ document.addEventListener('DOMContentLoaded', function() {
         function fileDesc(filePath, isSource, depCount) {
             var name = filePath.split('/').pop().toLowerCase();
             var dir = filePath.split('/').slice(0, -1).join('/');
-            var parts =[];
+            var parts = [];
 
             // What type of file
             if (name.includes('test') || name.includes('spec')) parts.push('<span class="badge bg-info bg-opacity-10 text-info fs-11 me-1">Test</span>');
@@ -2132,10 +4715,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // What role it plays
             if (isSource) {
                 parts.push('Directly changed in this PR.');
-                if (depCount > 0) parts.push('<strong>' + depCount + ' file' + (depCount > 1 ? 's' : '') + '</strong> depend on this ‚Äî changes here ripple outward.');
+                if (depCount > 0) parts.push('<strong>' + depCount + ' file' + (depCount > 1 ? 's' : '') + '</strong> depend on this ó changes here ripple outward.');
                 else parts.push('No downstream dependencies detected.');
             } else {
-                parts.push('In the blast radius ‚Äî may be affected by changes upstream.');
+                parts.push('In the blast radius ó may be affected by changes upstream.');
             }
 
             return parts.join(' ');
@@ -2157,7 +4740,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 + '<span class="badge bg-warning bg-opacity-10 text-warning">' + (files.length - depKeys.length) + ' affected</span>'
                 + '<span class="badge bg-primary bg-opacity-10 text-primary">' + services.length + ' services</span></div>' };
 
-        // === Services ‚Äî large circles around PR ===
+        // === Services ó large circles around PR ===
         services.forEach(function(s, i) {
             var id = nodeId++;
             nodeMap['svc_' + s] = id;
@@ -2175,7 +4758,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 html: '<p class="mb-0">Service <strong>' + s + '</strong> is in the blast radius of this PR. Monitor error rates and latency after deployment.</p>' };
         });
 
-        // === Changed files ‚Äî red bubbles, size based on downstream impact ===
+        // === Changed files ó red bubbles, size based on downstream impact ===
         depKeys.forEach(function(f) {
             var id = nodeId++;
             nodeMap['file_' + f] = id;
@@ -2193,10 +4776,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 arrows: { to: { enabled: true, scaleFactor: 0.6 } }, smooth: { type: 'curvedCW', roundness: 0.1 } });
             meta[id] = { category: 'changed', type: 'Changed File', name: f.split('/').pop(),
                 html: '<div class="text-secondary fs-12 mb-2">' + f + '</div>' + fileDesc(f, true, depCount),
-                deps: depCount > 0 ? depGraph[f].map(function(d) { return d.split('/').pop(); }) :[] };
+                deps: depCount > 0 ? depGraph[f].map(function(d) { return d.split('/').pop(); }) : [] };
         });
 
-        // === Affected files ‚Äî amber bubbles ===
+        // === Affected files ó amber bubbles ===
         files.forEach(function(f) {
             if (sourceFiles[f] || nodeMap['file_' + f]) return;
             var id = nodeId++;
@@ -2225,7 +4808,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 html: '<div class="text-secondary fs-12 mb-2">' + f + '</div>' + fileDesc(f, false, 0) };
         });
 
-        // === Downstream dependencies ‚Äî yellow smaller bubbles ===
+        // === Downstream dependencies ó yellow smaller bubbles ===
         depKeys.forEach(function(srcFile) {
             if (!Array.isArray(depGraph[srcFile])) return;
             depGraph[srcFile].forEach(function(dep) {
@@ -2245,11 +4828,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 meta[id] = { category: 'downstream', type: 'Downstream Dependency', name: dep.split('/').pop(),
                     html: '<div class="text-secondary fs-12 mb-2">' + dep + '</div>'
-                        + '<p class="mb-0">Depends on <strong>' + srcFile.split('/').pop() + '</strong> ‚Äî if that file\'s API changes, this file may break.</p>' };
+                        + '<p class="mb-0">Depends on <strong>' + srcFile.split('/').pop() + '</strong> ó if that file\'s API changes, this file may break.</p>' };
             });
         });
 
-        // === Endpoints ‚Äî cyan bubbles ===
+        // === Endpoints ó cyan bubbles ===
         endpoints.forEach(function(e) {
             var id = nodeId++;
             nodes.push({
@@ -2361,7 +4944,7 @@ document.addEventListener('DOMContentLoaded', function() {
             edgesDS.getIds().forEach(function(eid) { edgesDS.update({ id: eid, hidden: false }); });
         });
 
-        // === Click ‚Äî persistent info panel ===
+        // === Click ó persistent info panel ===
         var infoPanel = document.getElementById('blastInfoPanel');
         var infoHeader = document.getElementById('blastInfoHeader');
         var infoBody = document.getElementById('blastInfoBody');
@@ -2387,7 +4970,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-    // === Legend filter ‚Äî toggle node categories ===
+    // === Legend filter ó toggle node categories ===
     window.filterGraphType = function(btn, category) {
         btn.classList.toggle('dimmed');
         var isDimmed = btn.classList.contains('dimmed');
@@ -2404,7 +4987,7 @@ document.addEventListener('DOMContentLoaded', function() {
     (function() {
         var actionEl = document.getElementById('devopsActionItems');
         if (actionEl) {
-            var items =[];
+            var items = [];
             var changedCount = depKeys.length;
             var downstreamTotal = 0;
             depKeys.forEach(function(k) { if (Array.isArray(depGraph[k])) downstreamTotal += depGraph[k].length });
@@ -2475,22 +5058,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     })();
 
-    // === What to Review ‚Äî AI-powered file-level checklist ===
+    // === What to Review ó AI-powered file-level checklist ===
     (function() {
         var el = document.getElementById('reviewChecklist');
         if (!el) return;
 
         // Build review items sorted by risk score (highest first)
-        var reviewItems =[];
+        var reviewItems = [];
         var prDiffUrl = prUrl ? prUrl + '/files' : '';
 
-        // Changed files ‚Äî primary review targets
+        // Changed files ó primary review targets
         files.forEach(function(f) {
             var fname = (typeof f === 'string') ? f : (f.filename || f);
             var desc = fileDescMap[fname] || null;
             var classInfo = changeClassMap[fname] || null;
             var score = classInfo ? classInfo.risk_score : 5;
-            var deps = (depGraph[fname] && Array.isArray(depGraph[fname])) ? depGraph[fname] :[];
+            var deps = (depGraph[fname] && Array.isArray(depGraph[fname])) ? depGraph[fname] : [];
 
             reviewItems.push({
                 file: fname,
@@ -2513,7 +5096,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var desc = fileDescMap[f] || null;
                 var classInfo = changeClassMap[f] || null;
                 var score = classInfo ? classInfo.risk_score : 5;
-                var deps = (depGraph[f] && Array.isArray(depGraph[f])) ? depGraph[f] :[];
+                var deps = (depGraph[f] && Array.isArray(depGraph[f])) ? depGraph[f] : [];
 
                 reviewItems.push({
                     file: f,
@@ -2589,14 +5172,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Risk reason
-            if (item.risk) {
-                // Fix: Properly style low-risk descriptions with green check icons.
-                var isLowRisk = item.risk.toLowerCase().includes('low risk');
-                var riskIcon = isLowRisk ? 'check_circle' : 'warning';
-                var riskColor = isLowRisk ? 'text-success' : 'text-warning';
-                if (item.score >= 20) riskColor = 'text-danger';
-                
-                html += '<div class="fs-12 mb-1"><span class="material-symbols-outlined align-middle ' + riskColor + '" style="font-size:13px;">' + riskIcon + '</span> <span class="text-secondary">' + item.risk + '</span></div>';
+            if (item.risk && item.risk !== 'Low risk') {
+                html += '<div class="fs-12 mb-1"><span class="material-symbols-outlined align-middle text-warning" style="font-size:13px;">warning</span> <span class="text-secondary">' + item.risk + '</span></div>';
             }
 
             // How it affects downstream
@@ -2637,7 +5214,7 @@ document.addEventListener('DOMContentLoaded', function() {
         el.innerHTML = html;
     })();
 
-    // === Mermaid Structural Flow ‚Äî grouped by directory ===
+    // === Mermaid Structural Flow ó grouped by directory ===
     (function() {
         var m = 'flowchart TD\n';
         var safe = function(s) { return s.replace(/[^a-zA-Z0-9_]/g, '_'); };
@@ -2665,7 +5242,7 @@ document.addEventListener('DOMContentLoaded', function() {
         depKeys.forEach(function(f, globalIdx) {
             var parts = f.split('/');
             var dir = parts.length > 1 ? parts.slice(0, -1).join('/') : 'root';
-            if (!changedByDir[dir]) changedByDir[dir] =[];
+            if (!changedByDir[dir]) changedByDir[dir] = [];
             changedByDir[dir].push(f);
             changedFileIdx[f] = 'CF' + globalIdx;
         });
@@ -2698,7 +5275,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (sourceFiles[f]) return;
             var parts = f.split('/');
             var dir = parts.length > 1 ? parts.slice(0, -1).join('/') : 'root';
-            if (!affectedByDir[dir]) affectedByDir[dir] =[];
+            if (!affectedByDir[dir]) affectedByDir[dir] = [];
             affectedByDir[dir].push(f);
             affectedFileIdx[f] = 'AF' + affectedIdx++;
         });
@@ -2740,7 +5317,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Downstream deps ‚Äî grouped, summarized for readability
+        // Downstream deps ó grouped, summarized for readability
         var downstreamByDir = {};
         var dIdx = 0;
         depKeys.forEach(function(srcFile) {
@@ -2749,7 +5326,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (files.indexOf(dep) >= 0) return;
                 var parts = dep.split('/');
                 var dir = parts.length > 1 ? parts.slice(0, -1).join('/') : 'root';
-                if (!downstreamByDir[dir]) downstreamByDir[dir] = { files:[], sources: {} };
+                if (!downstreamByDir[dir]) downstreamByDir[dir] = { files: [], sources: {} };
                 if (downstreamByDir[dir].files.indexOf(dep) < 0) downstreamByDir[dir].files.push(dep);
                 downstreamByDir[dir].sources[srcFile] = true;
             });
@@ -2797,8 +5374,8 @@ document.addEventListener('DOMContentLoaded', function() {
         var treemapEl = document.getElementById('impactTreemap');
         if (!treemapEl) return;
 
-        var treemapData =[];
-        // Changed files ‚Äî base weight + downstream deps
+        var treemapData = [];
+        // Changed files ó base weight + downstream deps
         depKeys.forEach(function(f) {
             var depCount = (depGraph[f] && Array.isArray(depGraph[f])) ? depGraph[f].length : 0;
             var weight = 3 + depCount * 2;
@@ -2838,7 +5415,7 @@ document.addEventListener('DOMContentLoaded', function() {
             chart: { type: 'treemap', height: 320, fontFamily: 'inherit', toolbar: { show: false },
                 animations: { enabled: true, speed: 800 } },
             plotOptions: { treemap: { distributed: true, enableShades: false,
-                colorScale: { ranges:[
+                colorScale: { ranges: [
                     { from: 0, to: 2, color: '#FBBF24', name: 'Low Impact' },
                     { from: 3, to: 5, color: '#F59E0B', name: 'Medium Impact' },
                     { from: 6, to: 100, color: '#EF4444', name: 'High Impact' }
@@ -2851,7 +5428,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     + '<div style="font-weight:700;margin-bottom:4px;">' + d.x + '</div>'
                     + '<div style="color:#64748b;margin-bottom:2px;">' + (m.path || '') + '</div>'
                     + '<div><span style="color:' + d.fillColor + ';font-weight:600;">' + (m.type || '') + '</span>'
-                    + (m.deps > 0 ? ' ‚Äî ' + m.deps + ' downstream deps' : '') + '</div>'
+                    + (m.deps > 0 ? ' ó ' + m.deps + ' downstream deps' : '') + '</div>'
                     + '<div style="color:#94a3b8;margin-top:4px;">' + (m.desc || '') + '</div>'
                     + '</div>';
             } },
@@ -2882,7 +5459,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (elapsedEl) elapsedEl.textContent = secs + 's elapsed';
             }, 1000);
 
-            var stages =[
+            var stages = [
                 { key: 'archaeologist', title: 'Mapping Blast Radius', subtitle: 'Archaeologist scanning dependencies...', icon: 'explore', delay: 300, duration: 2500 },
                 { key: 'historian', title: 'Calculating Risk Score', subtitle: 'Historian correlating with incidents...', icon: 'history', delay: 3000, duration: 2500 },
                 { key: 'negotiator', title: 'Making Deploy Decision', subtitle: 'Negotiator weighing risk vs velocity...', icon: 'gavel', delay: 5800, duration: 2000 },
@@ -2931,3 +5508,87 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush
+
+
+==========================================================
+FILE: resources\views\layouts\app.blade.php
+==========================================================
+{{-- resources/views/layouts/app.blade.php --}}
+{{-- Main DriftWatch layout - wraps all authenticated pages with sidebar, header, footer --}}
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+
+        <title>@yield('title', 'Dashboard') ó DriftWatch</title>
+        @include('partials.styles')
+        @stack('styles')
+    </head>
+    <body class="boxed-size">
+        @include('partials.preloader')
+        @include('partials.sidebar')
+
+        <div class="container-fluid">
+            <div class="main-content d-flex flex-column">
+                @include('partials.header')
+
+                <div class="main-content-container overflow-hidden">
+                    {{-- Breadcrumb --}}
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                        <h3 class="mb-0">@yield('heading', 'Dashboard')</h3>
+
+                        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+                            <ol class="breadcrumb align-items-center mb-0 lh-1">
+                                <li class="breadcrumb-item">
+                                    <a href="{{ route('driftwatch.index') }}" class="d-flex align-items-center text-decoration-none">
+                                        <i class="ri-home-4-line fs-18 text-primary me-1"></i>
+                                        <span class="text-secondary fw-medium hover">DriftWatch</span>
+                                    </a>
+                                </li>
+                                @yield('breadcrumbs')
+                            </ol>
+                        </nav>
+                    </div>
+
+                    {{-- Flash Messages --}}
+                    @if(session('success'))
+                        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                            <span class="material-symbols-outlined align-middle me-1" style="font-size: 18px;">check_circle</span>
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+                    @if(session('error'))
+                        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                            <span class="material-symbols-outlined align-middle me-1" style="font-size: 18px;">error</span>
+                            {{ session('error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+                    @if(session('warning'))
+                        <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+                            <span class="material-symbols-outlined align-middle me-1" style="font-size: 18px;">warning</span>
+                            {{ session('warning') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+
+                    {{-- Page Content --}}
+                    @yield('content')
+                </div>
+
+                <div class="flex-grow-1"></div>
+
+                @include('partials.footer')
+            </div>
+        </div>
+
+        @include('partials.theme_settings')
+        @include('partials.scripts')
+        @stack('scripts')
+    </body>
+</html>
+
+

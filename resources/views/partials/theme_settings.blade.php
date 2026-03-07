@@ -68,11 +68,11 @@
     </div>
     <div class="offcanvas-body p-4">
         <div class="mb-4 pb-2">
-            <h4 class="fs-15 fw-semibold border-bottom pb-2 mb-3">RTL / LTR</h4>
+            <h4 class="fs-15 fw-semibold border-bottom pb-2 mb-3">Light / Dark Mode</h4>
             <div class="settings-btn rtl-btn">
                 <label id="switch" class="switch">
                     <input type="checkbox" onchange="toggleTheme()" id="slider">
-                    <span class="slider round">Click To RTL</span>
+                    <span class="slider round">Click To Toggle</span>
                 </label>
             </div>
         </div>

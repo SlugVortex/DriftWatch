@@ -19,6 +19,7 @@ class Incident extends Model
         'affected_services',
         'affected_files',
         'root_cause_file',
+        'change_type',
         'duration_minutes',
         'engineers_paged',
         'occurred_at',

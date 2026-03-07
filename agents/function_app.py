@@ -174,23 +174,44 @@ class ArchaeologistPlugin:
         description="Analyzes a pull request diff to map affected files, services, and endpoints."
     )
     async def analyze_blast_radius(self, repo: str, pr_number: int, diff_text: str, changed_files: list) -> dict:
-        """Executes blast radius analysis via Azure OpenAI."""
+        """Executes blast radius analysis via Azure OpenAI with full file contents."""
         system_prompt = ARCHAEOLOGIST_SYSTEM
-        file_list = json.dumps([f.get("filename", "unknown") if isinstance(f, dict) else str(f) for f in changed_files[:30]])
-        diff_truncated = diff_text[:8000]
+
+        # Build detailed file info including full content
+        file_sections = []
+        for f in changed_files[:30]:
+            if isinstance(f, dict):
+                section = f"### {f.get('filename', 'unknown')} ({f.get('status', 'modified')}, +{f.get('additions', 0)}/-{f.get('deletions', 0)})"
+                if f.get("full_file_content"):
+                    section += f"\n#### Full File Content:\n```\n{f['full_file_content']}\n```"
+                if f.get("patch"):
+                    section += f"\n#### Patch/Diff:\n```diff\n{f['patch']}\n```"
+                file_sections.append(section)
+
+        files_text = "\n\n".join(file_sections)
 
         user_prompt = f"""Analyze this pull request and produce a blast radius assessment.
+READ THE ACTUAL CODE BELOW — do not just look at file names.
 
 REPOSITORY: {repo}
 PR NUMBER: #{pr_number}
-CHANGED FILES: {file_list}
+TOTAL FILES CHANGED: {len(changed_files)}
 
-DIFF (first 8000 chars):
-{diff_truncated}
+=== CHANGED FILES WITH FULL CONTENT ===
 
-Return a complete JSON blast radius assessment."""
+{files_text}
 
-        return await sk_json_call(system_prompt, user_prompt, max_tokens=2000)
+=== FULL DIFF ===
+{diff_text[:10000]}
+
+Classify each file using the scoring rubric. Read the actual code to determine:
+1. What functions/classes were modified and how
+2. What imports/dependencies connect this file to others
+3. Whether the change affects public APIs, database queries, auth, or config
+
+Return a complete JSON blast radius assessment with change_classifications for each file."""
+
+        return await sk_json_call(system_prompt, user_prompt, max_tokens=3000)
 
 
 class HistorianPlugin:
@@ -268,33 +289,99 @@ Assess whether the prediction was accurate and provide post-mortem analysis."""
 # ---------------------------------------------------------------------------
 
 ARCHAEOLOGIST_SYSTEM = """You are The Archaeologist, a code analysis agent for DriftWatch.
-Your job is to analyze a pull request diff and map its blast radius — which files,
+Your job is to analyze a pull request diff and map its REAL blast radius — which files,
 services, API endpoints, and downstream dependencies are affected by this change.
+
+CRITICAL: You must READ the actual diff content, not just file names. Classify every changed
+file using this scoring rubric and sum the scores:
+
+SCORING TABLE (assign the HIGHEST matching score per file):
+- CSS or view-only change (no logic, only .blade.php layout or .css): 2 points
+- New standalone function added, not called by existing code: 5 points
+- New API endpoint or new controller action: 15 points
+- Existing function signature modified (parameters changed, return type changed): 20 points
+- Middleware, auth, token handling, session handling, guards: 30 points
+- SQL query added/modified, Eloquent query builder changes, migration file: 25 points
+- Config file changed (.env, config/, any .json config): 20 points
+- Shared utility or base class imported by 3+ other files: 25 points
+
+For any file scoring 20+, read the full file context to determine if the change is
+isolated or connects to many system parts. Follow imports (use/require/include for PHP,
+import/require for JS) to find downstream files in the blast radius.
+
+FAILURE STATES:
+- If the diff is empty or PR has no changed files, return {"status": "insufficient_data"}
+- If an error occurs, return {"status": "error", "error_message": "description"}
+- NEVER return a fake low score when data is missing — that causes false "Clear Skies"
 
 You must return ONLY valid JSON with this exact structure:
 {
+    "status": "scored",
     "affected_files": ["list of directly changed files"],
-    "affected_services": ["list of services/modules likely impacted — infer from file paths, imports, module names"],
+    "affected_services": ["list of services/modules impacted — infer from file paths, imports"],
     "affected_endpoints": ["list of API endpoints whose behavior may change"],
-    "dependency_graph": {"changed_file": ["list of files that depend on this changed file"]},
-    "risk_indicators": ["specific technical concerns about this change"],
-    "summary": "2-3 sentence plain English blast radius summary"
+    "dependency_graph": {"changed_file": ["files that depend on this changed file"]},
+    "change_classifications": [
+        {
+            "file": "filename.php",
+            "change_type": "changed_function_signature",
+            "risk_score": 20,
+            "reasoning": "one sentence explanation",
+            "full_file_read": true
+        }
+    ],
+    "total_blast_radius_score": 0,
+    "total_affected_files": 0,
+    "total_affected_services": 0,
+    "risk_indicators": ["specific technical concerns"],
+    "summary": "plain English paragraph explaining what the PR changes and why it is risky or safe"
 }
 
-Be thorough but realistic. Infer service names from directory structure (e.g. src/services/payment/ → payment-service).
+Be thorough but realistic. Infer service names from directory structure.
 Flag high-risk patterns: database migrations, config changes, shared library modifications, auth/payment code."""
 
 HISTORIAN_SYSTEM = """You are The Historian, a Site Reliability Engineer agent for DriftWatch.
 Your job is to assess deployment risk by correlating the current PR's blast radius with
-historical incident data from the last 90 days.
+historical incident data. You use THREE layers of matching:
+
+LAYER 1 — Direct File Match (25 pts each):
+Check if any file in affected_files exactly matches a file in any incident's affected_files.
+
+LAYER 2 — Service Match (10 pts each):
+Check if any service in affected_services matches a service in any incident's affected_services.
+
+LAYER 3 — Change Type Match (15 pts each):
+Check if any change_type from the Archaeologist's change_classifications matches a
+change_type field in past incidents (e.g., "changed_function_signature", "new_api_endpoint").
+
+CAP your total contribution at 40 points maximum from historical matching alone.
+Then add the blast_radius_score from the Archaeologist (passed to you) to get the final score.
+
+IMPORTANT: If no incidents exist in the database at all, return:
+{"status": "insufficient_data", "message": "No incident history available — deploy to a
+real environment and accumulate incident data to enable historical scoring."}
+Do NOT return zero as if the PR is safe. Be honest that scoring is unavailable.
+
+Also factor in CI status and bot findings if provided by the Archaeologist.
 
 You must return ONLY valid JSON with this exact structure:
 {
+    "status": "scored",
     "risk_score": 0-100 integer,
     "risk_level": "low" (0-25) / "medium" (26-50) / "high" (51-75) / "critical" (76-100),
     "historical_incidents": [
-        {"id": "INC-XXX", "title": "...", "severity": 1-5, "days_ago": N, "relevance": "why this incident is relevant"}
+        {"id": "INC-XXX", "title": "...", "severity": 1-5, "days_ago": N, "relevance": "why relevant",
+         "match_type": "file|service|change_type", "match_score": 25}
     ],
+    "match_summary": {
+        "file_matches": 0,
+        "service_matches": 0,
+        "change_type_matches": 0,
+        "history_score": 0,
+        "blast_radius_score": 0,
+        "ci_risk_addition": 0,
+        "bot_risk_addition": 0
+    },
     "contributing_factors": ["list of factors driving the risk score"],
     "recommendation": "paragraph with specific deploy/delay/block advice"
 }
@@ -379,10 +466,11 @@ def _run_async(coro):
 def archaeologist(req: func.HttpRequest) -> func.HttpResponse:
     """
     Agent 1: Blast Radius Mapper (Semantic Kernel ArchaeologistPlugin)
-    Input: repo_full_name, pr_number, base_branch, head_branch
-    Output: affected_files, affected_services, affected_endpoints, dependency_graph, summary
+    Steps: 1) Fetch diff  2) Classify changes  3) Read high-risk files
+           4) Follow imports  5) Check CI status  6) Check bot findings
     """
     logging.info("[Archaeologist] Received analysis request via SK pipeline.")
+    start_time = datetime.utcnow()
 
     try:
         body = req.get_json()
@@ -392,9 +480,10 @@ def archaeologist(req: func.HttpRequest) -> func.HttpResponse:
     repo = body.get("repo_full_name", "")
     pr_number = body.get("pr_number", 0)
 
-    # Fetch PR data from GitHub
+    # Step 1: Fetch PR diff and changed files from GitHub
     changed_files = []
-    diff_text = "No diff available"
+    diff_text = ""
+    pr_head_sha = ""
 
     token = os.environ.get("GITHUB_TOKEN", "")
     if token and repo and pr_number:
@@ -402,15 +491,26 @@ def archaeologist(req: func.HttpRequest) -> func.HttpResponse:
         headers = {"Authorization": f"token {token}", "Accept": "application/json"}
 
         try:
-            with httpx.Client(timeout=15) as client:
+            with httpx.Client(timeout=30) as client:
+                # Get PR metadata for head SHA
+                pr_resp = client.get(
+                    f"https://api.github.com/repos/{repo}/pulls/{pr_number}",
+                    headers=headers,
+                )
+                if pr_resp.status_code == 200:
+                    pr_data = pr_resp.json()
+                    pr_head_sha = pr_data.get("head", {}).get("sha", "")
+
+                # Get changed files with patch data
                 files_resp = client.get(
-                    f"https://api.github.com/repos/{repo}/pulls/{pr_number}/files",
+                    f"https://api.github.com/repos/{repo}/pulls/{pr_number}/files?per_page=100",
                     headers=headers,
                 )
                 if files_resp.status_code == 200:
                     changed_files = files_resp.json()
                     logging.info(f"[Archaeologist] Fetched {len(changed_files)} changed files from GitHub.")
 
+                # Get full diff
                 diff_headers = {**headers, "Accept": "application/vnd.github.v3.diff"}
                 diff_resp = client.get(
                     f"https://api.github.com/repos/{repo}/pulls/{pr_number}",
@@ -419,31 +519,194 @@ def archaeologist(req: func.HttpRequest) -> func.HttpResponse:
                 if diff_resp.status_code == 200:
                     diff_text = diff_resp.text
                     logging.info(f"[Archaeologist] Fetched diff ({len(diff_text)} chars).")
+
+                # Step 3: Fetch full file contents for ALL changed files
+                # This gives the AI the actual code context, not just patch hunks
+                import base64
+                files_read = 0
+                for f in changed_files[:30]:  # Cap at 30 files to stay within API limits
+                    fname = f.get("filename", "")
+                    if not fname or not pr_head_sha:
+                        continue
+                    # Skip binary/image/vendor files
+                    skip_exts = [".png", ".jpg", ".jpeg", ".gif", ".ico", ".svg", ".woff",
+                                 ".woff2", ".ttf", ".eot", ".mp4", ".zip", ".tar", ".gz",
+                                 ".lock", ".min.js", ".min.css"]
+                    if any(fname.lower().endswith(ext) for ext in skip_exts):
+                        continue
+                    if "/vendor/" in fname or "/node_modules/" in fname or "/dist/" in fname:
+                        continue
+                    try:
+                        content_resp = client.get(
+                            f"https://api.github.com/repos/{repo}/contents/{fname}?ref={pr_head_sha}",
+                            headers=headers,
+                        )
+                        if content_resp.status_code == 200:
+                            content_data = content_resp.json()
+                            if content_data.get("encoding") == "base64" and content_data.get("size", 0) < 100000:
+                                decoded = base64.b64decode(content_data["content"]).decode("utf-8", errors="replace")
+                                f["full_content"] = decoded[:8000]
+                                files_read += 1
+                    except Exception:
+                        pass
+                logging.info(f"[Archaeologist] Read full contents of {files_read}/{len(changed_files)} files.")
+
+                # Step 5: Check CI status
+                ci_status = "unknown"
+                failing_checks = []
+                ci_risk_addition = 0
+                if pr_head_sha:
+                    try:
+                        checks_resp = client.get(
+                            f"https://api.github.com/repos/{repo}/commits/{pr_head_sha}/check-runs?per_page=50",
+                            headers=headers,
+                        )
+                        if checks_resp.status_code == 200:
+                            check_runs = checks_resp.json().get("check_runs", [])
+                            required_keywords = ["unit test", "required", "backend", "integration",
+                                                  "build", "lint", "ci"]
+                            for check in check_runs:
+                                if check.get("conclusion") == "failure":
+                                    check_name = check.get("name", "")
+                                    if any(kw in check_name.lower() for kw in required_keywords):
+                                        failing_checks.append(check_name)
+
+                            if failing_checks:
+                                ci_status = "failing"
+                                ci_risk_addition = 25
+                                logging.info(f"[Archaeologist] CI failures detected: {failing_checks}")
+                            elif any(c.get("conclusion") == "success" for c in check_runs):
+                                ci_status = "passing"
+                            else:
+                                ci_status = "pending"
+                    except Exception as e:
+                        logging.warning(f"[Archaeologist] CI check failed: {e}")
+
+                # Step 6: Check bot findings (security bots)
+                bot_findings = []
+                bot_risk_addition = 0
+                security_bots = ["aikido", "snyk", "codeql", "dependabot", "semgrep",
+                                  "sonarcloud", "sonarqube", "checkmarx", "mend", "renovate"]
+                try:
+                    comments_resp = client.get(
+                        f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments?per_page=100",
+                        headers=headers,
+                    )
+                    if comments_resp.status_code == 200:
+                        comments = comments_resp.json()
+                        for comment in comments:
+                            author = (comment.get("user", {}).get("login", "") or "").lower()
+                            body_text = (comment.get("body", "") or "")[:500]
+                            for bot in security_bots:
+                                if bot in author:
+                                    severity = "medium"
+                                    risk_add = 10
+                                    body_lower = body_text.lower()
+                                    if "critical" in body_lower:
+                                        severity = "critical"
+                                        risk_add = 30
+                                    elif "high" in body_lower:
+                                        severity = "high"
+                                        risk_add = 20
+                                    bot_findings.append({
+                                        "bot": author,
+                                        "severity": severity,
+                                        "summary": body_text[:200],
+                                        "risk_addition": risk_add,
+                                    })
+                                    bot_risk_addition += risk_add
+                                    break
+                except Exception as e:
+                    logging.warning(f"[Archaeologist] Bot findings check failed: {e}")
+
         except Exception as e:
             logging.warning(f"[Archaeologist] GitHub API call failed: {e}")
 
-    # Execute via SK plugin
+    # Handle empty diff / no data
+    if not changed_files and not diff_text:
+        return func.HttpResponse(json.dumps({
+            "status": "insufficient_data",
+            "error_message": "No changed files or diff content available for this PR.",
+            "affected_files": [],
+            "affected_services": [],
+            "affected_endpoints": [],
+            "dependency_graph": {},
+            "change_classifications": [],
+            "total_blast_radius_score": 0,
+            "total_affected_files": 0,
+            "total_affected_services": 0,
+            "summary": "Insufficient data to analyze this PR.",
+        }), mimetype="application/json", status_code=200)
+
+    # Build enriched file info for the AI prompt — include full file contents
+    file_details = []
+    total_content_chars = 0
+    max_total_chars = 60000  # Stay within token limits
+    for f in changed_files[:30]:
+        if isinstance(f, dict):
+            detail = {
+                "filename": f.get("filename", "unknown"),
+                "status": f.get("status", "modified"),
+                "additions": f.get("additions", 0),
+                "deletions": f.get("deletions", 0),
+                "patch": (f.get("patch", "") or "")[:3000],
+            }
+            # Include full file content so the AI can analyze actual code
+            if f.get("full_content") and total_content_chars < max_total_chars:
+                content = f["full_content"]
+                budget = min(len(content), max_total_chars - total_content_chars, 6000)
+                detail["full_file_content"] = content[:budget]
+                total_content_chars += budget
+            file_details.append(detail)
+
+    # Step 2: Execute AI classification via SK plugin with full file data
     plugin = ArchaeologistPlugin()
     result = _run_async(plugin.analyze_blast_radius(
         repo=repo,
         pr_number=pr_number,
-        diff_text=diff_text,
-        changed_files=changed_files,
+        diff_text=diff_text[:15000],
+        changed_files=file_details,
     ))
 
     # Ensure required fields exist
+    result.setdefault("status", "scored")
     result.setdefault("affected_files", [f.get("filename", "") for f in changed_files if isinstance(f, dict)])
     result.setdefault("affected_services", [])
     result.setdefault("affected_endpoints", [])
     result.setdefault("dependency_graph", {})
+    result.setdefault("change_classifications", [])
     result.setdefault("risk_indicators", [])
     result.setdefault("summary", "Analysis complete.")
+    result.setdefault("total_affected_files", len(result["affected_files"]))
+    result.setdefault("total_affected_services", len(result["affected_services"]))
+
+    # Calculate total blast radius score from classifications
+    classification_score = sum(
+        c.get("risk_score", 0) for c in result.get("change_classifications", [])
+    )
+    # Add CI and bot risk
+    total_score = classification_score + ci_risk_addition + bot_risk_addition
+    # Cap at 100
+    result["total_blast_radius_score"] = min(total_score, 100)
+
+    # Add CI and bot data to result
+    result["ci_status"] = ci_status
+    result["failing_checks"] = failing_checks
+    result["ci_risk_addition"] = ci_risk_addition
+    result["bot_findings"] = bot_findings
+    result["bot_risk_addition"] = bot_risk_addition
 
     # Content Safety check on summary
     if not content_safety_check(result.get("summary", "")):
         result["summary"] = "Analysis complete. (Content filtered by Azure AI Content Safety)"
 
-    logging.info(f"[Archaeologist] SK analysis complete. Services: {len(result['affected_services'])}")
+    # Record timing
+    duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+    result["duration_ms"] = duration_ms
+
+    logging.info(f"[Archaeologist] SK analysis complete. Score: {result['total_blast_radius_score']}, "
+                 f"Services: {len(result['affected_services'])}, CI: {ci_status}, "
+                 f"Bot findings: {len(bot_findings)}, Duration: {duration_ms}ms")
 
     return func.HttpResponse(json.dumps(result), mimetype="application/json", status_code=200)
 
@@ -452,10 +715,11 @@ def archaeologist(req: func.HttpRequest) -> func.HttpResponse:
 def historian(req: func.HttpRequest) -> func.HttpResponse:
     """
     Agent 2: Risk Score Calculator (Semantic Kernel HistorianPlugin)
-    Input: affected_services, risk_indicators, pr_number
-    Output: risk_score, risk_level, historical_incidents, contributing_factors, recommendation
+    Multi-layer matching: file match (25pts), service match (10pts), change-type match (15pts).
+    Combines historical risk with blast_radius_score from Archaeologist.
     """
     logging.info("[Historian] Received risk assessment request via SK pipeline.")
+    start_time = datetime.utcnow()
 
     try:
         body = req.get_json()
@@ -463,41 +727,97 @@ def historian(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(json.dumps({"error": "Invalid JSON body"}), status_code=400, mimetype="application/json")
 
     affected_services = body.get("affected_services", [])
+    affected_files = body.get("affected_files", [])
     risk_indicators = body.get("risk_indicators", [])
     pr_number = body.get("pr_number", 0)
+    blast_radius_score = body.get("blast_radius_score", 0)
+    change_classifications = body.get("change_classifications", [])
+    ci_status = body.get("ci_status", "unknown")
+    ci_risk_addition = body.get("ci_risk_addition", 0)
+    bot_findings = body.get("bot_findings", [])
+    bot_risk_addition = body.get("bot_risk_addition", 0)
 
-    # Fetch historical incidents from Laravel API
+    # Fetch ALL historical incidents from Laravel API (not just service-filtered)
     incidents = []
     laravel_url = os.environ.get("LARAVEL_APP_URL", "http://localhost:8000")
-    if affected_services:
-        import httpx
-        try:
-            with httpx.Client(timeout=10) as client:
-                resp = client.get(
-                    f"{laravel_url}/api/incidents",
-                    params={"services": ",".join(affected_services)},
-                )
-                if resp.status_code == 200:
-                    incidents = resp.json()
-                    logging.info(f"[Historian] Fetched {len(incidents)} related incidents.")
-        except Exception as e:
-            logging.warning(f"[Historian] Failed to fetch incidents: {e}")
+    import httpx
+    try:
+        with httpx.Client(timeout=10) as client:
+            # Fetch all incidents for multi-layer matching
+            resp = client.get(f"{laravel_url}/api/incidents")
+            if resp.status_code == 200:
+                incidents = resp.json()
+                logging.info(f"[Historian] Fetched {len(incidents)} total incidents for multi-layer matching.")
+    except Exception as e:
+        logging.warning(f"[Historian] Failed to fetch incidents: {e}")
 
-    # Execute via SK plugin
+    # If no incidents exist at all, return insufficient_data
+    if not incidents:
+        result = {
+            "status": "insufficient_data",
+            "risk_score": blast_radius_score,
+            "risk_level": "unknown",
+            "message": "No incident history available — deploy to a real environment and accumulate incident data to enable historical scoring.",
+            "historical_incidents": [],
+            "match_summary": {
+                "file_matches": 0,
+                "service_matches": 0,
+                "change_type_matches": 0,
+                "history_score": 0,
+                "blast_radius_score": blast_radius_score,
+                "ci_risk_addition": ci_risk_addition,
+                "bot_risk_addition": bot_risk_addition,
+            },
+            "contributing_factors": ["No incident history available for historical correlation"],
+            "recommendation": "Historical scoring unavailable. Blast radius score is {}/100. Proceed with standard review process.".format(blast_radius_score),
+        }
+        # Still assign risk_level based on blast_radius_score alone
+        score = blast_radius_score
+        if score >= 76:
+            result["risk_level"] = "critical"
+        elif score >= 51:
+            result["risk_level"] = "high"
+        elif score >= 26:
+            result["risk_level"] = "medium"
+        else:
+            result["risk_level"] = "low"
+
+        duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+        result["duration_ms"] = duration_ms
+        return func.HttpResponse(json.dumps(result), mimetype="application/json", status_code=200)
+
+    # Execute via SK plugin with enriched data
     plugin = HistorianPlugin()
     result = _run_async(plugin.calculate_risk(
         pr_number=pr_number,
         affected_services=affected_services,
-        risk_indicators=risk_indicators,
-        incidents=incidents,
+        risk_indicators=risk_indicators + [
+            f"Blast radius score: {blast_radius_score}",
+            f"CI status: {ci_status}",
+            f"CI risk addition: {ci_risk_addition}",
+            f"Bot findings count: {len(bot_findings)}",
+            f"Affected files: {json.dumps(affected_files[:10])}",
+            f"Change classifications: {json.dumps(change_classifications[:10])}",
+        ],
+        incidents=incidents[:20],
     ))
 
     # Ensure required fields
+    result.setdefault("status", "scored")
     result.setdefault("risk_score", 50)
     result.setdefault("risk_level", "medium")
     result.setdefault("historical_incidents", [])
     result.setdefault("contributing_factors", [])
     result.setdefault("recommendation", "Review recommended before deployment.")
+    result.setdefault("match_summary", {
+        "file_matches": 0,
+        "service_matches": 0,
+        "change_type_matches": 0,
+        "history_score": 0,
+        "blast_radius_score": blast_radius_score,
+        "ci_risk_addition": ci_risk_addition,
+        "bot_risk_addition": bot_risk_addition,
+    })
 
     # Validate risk_level matches score
     score = result["risk_score"]
@@ -510,7 +830,10 @@ def historian(req: func.HttpRequest) -> func.HttpResponse:
     else:
         result["risk_level"] = "low"
 
-    logging.info(f"[Historian] SK risk assessment complete. Score: {score}/100 ({result['risk_level']})")
+    duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+    result["duration_ms"] = duration_ms
+
+    logging.info(f"[Historian] SK risk assessment complete. Score: {score}/100 ({result['risk_level']}), Duration: {duration_ms}ms")
 
     return func.HttpResponse(json.dumps(result), mimetype="application/json", status_code=200)
 
@@ -523,6 +846,7 @@ def negotiator(req: func.HttpRequest) -> func.HttpResponse:
     Output: decision, notification details, pr_comment
     """
     logging.info("[Negotiator] Received deployment decision request via SK pipeline.")
+    start_time = datetime.utcnow()
 
     try:
         body = req.get_json()
@@ -602,7 +926,10 @@ def negotiator(req: func.HttpRequest) -> func.HttpResponse:
         except Exception as e:
             logging.warning(f"[Negotiator] GitHub comment post failed: {e}")
 
-    logging.info(f"[Negotiator] SK decision: {result['decision']} for PR #{pr_number}")
+    duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+    result["duration_ms"] = duration_ms
+
+    logging.info(f"[Negotiator] SK decision: {result['decision']} for PR #{pr_number}, Duration: {duration_ms}ms")
 
     return func.HttpResponse(json.dumps(result), mimetype="application/json", status_code=200)
 
@@ -615,6 +942,7 @@ def chronicler(req: func.HttpRequest) -> func.HttpResponse:
     Output: prediction accuracy assessment and post-mortem notes
     """
     logging.info("[Chronicler] Received post-deployment outcome via SK pipeline.")
+    start_time = datetime.utcnow()
 
     try:
         body = req.get_json()
@@ -653,7 +981,10 @@ def chronicler(req: func.HttpRequest) -> func.HttpResponse:
 
     result.setdefault("post_mortem_notes", "Outcome recorded.")
 
-    logging.info(f"[Chronicler] SK outcome recorded. Prediction accurate: {result['prediction_accurate']}")
+    duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+    result["duration_ms"] = duration_ms
+
+    logging.info(f"[Chronicler] SK outcome recorded. Prediction accurate: {result['prediction_accurate']}, Duration: {duration_ms}ms")
 
     return func.HttpResponse(json.dumps(result), mimetype="application/json", status_code=200)
 

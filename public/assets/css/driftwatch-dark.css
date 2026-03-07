@@ -1,0 +1,206 @@
+/* DriftWatch Dark Mode Overrides */
+/* Fixes Bootstrap .bg-white !important conflicting with Trezo dark mode */
+
+[data-theme=dark] .bg-white {
+    background-color: #0C1427 !important;
+}
+
+[data-theme=dark] .bg-light {
+    background-color: #151D30 !important;
+}
+
+[data-theme=dark] .card.bg-white {
+    background-color: #0C1427 !important;
+}
+
+[data-theme=dark] .header-area.bg-white {
+    background-color: #0C1427 !important;
+}
+
+[data-theme=dark] .form-control {
+    background-color: #151D30 !important;
+    border-color: #1E293B !important;
+    color: #CBD5E1 !important;
+}
+
+[data-theme=dark] .form-control:focus {
+    border-color: #605DFF !important;
+}
+
+[data-theme=dark] .table {
+    color: #CBD5E1 !important;
+}
+
+[data-theme=dark] .table thead th {
+    color: #8695AA !important;
+    border-color: #1E293B !important;
+}
+
+[data-theme=dark] .table tbody td {
+    border-color: #1E293B !important;
+}
+
+[data-theme=dark] .table tbody tr:hover {
+    background-color: #151D30 !important;
+}
+
+[data-theme=dark] .border-bottom {
+    border-color: #1E293B !important;
+}
+
+[data-theme=dark] .border-top {
+    border-color: #1E293B !important;
+}
+
+[data-theme=dark] code {
+    color: #A78BFA !important;
+}
+
+[data-theme=dark] .dropdown-menu {
+    background-color: #0C1427 !important;
+    border-color: #1E293B !important;
+}
+
+[data-theme=dark] .dropdown-item {
+    color: #CBD5E1 !important;
+}
+
+[data-theme=dark] .dropdown-item:hover {
+    background-color: #151D30 !important;
+}
+
+[data-theme=dark] .modal-content {
+    background-color: #0C1427 !important;
+}
+
+[data-theme=dark] .text-dark {
+    color: #E2E8F0 !important;
+}
+
+[data-theme=dark] .fw-bold,
+[data-theme=dark] h1, [data-theme=dark] h2, [data-theme=dark] h3,
+[data-theme=dark] h4, [data-theme=dark] h5, [data-theme=dark] h6 {
+    color: #E2E8F0 !important;
+}
+
+[data-theme=dark] .text-secondary {
+    color: #8695AA !important;
+}
+
+[data-theme=dark] .progress {
+    background-color: #1E293B !important;
+}
+
+[data-theme=dark] .btn-outline-primary {
+    color: #818CF8 !important;
+    border-color: #818CF8 !important;
+}
+
+[data-theme=dark] .btn-outline-primary:hover {
+    background-color: #605DFF !important;
+    color: #fff !important;
+}
+
+[data-theme=dark] .btn-outline-warning {
+    color: #FBBF24 !important;
+    border-color: #FBBF24 !important;
+}
+
+[data-theme=dark] .btn-outline-secondary {
+    color: #8695AA !important;
+    border-color: #334155 !important;
+}
+
+[data-theme=dark] .pagination .page-link {
+    background-color: #0C1427 !important;
+    border-color: #1E293B !important;
+    color: #CBD5E1 !important;
+}
+
+[data-theme=dark] .pagination .page-item.active .page-link {
+    background-color: #605DFF !important;
+    border-color: #605DFF !important;
+}
+
+[data-theme=dark] .alert {
+    border-color: #1E293B !important;
+}
+
+/* Logo text */
+[data-theme=dark] .sidebar-area .logo .logo-text {
+    color: #E2E8F0 !important;
+}
+
+/* Offcanvas / Theme settings */
+[data-theme=dark] .offcanvas {
+    background-color: #0C1427 !important;
+}
+
+[data-theme=dark] .offcanvas-header {
+    border-color: #1E293B !important;
+}
+
+/* vis.js graph container */
+[data-theme=dark] #blastRadiusDynamic {
+    border-color: #1E293B !important;
+    background: #0C1427 !important;
+}
+
+[data-theme=dark] #blastRadiusStructural {
+    border-color: #1E293B !important;
+    background: #0C1427 !important;
+}
+
+[data-theme=dark] #blastInfoPanel {
+    background-color: #151D30 !important;
+}
+
+/* Badge text visibility */
+[data-theme=dark] .badge.bg-opacity-10 {
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Container fluid bg */
+[data-theme=dark] .container-fluid {
+    background-color: #0A0E19 !important;
+}
+
+/* Blast radius info panel */
+[data-theme=dark] #blastInfoPanel {
+    border-color: #1E293B !important;
+}
+
+[data-theme=dark] #blastInfoHeader {
+    background-color: #151D30 !important;
+    border-color: #1E293B !important;
+}
+
+[data-theme=dark] #blastInfoBody {
+    background-color: #0C1427 !important;
+}
+
+/* DevOps action items */
+[data-theme=dark] #devopsActionItems .border {
+    border-color: #1E293B !important;
+}
+
+/* What Moved the Needle - risk breakdown bars */
+[data-theme=dark] #riskNeedleBars .progress {
+    background-color: #1E293B !important;
+}
+
+[data-theme=dark] #riskNeedleBars .border-top {
+    border-color: #1E293B !important;
+}
+
+/* Agent loading overlay — already dark by design, no overrides needed */
+
+/* Deployment weather card */
+[data-theme=dark] .bg-light.rounded-3 {
+    background-color: #151D30 !important;
+}
+
+/* Code tags in action items */
+[data-theme=dark] code.bg-light {
+    background-color: #1E293B !important;
+}
