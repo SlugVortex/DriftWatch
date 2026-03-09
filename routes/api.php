@@ -1,4 +1,5 @@
 <?php
+
 // routes/api.php
 // DriftWatch API routes - used by the Python AI agents, GitHub Action, and external integrations.
 
@@ -17,7 +18,7 @@ Route::get('/incidents', function (Request $request) {
 
     $query = Incident::query();
 
-    if (!empty($services)) {
+    if (! empty($services)) {
         $query->where(function ($q) use ($services) {
             foreach ($services as $service) {
                 $q->orWhereJsonContains('affected_services', trim($service));
@@ -107,7 +108,7 @@ Route::post('/analyze', function (Request $request) {
 Route::get('/jobs/{id}/status', function (int $id) {
     $pullRequest = PullRequest::with(['riskAssessment', 'deploymentDecision', 'blastRadius'])->find($id);
 
-    if (!$pullRequest) {
+    if (! $pullRequest) {
         return response()->json(['status' => 'not_found', 'error' => 'Job not found'], 404);
     }
 
@@ -124,6 +125,289 @@ Route::get('/jobs/{id}/status', function (int $id) {
     ]);
 });
 
+// === File Preview — Fetch source code from GitHub for in-chat code inspection ===
+Route::post('/file-preview', function (Request $request) {
+    $request->validate([
+        'pr_id' => ['required', 'integer'],
+        'file_path' => ['required', 'string', 'max:500'],
+    ]);
+
+    $pullRequest = PullRequest::find($request->input('pr_id'));
+    if (! $pullRequest) {
+        return response()->json(['error' => 'PR not found'], 404);
+    }
+
+    $filePath = $request->input('file_path');
+    $repoFullName = $pullRequest->repo_full_name;
+    $headBranch = $pullRequest->head_branch ?: $pullRequest->base_branch ?: 'main';
+    $ghToken = config('services.github.token');
+
+    Log::info('[API:file-preview] Fetching file.', ['repo' => $repoFullName, 'file' => $filePath, 'branch' => $headBranch]);
+
+    // Try to fetch the file content from GitHub
+    if ($ghToken && $repoFullName && $repoFullName !== 'unknown/unknown') {
+        try {
+            // Try head branch first, fall back to default branch
+            $ghResponse = Http::withHeaders([
+                'Authorization' => "Bearer {$ghToken}",
+                'Accept' => 'application/vnd.github.v3+json',
+            ])->timeout(10)->get("https://api.github.com/repos/{$repoFullName}/contents/{$filePath}", [
+                'ref' => $headBranch,
+            ]);
+
+            // If head branch fails, try without ref (default branch)
+            if (! $ghResponse->successful() && $headBranch !== 'main') {
+                $ghResponse = Http::withHeaders([
+                    'Authorization' => "Bearer {$ghToken}",
+                    'Accept' => 'application/vnd.github.v3+json',
+                ])->timeout(10)->get("https://api.github.com/repos/{$repoFullName}/contents/{$filePath}");
+            }
+
+            if ($ghResponse->successful()) {
+                $data = $ghResponse->json();
+                $content = '';
+
+                if (isset($data['content']) && isset($data['encoding']) && $data['encoding'] === 'base64') {
+                    $content = base64_decode($data['content']);
+                }
+
+                // Truncate very large files
+                if (strlen($content) > 50000) {
+                    $content = substr($content, 0, 50000)."\n\n// ... truncated (file too large) ...";
+                }
+
+                // Also try to fetch the diff for this specific file
+                $diffSnippet = '';
+                try {
+                    $diffResponse = Http::withHeaders([
+                        'Authorization' => "Bearer {$ghToken}",
+                        'Accept' => 'application/vnd.github.v3.diff',
+                    ])->timeout(10)->get("https://api.github.com/repos/{$repoFullName}/pulls/{$pullRequest->pr_number}");
+
+                    if ($diffResponse->successful()) {
+                        $fullDiff = $diffResponse->body();
+                        // Extract just this file's diff
+                        $pattern = '/diff --git a\/'.preg_quote($filePath, '/').'.*?(?=diff --git|\z)/s';
+                        if (preg_match($pattern, $fullDiff, $matches)) {
+                            $diffSnippet = $matches[0];
+                            // Truncate long diffs
+                            if (strlen($diffSnippet) > 10000) {
+                                $diffSnippet = substr($diffSnippet, 0, 10000)."\n... truncated ...";
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Diff fetch is optional
+                }
+
+                return response()->json([
+                    'file_path' => $filePath,
+                    'content' => $content,
+                    'diff' => $diffSnippet,
+                    'language' => pathinfo($filePath, PATHINFO_EXTENSION),
+                    'size' => $data['size'] ?? strlen($content),
+                    'sha' => $data['sha'] ?? '',
+                    'source' => 'github',
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::warning('[API:file-preview] GitHub fetch failed.', ['error' => $e->getMessage()]);
+        }
+    }
+
+    // Fallback: check if we have code_analysis stored from the pipeline
+    $blastRadius = $pullRequest->blastRadius;
+    $codeAnalysis = $blastRadius?->code_analysis ?? [];
+    $fileContent = $codeAnalysis['file_contents'][$filePath] ?? null;
+
+    if ($fileContent) {
+        return response()->json([
+            'file_path' => $filePath,
+            'content' => $fileContent,
+            'diff' => '',
+            'language' => pathinfo($filePath, PATHINFO_EXTENSION),
+            'size' => strlen($fileContent),
+            'sha' => '',
+            'source' => 'cached',
+        ]);
+    }
+
+    // No content available
+    return response()->json([
+        'file_path' => $filePath,
+        'content' => '',
+        'diff' => '',
+        'language' => pathinfo($filePath, PATHINFO_EXTENSION),
+        'size' => 0,
+        'sha' => '',
+        'source' => 'unavailable',
+        'message' => 'File content not available. Configure GITHUB_TOKEN to enable live code preview.',
+    ]);
+});
+
+// === Impact Chat — Navigator Agent Endpoint ===
+// POST /api/impact-chat — Conversational AI for exploring PR blast radius
+Route::post('/impact-chat', function (Request $request) {
+    $request->validate([
+        'pr_id' => ['required', 'integer'],
+        'query' => ['required', 'string', 'max:500'],
+    ]);
+
+    $prId = $request->input('pr_id');
+    $query = $request->input('query');
+
+    $pullRequest = PullRequest::with(['blastRadius', 'riskAssessment', 'deploymentDecision'])->find($prId);
+
+    if (! $pullRequest) {
+        return response()->json(['error' => 'PR not found'], 404);
+    }
+
+    Log::info('[API:impact-chat] Chat query received.', ['pr' => $prId, 'query' => $query]);
+
+    // Build PR context payload for the Navigator agent
+    $blastRadius = $pullRequest->blastRadius;
+    $riskAssessment = $pullRequest->riskAssessment;
+    $decision = $pullRequest->deploymentDecision;
+
+    $prContext = [
+        'pr_number' => $pullRequest->pr_number,
+        'pr_title' => $pullRequest->pr_title,
+        'pr_author' => $pullRequest->pr_author,
+        'repo_full_name' => $pullRequest->repo_full_name,
+        'files_changed' => $pullRequest->files_changed,
+        'additions' => $pullRequest->additions,
+        'deletions' => $pullRequest->deletions,
+        'base_branch' => $pullRequest->base_branch,
+        'head_branch' => $pullRequest->head_branch,
+        'risk_score' => $riskAssessment?->risk_score ?? 0,
+        'risk_level' => $riskAssessment?->risk_level ?? 'unknown',
+        'decision' => $decision?->decision ?? 'pending',
+        'affected_services' => $blastRadius?->affected_services ?? [],
+        'changed_files' => $blastRadius?->change_classifications ?? $blastRadius?->affected_files ?? [],
+        'dependency_graph' => $blastRadius?->dependency_graph ?? [],
+        'file_summaries' => $blastRadius?->file_descriptions ?? [],
+        'blast_summary' => $blastRadius?->summary ?? '',
+        'recommendation' => $riskAssessment?->recommendation ?? '',
+        'affected_endpoints' => $blastRadius?->affected_endpoints ?? [],
+    ];
+
+    // Try 1: Call the Navigator Azure Function agent
+    $navigatorUrl = config('services.agents.navigator_url');
+    $functionKey = config('services.agents.function_key');
+
+    if ($navigatorUrl) {
+        try {
+            $agentResponse = Http::withHeaders(array_filter([
+                'Content-Type' => 'application/json',
+                'x-functions-key' => $functionKey,
+            ]))->timeout(20)->post($navigatorUrl, [
+                'query' => $query,
+                'pr_context' => $prContext,
+            ]);
+
+            if ($agentResponse->successful()) {
+                Log::info('[API:impact-chat] Navigator agent responded.');
+                $agentData = $agentResponse->json();
+                $agentData['source'] = 'agent';
+
+                return response()->json($agentData);
+            }
+        } catch (\Exception $e) {
+            Log::warning('[API:impact-chat] Navigator agent call failed.', ['error' => $e->getMessage()]);
+        }
+    }
+
+    // Try 2: Direct Azure OpenAI call (same prompt as the Navigator agent)
+    $aoaiEndpoint = config('services.azure_openai.endpoint');
+    $aoaiKey = config('services.azure_openai.api_key');
+    $aoaiDeployment = config('services.azure_openai.deployment');
+
+    if ($aoaiEndpoint && $aoaiKey) {
+        try {
+            $contextStr = "PR: {$pullRequest->pr_title} (#{$pullRequest->pr_number})\n"
+                ."Repo: {$pullRequest->repo_full_name}\n"
+                ."Files Changed: {$pullRequest->files_changed}\n"
+                .'Risk Score: '.($riskAssessment?->risk_score ?? 0).'/100 ('.($riskAssessment?->risk_level ?? 'unknown').")\n"
+                .'Decision: '.($decision?->decision ?? 'pending')."\n"
+                .'Services: '.implode(', ', $blastRadius?->affected_services ?? [])."\n"
+                .'Summary: '.($blastRadius?->summary ?? '')."\n"
+                .'Recommendation: '.($riskAssessment?->recommendation ?? '')."\n";
+
+            $changedFiles = $blastRadius?->change_classifications ?? [];
+            if (is_array($changedFiles)) {
+                $contextStr .= "\nChanged Files:\n";
+                foreach ($changedFiles as $cf) {
+                    if (is_array($cf)) {
+                        $contextStr .= "  {$cf['file']} (score: {$cf['risk_score']}, type: {$cf['change_type']})\n";
+                    }
+                }
+            }
+
+            $depGraph = $blastRadius?->dependency_graph ?? [];
+            if (is_array($depGraph)) {
+                $contextStr .= "\nDependency Graph:\n";
+                foreach ($depGraph as $src => $deps) {
+                    if (is_array($deps) && count($deps) > 0) {
+                        $contextStr .= "  {$src} → ".implode(', ', $deps)."\n";
+                    }
+                }
+            }
+
+            $fileDescs = $blastRadius?->file_descriptions ?? [];
+            if (is_array($fileDescs)) {
+                $contextStr .= "\nFile Summaries:\n";
+                foreach ($fileDescs as $path => $info) {
+                    if (is_array($info)) {
+                        $contextStr .= "  {$path}: ".($info['summary'] ?? '')."\n";
+                    }
+                }
+            }
+
+            $systemPrompt = 'You are the DriftWatch Navigator — an AI assistant that helps DevOps engineers understand PR impact. '
+                .'Answer concisely (2-4 sentences). Reference specific files and risk scores. '
+                .'Return JSON: {"response": "your answer (markdown ok)", "highlight_nodes": ["file_path1"], "suggested_followups": ["q1", "q2"]}';
+
+            $aoaiResponse = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'api-key' => $aoaiKey,
+            ])->timeout(25)->post("{$aoaiEndpoint}/openai/deployments/{$aoaiDeployment}/chat/completions?api-version=2025-03-01-preview", [
+                'messages' => [
+                    ['role' => 'system', 'content' => $systemPrompt],
+                    ['role' => 'user', 'content' => "PR Context:\n{$contextStr}\n\nUser Question: {$query}"],
+                ],
+                'temperature' => 0.2,
+                'max_tokens' => 1500,
+                'response_format' => ['type' => 'json_object'],
+            ]);
+
+            if ($aoaiResponse->successful()) {
+                $aiResult = $aoaiResponse->json();
+                $content = $aiResult['choices'][0]['message']['content'] ?? '{}';
+                $parsed = json_decode($content, true) ?? [];
+
+                Log::info('[API:impact-chat] Azure OpenAI direct response.');
+
+                return response()->json([
+                    'response' => $parsed['response'] ?? 'Analysis complete.',
+                    'highlight_nodes' => $parsed['highlight_nodes'] ?? [],
+                    'suggested_followups' => $parsed['suggested_followups'] ?? [],
+                    'source' => 'openai',
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::warning('[API:impact-chat] Azure OpenAI direct call failed.', ['error' => $e->getMessage()]);
+        }
+    }
+
+    // Try 3: Smart local mock (always works, no AI needed)
+    Log::info('[API:impact-chat] Using local mock response.');
+
+    $mockResponse = app(GitHubWebhookController::class)->generateImpactChatMock($query, $prContext);
+    $mockResponse['source'] = 'local';
+
+    return response()->json($mockResponse);
+});
+
 // === Decision Callback Endpoints (for Teams notifications) ===
 
 Route::get('/decisions/{id}/approve', function (Request $request, int $id) {
@@ -131,17 +415,34 @@ Route::get('/decisions/{id}/approve', function (Request $request, int $id) {
     $token = $request->query('token');
     $expectedToken = hash_hmac('sha256', "decision-{$id}", config('app.key'));
 
-    if (!$token || !hash_equals($expectedToken, $token)) {
+    if (! $token || ! hash_equals($expectedToken, $token)) {
         return response('Invalid or missing token.', 403);
     }
 
+    // Append to MRP audit trail
+    $mrpPayload = $decision->mrp_payload ?? [];
+    $mrpPayload['audit_trail'] = $mrpPayload['audit_trail'] ?? [];
+    $mrpPayload['audit_trail'][] = [
+        'action' => 'approved',
+        'by' => $request->query('approver', 'Teams Callback User'),
+        'at' => now()->toIso8601String(),
+        'details' => 'Human decision: APPROVED via Teams notification callback.',
+    ];
+
     $decision->update([
         'decision' => 'approved',
-        'decided_by' => 'Teams Callback',
+        'decided_by' => $request->query('approver', 'Teams Callback'),
         'decided_at' => now(),
+        'mrp_payload' => $mrpPayload,
     ]);
 
     $decision->pullRequest->update(['status' => 'approved']);
+
+    // Resume pipeline if it was paused at approval gate
+    if ($decision->pullRequest->pipeline_paused) {
+        $webhookController = app(\App\Http\Controllers\GitHubWebhookController::class);
+        $webhookController->resumePipeline($decision->pullRequest);
+    }
 
     Log::info("[API:decision] PR #{$decision->pullRequest->pr_number} APPROVED via Teams callback.");
 
@@ -156,14 +457,25 @@ Route::get('/decisions/{id}/block', function (Request $request, int $id) {
     $token = $request->query('token');
     $expectedToken = hash_hmac('sha256', "decision-{$id}", config('app.key'));
 
-    if (!$token || !hash_equals($expectedToken, $token)) {
+    if (! $token || ! hash_equals($expectedToken, $token)) {
         return response('Invalid or missing token.', 403);
     }
 
+    // Append to MRP audit trail
+    $mrpPayload = $decision->mrp_payload ?? [];
+    $mrpPayload['audit_trail'] = $mrpPayload['audit_trail'] ?? [];
+    $mrpPayload['audit_trail'][] = [
+        'action' => 'blocked',
+        'by' => $request->query('approver', 'Teams Callback User'),
+        'at' => now()->toIso8601String(),
+        'details' => 'Human decision: BLOCKED via Teams notification callback.',
+    ];
+
     $decision->update([
         'decision' => 'blocked',
-        'decided_by' => 'Teams Callback',
+        'decided_by' => $request->query('approver', 'Teams Callback'),
         'decided_at' => now(),
+        'mrp_payload' => $mrpPayload,
     ]);
 
     $decision->pullRequest->update(['status' => 'blocked']);
@@ -174,4 +486,50 @@ Route::get('/decisions/{id}/block', function (Request $request, int $id) {
         'action' => 'BLOCKED',
         'prNumber' => $decision->pullRequest->pr_number,
     ]);
+});
+
+// POST /api/tts — Azure Speech text-to-speech proxy
+Route::post('/tts', function (Request $request) {
+    $text = $request->input('text', '');
+    if (empty($text)) {
+        return response()->json(['error' => 'No text provided'], 400);
+    }
+
+    $region = config('services.azure_speech.region');
+    $key = config('services.azure_speech.key');
+
+    if (empty($key) || empty($region)) {
+        return response()->json(['error' => 'Azure Speech not configured'], 503);
+    }
+
+    // Truncate to 3000 chars for reasonable audio length
+    $text = mb_substr(strip_tags($text), 0, 3000);
+
+    $ssml = '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">'
+        .'<voice name="en-US-JennyNeural">'
+        .'<prosody rate="+10%">'
+        .htmlspecialchars($text, ENT_XML1, 'UTF-8')
+        .'</prosody></voice></speak>';
+
+    try {
+        $response = Http::withHeaders([
+            'Ocp-Apim-Subscription-Key' => $key,
+            'Content-Type' => 'application/ssml+xml',
+            'X-Microsoft-OutputFormat' => 'audio-16khz-128kbitrate-mono-mp3',
+        ])->timeout(15)->withBody($ssml, 'application/ssml+xml')
+            ->post("https://{$region}.tts.speech.microsoft.com/cognitiveservices/v1");
+
+        if ($response->successful()) {
+            return response($response->body(), 200)
+                ->header('Content-Type', 'audio/mpeg');
+        }
+
+        Log::warning('[API:tts] Azure Speech failed.', ['status' => $response->status()]);
+
+        return response()->json(['error' => 'Speech synthesis failed'], 502);
+    } catch (\Exception $e) {
+        Log::error('[API:tts] Exception.', ['error' => $e->getMessage()]);
+
+        return response()->json(['error' => 'Speech service unavailable'], 503);
+    }
 });

@@ -993,6 +993,140 @@ def chronicler(req: func.HttpRequest) -> func.HttpResponse:
 # Health check endpoint
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Agent 5: Navigator — Interactive Impact Chat
+# ---------------------------------------------------------------------------
+# The Navigator is a conversational agent that helps DevOps engineers
+# explore and understand the blast radius of a PR through natural language.
+# It receives the full file context, dependency graph, risk scores, and
+# answers questions like "what depends on auth.py?" or "why is this risky?"
+
+class NavigatorPlugin:
+    """Semantic Kernel plugin for the Navigator (Impact Chat) agent."""
+
+    @kernel_function(name="analyze_impact_query", description="Answer natural language questions about PR impact")
+    def analyze_impact_query(self, query: str, context: str) -> str:
+        return f"Query: {query}\nContext length: {len(context)} chars"
+
+
+NAVIGATOR_SYSTEM_PROMPT = """You are the DriftWatch Navigator — an AI assistant that helps DevOps engineers understand the impact of a pull request.
+
+You will receive:
+- A user's natural language question
+- Full context about the PR including: changed files, dependency graph, risk scores, affected services, blast radius analysis, and file summaries
+
+Your job:
+1. Answer the question clearly and concisely
+2. Reference specific files, services, and risk scores from the context
+3. Explain WHY things are risky, not just THAT they are risky
+4. When asked about dependencies, trace the full chain
+5. When asked to highlight or focus on files, return their IDs in the `highlight_nodes` array
+6. Keep responses short (2-4 sentences) unless the user asks for detail
+
+Return a JSON object with:
+{
+    "response": "Your natural language answer (supports markdown)",
+    "highlight_nodes": ["file_path1", "file_path2"],
+    "suggested_followups": ["question 1", "question 2"]
+}
+
+Be conversational, helpful, and specific. Use the actual file names and scores from context."""
+
+
+@app.route(route="navigator", methods=["POST"])
+def navigator(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    Navigator agent — conversational Impact Chat for PR analysis.
+    Receives: { query, pr_context: { files, dependency_graph, risk_scores, services, ... } }
+    Returns: { response, highlight_nodes, suggested_followups }
+    """
+    import asyncio
+    logging.info("[Navigator] Impact chat request received.")
+
+    try:
+        body = req.get_json()
+    except Exception:
+        return func.HttpResponse(json.dumps({"error": "Invalid JSON"}), mimetype="application/json", status_code=400)
+
+    query = body.get("query", "")
+    pr_context = body.get("pr_context", {})
+
+    if not query:
+        return func.HttpResponse(json.dumps({"error": "No query provided"}), mimetype="application/json", status_code=400)
+
+    # Build the context string for the AI
+    context_parts = []
+    context_parts.append(f"PR: {pr_context.get('pr_title', 'Unknown')} (#{pr_context.get('pr_number', '?')})")
+    context_parts.append(f"Author: {pr_context.get('pr_author', 'unknown')}")
+    context_parts.append(f"Repository: {pr_context.get('repo_full_name', 'unknown')}")
+    context_parts.append(f"Files Changed: {pr_context.get('files_changed', 0)}")
+    context_parts.append(f"Risk Score: {pr_context.get('risk_score', 0)}/100 ({pr_context.get('risk_level', 'unknown')})")
+    context_parts.append(f"Decision: {pr_context.get('decision', 'pending')}")
+
+    if pr_context.get("affected_services"):
+        context_parts.append(f"Affected Services: {', '.join(pr_context['affected_services'])}")
+
+    if pr_context.get("changed_files"):
+        context_parts.append("\n--- Changed Files ---")
+        for f in pr_context["changed_files"]:
+            if isinstance(f, dict):
+                context_parts.append(f"  {f.get('filename', f.get('file', '?'))} (score: {f.get('risk_score', '?')}, type: {f.get('change_type', '?')})")
+            else:
+                context_parts.append(f"  {f}")
+
+    if pr_context.get("dependency_graph"):
+        context_parts.append("\n--- Dependency Graph ---")
+        for src, deps in pr_context["dependency_graph"].items():
+            if isinstance(deps, list) and len(deps) > 0:
+                context_parts.append(f"  {src} → {', '.join(deps)}")
+
+    if pr_context.get("file_summaries"):
+        context_parts.append("\n--- File Summaries ---")
+        for path, info in pr_context["file_summaries"].items():
+            if isinstance(info, dict):
+                context_parts.append(f"  {path}: {info.get('summary', '')} | Risk: {info.get('risk', '')} | Affects: {info.get('affects', '')}")
+
+    if pr_context.get("blast_summary"):
+        context_parts.append(f"\nBlast Radius Summary: {pr_context['blast_summary']}")
+
+    if pr_context.get("recommendation"):
+        context_parts.append(f"AI Recommendation: {pr_context['recommendation']}")
+
+    context_str = "\n".join(context_parts)
+    user_prompt = f"PR Context:\n{context_str}\n\nUser Question: {query}"
+
+    # Call Azure OpenAI via Semantic Kernel
+    try:
+        result = asyncio.run(sk_json_call(NAVIGATOR_SYSTEM_PROMPT, user_prompt, max_tokens=1500))
+    except Exception as e:
+        logging.error(f"[Navigator] SK call failed: {e}")
+        result = {
+            "response": f"I encountered an issue processing your question. Here's what I know: the PR changes {pr_context.get('files_changed', 0)} files with a risk score of {pr_context.get('risk_score', 0)}.",
+            "highlight_nodes": [],
+            "suggested_followups": ["What files were changed?", "Show me the risk breakdown"],
+        }
+
+    # Ensure required fields
+    if "response" not in result:
+        result["response"] = "I couldn't generate a response. Try rephrasing your question."
+    if "highlight_nodes" not in result:
+        result["highlight_nodes"] = []
+    if "suggested_followups" not in result:
+        result["suggested_followups"] = []
+
+    # Content safety check
+    if not content_safety_check(result["response"]):
+        result["response"] = "Response filtered by content safety. Please rephrase your question."
+
+    logging.info(f"[Navigator] Responded with {len(result['highlight_nodes'])} highlight nodes.")
+
+    return func.HttpResponse(
+        json.dumps(result),
+        mimetype="application/json",
+        status_code=200,
+    )
+
+
 @app.route(route="health", methods=["GET"])
 def health(req: func.HttpRequest) -> func.HttpResponse:
     """Health check — reports agent status and Azure services in use."""
@@ -1007,6 +1141,7 @@ def health(req: func.HttpRequest) -> func.HttpResponse:
                 {"name": "historian", "type": "SK Plugin", "status": "active"},
                 {"name": "negotiator", "type": "SK Plugin", "status": "active"},
                 {"name": "chronicler", "type": "SK Plugin", "status": "active"},
+                {"name": "navigator", "type": "SK Plugin", "status": "active"},
             ],
             "azure_services": [
                 "Azure OpenAI", "Azure Functions V2", "Azure AI Content Safety",

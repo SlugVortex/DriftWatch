@@ -1,4 +1,5 @@
 <?php
+
 // app/Models/PullRequest.php
 // Core model tracking every PR analyzed by DriftWatch's 4-agent pipeline.
 
@@ -27,13 +28,27 @@ class PullRequest extends Model
         'additions',
         'deletions',
         'status',
+        'target_environment',
+        'pipeline_template',
+        'pipeline_paused',
+        'paused_at_stage',
+        'paused_at',
+        'paused_reason',
     ];
 
-    protected $casts = [
-        'files_changed' => 'integer',
-        'additions' => 'integer',
-        'deletions' => 'integer',
-    ];
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'files_changed' => 'integer',
+            'additions' => 'integer',
+            'deletions' => 'integer',
+            'pipeline_paused' => 'boolean',
+            'paused_at' => 'datetime',
+        ];
+    }
 
     // --- Relationships ---
 
@@ -100,10 +115,19 @@ class PullRequest extends Model
     public function getRiskColorAttribute(): string
     {
         $score = $this->risk_score_value;
-        if ($score === null) return 'secondary';
-        if ($score >= 76) return 'danger';
-        if ($score >= 51) return 'warning';
-        if ($score >= 26) return 'info';
+        if ($score === null) {
+            return 'secondary';
+        }
+        if ($score >= 76) {
+            return 'danger';
+        }
+        if ($score >= 51) {
+            return 'warning';
+        }
+        if ($score >= 26) {
+            return 'info';
+        }
+
         return 'success';
     }
 }

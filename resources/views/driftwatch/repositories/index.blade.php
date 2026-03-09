@@ -77,6 +77,23 @@
                                 </div>
                             </div>
 
+                            {{-- Auto-Analyze Toggle --}}
+                            <div class="d-flex align-items-center justify-content-between mb-3 p-2 rounded-2" style="background: {{ $repo->auto_analyze ? 'rgba(96,93,255,0.06)' : '#f8fafc' }}; border: 1px solid {{ $repo->auto_analyze ? 'rgba(96,93,255,0.2)' : '#e2e8f0' }};">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="material-symbols-outlined {{ $repo->auto_analyze ? 'text-primary' : 'text-secondary' }}" style="font-size: 18px;">auto_fix_high</span>
+                                    <div>
+                                        <span class="fs-12 fw-medium">Auto-Analyze</span>
+                                        <span class="d-block fs-10 text-secondary">Scan new PRs automatically</span>
+                                    </div>
+                                </div>
+                                <form action="{{ route('driftwatch.repositories.toggle-auto-analyze', $repo) }}" method="POST">
+                                    @csrf
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" onchange="this.form.submit()" {{ $repo->auto_analyze ? 'checked' : '' }}>
+                                    </div>
+                                </form>
+                            </div>
+
                             @if($repo->last_synced_at)
                                 <p class="fs-12 text-secondary mb-3">
                                     <span class="material-symbols-outlined align-middle me-1" style="font-size: 13px;">sync</span>
@@ -89,7 +106,7 @@
                                 </p>
                             @endif
 
-                            <div class="d-flex gap-2">
+                            <div class="d-flex gap-2 flex-wrap">
                                 <a href="{{ route('driftwatch.repositories.show', $repo) }}" class="btn btn-sm btn-primary flex-fill">
                                     <span class="material-symbols-outlined align-middle me-1" style="font-size: 14px;">visibility</span> View PRs
                                 </a>
@@ -97,6 +114,12 @@
                                     @csrf
                                     <button type="submit" class="btn btn-sm btn-outline-primary w-100">
                                         <span class="material-symbols-outlined align-middle me-1" style="font-size: 14px;">sync</span> Sync
+                                    </button>
+                                </form>
+                                <form action="{{ route('driftwatch.repositories.analyze-all', $repo) }}" method="POST" class="flex-fill">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-outline-success w-100" onclick="return confirm('Run DriftWatch analysis on all unanalyzed PRs?')">
+                                        <span class="material-symbols-outlined align-middle me-1" style="font-size: 14px;">auto_fix_high</span> Analyze
                                     </button>
                                 </form>
                                 <form action="{{ route('driftwatch.repositories.disconnect', $repo) }}" method="POST">

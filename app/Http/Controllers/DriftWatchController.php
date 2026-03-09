@@ -1,14 +1,15 @@
 <?php
+
 // app/Http/Controllers/DriftWatchController.php
 // Main dashboard controller for DriftWatch - handles all dashboard pages,
 // PR detail views, approve/block actions, and analytics.
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\GitHubWebhookController;
 use App\Models\DeploymentDecision;
 use App\Models\DeploymentOutcome;
 use App\Models\Incident;
+use App\Models\PipelineConfig;
 use App\Models\PullRequest;
 use App\Models\RiskAssessment;
 use Illuminate\Http\Request;
@@ -53,8 +54,8 @@ class DriftWatchController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('pr_title', 'like', "%{$search}%")
-                  ->orWhere('pr_author', 'like', "%{$search}%")
-                  ->orWhere('repo_full_name', 'like', "%{$search}%");
+                    ->orWhere('pr_author', 'like', "%{$search}%")
+                    ->orWhere('repo_full_name', 'like', "%{$search}%");
             });
         }
 
@@ -85,7 +86,7 @@ class DriftWatchController extends Controller
         // Generate AI file descriptions if not yet present
         if ($pullRequest->blastRadius && empty($pullRequest->blastRadius->file_descriptions)) {
             $descriptions = $this->generateFileDescriptions($pullRequest);
-            if (!empty($descriptions)) {
+            if (! empty($descriptions)) {
                 $pullRequest->blastRadius->update(['file_descriptions' => $descriptions]);
                 $pullRequest->load('blastRadius');
             }
@@ -101,7 +102,7 @@ class DriftWatchController extends Controller
     {
         $pullRequest->load('deploymentDecision');
 
-        if (!$pullRequest->deploymentDecision) {
+        if (! $pullRequest->deploymentDecision) {
             return back()->with('error', 'No deployment decision found for this PR.');
         }
 
@@ -128,7 +129,7 @@ class DriftWatchController extends Controller
     {
         $pullRequest->load('deploymentDecision');
 
-        if (!$pullRequest->deploymentDecision) {
+        if (! $pullRequest->deploymentDecision) {
             return back()->with('error', 'No deployment decision found for this PR.');
         }
 
@@ -167,7 +168,7 @@ class DriftWatchController extends Controller
         $prNumber = (int) $matches[3];
         $repoFullName = "{$owner}/{$repo}";
 
-        Log::info("[DriftWatch] Manual analysis requested.", [
+        Log::info('[DriftWatch] Manual analysis requested.', [
             'repo' => $repoFullName,
             'pr_number' => $prNumber,
         ]);
@@ -180,18 +181,20 @@ class DriftWatchController extends Controller
                 'Accept' => 'application/vnd.github.v3+json',
             ])->timeout(15)->get("https://api.github.com/repos/{$repoFullName}/pulls/{$prNumber}");
 
-            if (!$ghResponse->successful()) {
+            if (! $ghResponse->successful()) {
                 Log::warning('[DriftWatch] GitHub API returned error.', [
                     'status' => $ghResponse->status(),
                     'body' => $ghResponse->body(),
                 ]);
+
                 return back()->with('error', "Could not fetch PR from GitHub (HTTP {$ghResponse->status()}). Check the URL and ensure the repo is accessible.");
             }
 
             $prData = $ghResponse->json();
         } catch (\Exception $e) {
             Log::error('[DriftWatch] GitHub API call failed.', ['error' => $e->getMessage()]);
-            return back()->with('error', 'Could not connect to GitHub API: ' . $e->getMessage());
+
+            return back()->with('error', 'Could not connect to GitHub API: '.$e->getMessage());
         }
 
         // Create or update the PR record
@@ -286,7 +289,7 @@ class DriftWatchController extends Controller
     public function agentStatus(string $agent)
     {
         $validAgents = ['archaeologist', 'historian', 'negotiator', 'chronicler'];
-        if (!in_array($agent, $validAgents)) {
+        if (! in_array($agent, $validAgents)) {
             abort(404);
         }
 
@@ -388,6 +391,18 @@ class DriftWatchController extends Controller
             ->get();
 
         return view('driftwatch.governance', compact('recentDecisions'));
+    }
+
+    /**
+     * Explainability page — how scoring and pipeline decisions work.
+     */
+    public function explainability(): \Illuminate\View\View
+    {
+        Log::info('[DriftWatch] Explainability page loaded.');
+
+        $defaultConfig = PipelineConfig::getDefault();
+
+        return view('driftwatch.explainability', compact('defaultConfig'));
     }
 
     /**
@@ -509,7 +524,7 @@ class DriftWatchController extends Controller
                 'per_page' => 20,
             ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 return back()->with('error', "Could not fetch PRs from GitHub (HTTP {$response->status()}).");
             }
 
@@ -540,10 +555,35 @@ class DriftWatchController extends Controller
 
             Log::info("[DriftWatch] Synced {$synced} PRs from {$repository->full_name}");
 
-            return back()->with('success', "Synced {$synced} open PRs from {$repository->full_name}.");
+            // Auto-analyze if enabled
+            $autoMsg = '';
+            if ($repository->auto_analyze && $synced > 0) {
+                $unanalyzed = PullRequest::where('repo_full_name', $repository->full_name)
+                    ->where('status', 'pending')
+                    ->whereDoesntHave('riskAssessment')
+                    ->get();
+
+                if ($unanalyzed->isNotEmpty()) {
+                    $webhookController = app(\App\Http\Controllers\GitHubWebhookController::class);
+                    $analyzed = 0;
+                    foreach ($unanalyzed as $pr) {
+                        try {
+                            $webhookController->runAgentPipelinePublic($pr);
+                            $analyzed++;
+                        } catch (\Exception $e) {
+                            Log::error("[DriftWatch] Auto-analyze failed for PR #{$pr->pr_number}", ['error' => $e->getMessage()]);
+                        }
+                    }
+                    $autoMsg = " Auto-analyzed {$analyzed} PR(s).";
+                    Log::info("[DriftWatch] Auto-analyzed {$analyzed} PRs from {$repository->full_name}");
+                }
+            }
+
+            return back()->with('success', "Synced {$synced} open PRs from {$repository->full_name}.{$autoMsg}");
         } catch (\Exception $e) {
             Log::error("[DriftWatch] Sync failed for {$repository->full_name}", ['error' => $e->getMessage()]);
-            return back()->with('error', 'Sync failed: ' . $e->getMessage());
+
+            return back()->with('error', 'Sync failed: '.$e->getMessage());
         }
     }
 
@@ -562,11 +602,181 @@ class DriftWatchController extends Controller
     }
 
     /**
-     * Settings page.
+     * Toggle auto-analyze on a repository.
+     */
+    public function toggleAutoAnalyze(\App\Models\Repository $repository)
+    {
+        $repository->update(['auto_analyze' => ! $repository->auto_analyze]);
+
+        $state = $repository->auto_analyze ? 'enabled' : 'disabled';
+        Log::info("[DriftWatch] Auto-analyze {$state} for {$repository->full_name}");
+
+        return back()->with('success', "Auto-analyze {$state} for {$repository->full_name}.");
+    }
+
+    /**
+     * Analyze all unanalyzed PRs in a repository.
+     */
+    public function analyzeAllPrs(\App\Models\Repository $repository)
+    {
+        $unanalyzed = PullRequest::where('repo_full_name', $repository->full_name)
+            ->where('status', 'pending')
+            ->whereDoesntHave('riskAssessment')
+            ->get();
+
+        if ($unanalyzed->isEmpty()) {
+            return back()->with('warning', 'No unanalyzed PRs found. All PRs have already been processed.');
+        }
+
+        $webhookController = app(\App\Http\Controllers\GitHubWebhookController::class);
+        $analyzed = 0;
+
+        foreach ($unanalyzed as $pr) {
+            try {
+                $webhookController->runAgentPipelinePublic($pr);
+                $analyzed++;
+            } catch (\Exception $e) {
+                Log::error("[DriftWatch] Auto-analyze failed for PR #{$pr->pr_number}", ['error' => $e->getMessage()]);
+            }
+        }
+
+        Log::info("[DriftWatch] Auto-analyzed {$analyzed} PRs from {$repository->full_name}");
+
+        return back()->with('success', "Analyzed {$analyzed} PR(s) from {$repository->full_name}.");
+    }
+
+    /**
+     * Settings page — includes pipeline configuration.
      */
     public function settings()
     {
-        return view('driftwatch.settings');
+        $pipelineConfigs = PipelineConfig::all();
+
+        // Seed defaults if none exist
+        if ($pipelineConfigs->isEmpty()) {
+            PipelineConfig::seedBuiltInTemplates();
+            $pipelineConfigs = PipelineConfig::all();
+        }
+
+        $defaultConfig = $pipelineConfigs->firstWhere('is_default', true) ?? $pipelineConfigs->first();
+
+        return view('driftwatch.settings', compact('pipelineConfigs', 'defaultConfig'));
+    }
+
+    /**
+     * Save pipeline configuration updates.
+     */
+    public function savePipelineConfig(Request $request)
+    {
+        $request->validate([
+            'config_id' => ['required', 'exists:pipeline_configs,id'],
+        ]);
+
+        $config = PipelineConfig::findOrFail($request->input('config_id'));
+
+        $config->update([
+            'agent_archaeologist' => $request->boolean('agent_archaeologist', true),
+            'agent_historian' => $request->boolean('agent_historian', true),
+            'agent_negotiator' => $request->boolean('agent_negotiator', true),
+            'agent_chronicler' => $request->boolean('agent_chronicler', true),
+            'require_approval_after_scoring' => $request->boolean('require_approval_after_scoring'),
+            'auto_approve_below_score' => (int) $request->input('auto_approve_below_score', 20),
+            'auto_block_above_score' => (int) $request->input('auto_block_above_score', 85),
+            'max_retries_per_agent' => (int) $request->input('max_retries_per_agent', 1),
+            'retry_on_timeout' => $request->boolean('retry_on_timeout', true),
+        ]);
+
+        // Update environment thresholds
+        $envThresholds = [];
+        foreach (['production', 'staging', 'development'] as $env) {
+            if ($request->has("env_{$env}_threshold")) {
+                $envThresholds[$env] = [
+                    'risk_threshold' => (int) $request->input("env_{$env}_threshold", 50),
+                    'require_approval' => $request->boolean("env_{$env}_approval"),
+                ];
+            }
+        }
+        if (! empty($envThresholds)) {
+            $config->update(['environment_thresholds' => $envThresholds]);
+        }
+
+        // Set as default if requested
+        if ($request->boolean('set_default')) {
+            PipelineConfig::where('id', '!=', $config->id)->update(['is_default' => false]);
+            $config->update(['is_default' => true]);
+        }
+
+        Log::info("[DriftWatch] Pipeline config '{$config->name}' updated.");
+
+        return back()->with('success', "Pipeline template '{$config->label}' saved successfully.");
+    }
+
+    /**
+     * Reset pipeline configs to built-in defaults.
+     */
+    public function resetPipelineConfig()
+    {
+        PipelineConfig::truncate();
+        PipelineConfig::seedBuiltInTemplates();
+
+        Log::info('[DriftWatch] Pipeline configs reset to defaults.');
+
+        return back()->with('success', 'Pipeline configurations reset to defaults.');
+    }
+
+    /**
+     * Resume a paused pipeline (approval gate).
+     */
+    public function resumePipeline(PullRequest $pullRequest)
+    {
+        if (! $pullRequest->pipeline_paused) {
+            return back()->with('warning', 'This pipeline is not paused.');
+        }
+
+        Log::info("[DriftWatch] Pipeline resumed for PR #{$pullRequest->pr_number} by manual approval.");
+
+        $webhookController = app(GitHubWebhookController::class);
+        $webhookController->resumePipeline($pullRequest);
+
+        return redirect()
+            ->route('driftwatch.show', $pullRequest)
+            ->with('success', "Pipeline resumed for PR #{$pullRequest->pr_number}. Negotiator agent will now make its decision.");
+    }
+
+    /**
+     * Update the target environment for a PR.
+     */
+    public function updateEnvironment(PullRequest $pullRequest, Request $request)
+    {
+        $request->validate([
+            'target_environment' => ['required', 'in:production,staging,development'],
+        ]);
+
+        $pullRequest->update([
+            'target_environment' => $request->input('target_environment'),
+        ]);
+
+        Log::info("[DriftWatch] PR #{$pullRequest->pr_number} target environment changed to {$request->input('target_environment')}.");
+
+        return back()->with('success', "Target environment updated to {$request->input('target_environment')}.");
+    }
+
+    /**
+     * Update the pipeline template for a PR.
+     */
+    public function updateTemplate(PullRequest $pullRequest, Request $request)
+    {
+        $request->validate([
+            'pipeline_template' => ['required', 'string'],
+        ]);
+
+        $pullRequest->update([
+            'pipeline_template' => $request->input('pipeline_template'),
+        ]);
+
+        Log::info("[DriftWatch] PR #{$pullRequest->pr_number} pipeline template changed to {$request->input('pipeline_template')}.");
+
+        return back()->with('success', "Pipeline template updated to {$request->input('pipeline_template')}.");
     }
 
     // --- Private helpers ---
@@ -582,6 +792,7 @@ class DriftWatchController extends Controller
         }
 
         $accurate = DeploymentOutcome::where('prediction_accurate', true)->count();
+
         return round(($accurate / $total) * 100, 1);
     }
 
@@ -601,6 +812,7 @@ class DriftWatchController extends Controller
         }
 
         arsort($serviceCounts);
+
         return array_slice($serviceCounts, 0, 10, true);
     }
 
@@ -615,6 +827,7 @@ class DriftWatchController extends Controller
         }
 
         $completed = PullRequest::whereHas($relation)->count();
+
         return (int) round(($completed / $total) * 100);
     }
 
@@ -693,7 +906,7 @@ class DriftWatchController extends Controller
     private function generateFileDescriptions(PullRequest $pullRequest): array
     {
         $blastRadius = $pullRequest->blastRadius;
-        if (!$blastRadius) {
+        if (! $blastRadius) {
             return [];
         }
 
@@ -726,7 +939,7 @@ class DriftWatchController extends Controller
 
         // Also add dep graph source files not in affected_files
         foreach (array_keys($depGraph) as $srcFile) {
-            if (!isset($fileSnippets[$srcFile]) && count($fileSnippets) < 25) {
+            if (! isset($fileSnippets[$srcFile]) && count($fileSnippets) < 25) {
                 try {
                     $response = Http::withHeaders([
                         'Authorization' => "Bearer {$ghToken}",
@@ -748,6 +961,7 @@ class DriftWatchController extends Controller
 
         if (empty($fileSnippets)) {
             Log::info("[DriftWatch] No file snippets fetched from GitHub for PR #{$pullRequest->pr_number}. Using heuristic descriptions.");
+
             return $this->generateHeuristicDescriptions($affectedFiles, $depGraph);
         }
 
@@ -783,12 +997,13 @@ PROMPT;
             $apiKey = config('services.azure_openai.api_key');
             $deployment = config('services.azure_openai.deployment');
 
-            if (!$endpoint || !$apiKey) {
+            if (! $endpoint || ! $apiKey) {
                 Log::warning('[DriftWatch] Azure OpenAI not configured. Using heuristic descriptions.');
+
                 return $this->generateHeuristicDescriptions($affectedFiles, $depGraph);
             }
 
-            $url = rtrim($endpoint, '/') . "/openai/deployments/{$deployment}/chat/completions?api-version=2024-12-01-preview";
+            $url = rtrim($endpoint, '/')."/openai/deployments/{$deployment}/chat/completions?api-version=2024-12-01-preview";
 
             $response = Http::withHeaders([
                 'api-key' => $apiKey,
@@ -812,8 +1027,9 @@ PROMPT;
 
                 $descriptions = json_decode($content, true);
 
-                if (is_array($descriptions) && !empty($descriptions)) {
-                    Log::info("[DriftWatch] AI generated descriptions for " . count($descriptions) . " files in PR #{$pullRequest->pr_number}.");
+                if (is_array($descriptions) && ! empty($descriptions)) {
+                    Log::info('[DriftWatch] AI generated descriptions for '.count($descriptions)." files in PR #{$pullRequest->pr_number}.");
+
                     return $descriptions;
                 }
 
@@ -866,11 +1082,11 @@ PROMPT;
                 str_contains($dir, 'view') || str_contains($dir, 'template') || $ext === 'blade.php' => 'View Template',
                 in_array($ext, ['json', 'yaml', 'yml', 'toml', 'ini', 'env']) || str_contains($nameLower, 'config') => 'Configuration',
                 in_array($ext, ['css', 'scss', 'less']) => 'Styles',
-                default => ucfirst($ext) . ' Module',
+                default => ucfirst($ext).' Module',
             };
 
             // Build summary
-            $summary = "Handles {$role} logic in the " . basename($dir) . " directory.";
+            $summary = "Handles {$role} logic in the ".basename($dir).' directory.';
 
             // Build risk assessment
             $risk = match (true) {
@@ -885,7 +1101,7 @@ PROMPT;
 
             // Build affects description
             $affects = $depCount > 0
-                ? "Changes here directly impact {$depCount} downstream file(s): " . implode(', ', array_map('basename', array_slice($deps, 0, 4))) . (count($deps) > 4 ? ' and more' : '') . '.'
+                ? "Changes here directly impact {$depCount} downstream file(s): ".implode(', ', array_map('basename', array_slice($deps, 0, 4))).(count($deps) > 4 ? ' and more' : '').'.'
                 : 'No known downstream dependencies — changes are relatively isolated.';
 
             $descriptions[$filePath] = [
@@ -898,15 +1114,15 @@ PROMPT;
 
         // Also add descriptions for source files in dep graph not in affected_files
         foreach (array_keys($depGraph) as $srcFile) {
-            if (!isset($descriptions[$srcFile])) {
+            if (! isset($descriptions[$srcFile])) {
                 $deps = $depGraph[$srcFile] ?? [];
                 $depCount = is_array($deps) ? count($deps) : 0;
                 $descriptions[$srcFile] = [
                     'summary' => 'Source file that was directly changed in this PR.',
-                    'role' => ucfirst(pathinfo($srcFile, PATHINFO_EXTENSION)) . ' Module',
+                    'role' => ucfirst(pathinfo($srcFile, PATHINFO_EXTENSION)).' Module',
                     'risk' => $depCount >= 3 ? "High fan-out: {$depCount} files depend on this." : 'Moderate — directly changed.',
                     'affects' => $depCount > 0
-                        ? "Impacts {$depCount} downstream files: " . implode(', ', array_map('basename', array_slice($deps, 0, 4))) . '.'
+                        ? "Impacts {$depCount} downstream files: ".implode(', ', array_map('basename', array_slice($deps, 0, 4))).'.'
                         : 'No known downstream dependencies.',
                 ];
             }

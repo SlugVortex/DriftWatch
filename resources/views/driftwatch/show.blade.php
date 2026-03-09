@@ -152,6 +152,18 @@
     .legend-btn:hover { border-color: #605DFF !important; }
     .legend-btn.dimmed { opacity: 0.35; background: #f8fafc; }
     [data-theme=dark] .legend-btn { border-color: #334155 !important; background: #1e293b; color: #e2e8f0; }[data-theme=dark] .legend-btn.dimmed { background: #0f172a; }[data-theme=dark] #graphHoverCard .card { background: rgba(30,41,59,0.97) !important; }
+
+    /* === Blast Map — animated concentric radius === */
+    @keyframes blastPulse { 0% { opacity: 0.6; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.02); } 100% { opacity: 0.6; transform: scale(0.95); } }
+    @keyframes blastRingExpand { 0% { r: 0; opacity: 0.8; stroke-width: 3; } 100% { r: 300; opacity: 0; stroke-width: 0.5; } }
+    @keyframes blastNodeAppear { 0% { opacity: 0; transform: scale(0); } 60% { opacity: 1; transform: scale(1.15); } 100% { opacity: 1; transform: scale(1); } }
+    @keyframes blastOrbit { 0% { transform: rotate(0deg) translateX(var(--orbit-r)) rotate(0deg); } 100% { transform: rotate(360deg) translateX(var(--orbit-r)) rotate(-360deg); } }
+    .blast-node { cursor: pointer; transition: filter 0.2s, opacity 0.2s; }
+    .blast-node:hover { filter: url(#glowStrong) brightness(1.3); }
+    .blast-node-label { fill: #e2e8f0; font-size: 11px; pointer-events: none; text-anchor: middle; dominant-baseline: central; font-weight: 500; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
+    .blast-ring-static { fill: none; stroke-dasharray: 4 6; }
+    .blast-ring-label { font-size: 11px; text-anchor: middle; letter-spacing: 3px; text-transform: uppercase; font-weight: 700; }
+    .blast-connection { stroke-linecap: round; transition: opacity 0.2s; }
     [data-theme=dark] #graphHoverCard .fw-bold { color: #f1f5f9 !important; }[data-theme=dark] #graphHoverCard .text-secondary { color: #94a3b8 !important; }
     #blastRadiusDynamic canvas { border-radius: 10px; }
 
@@ -196,6 +208,164 @@
     [data-theme=dark] #dagTreeContainer { background: #1e293b !important; border-color: #334155 !important; }[data-theme=dark] #dagTreeSvg text { fill: #e2e8f0 !important; }
     #dagTreeSvg .edgePath path { fill: none; }
 
+    /* Tree layout: graph + chat panel */
+    .tree-layout { display: flex; gap: 0; position: relative; height: 600px; }
+    .tree-graph-area { flex: 1; min-width: 0; transition: flex 0.3s ease; overflow: auto; }
+    .tree-side-panel { width: 0; overflow: hidden; transition: width 0.3s ease, opacity 0.2s ease; opacity: 0; border-left: 2px solid #e2e8f0; background: #fff; display: flex; flex-direction: column; height: 100%; flex-shrink: 0; position: relative; }
+    .tree-side-panel.open { width: 480px; opacity: 1; overflow: visible; }
+    .tree-side-panel .resize-handle { position: absolute; left: -4px; top: 0; bottom: 0; width: 8px; cursor: col-resize; z-index: 20; background: transparent; }
+    .tree-side-panel .resize-handle:hover, .tree-side-panel .resize-handle.dragging { background: rgba(96,93,255,0.3); }
+    .tree-side-panel .resize-handle::after { content: ''; position: absolute; left: 3px; top: 50%; transform: translateY(-50%); width: 2px; height: 32px; background: #cbd5e1; border-radius: 2px; transition: background 0.2s; }
+    .tree-side-panel .resize-handle:hover::after, .tree-side-panel .resize-handle.dragging::after { background: #605DFF; }
+    [data-theme=dark] .tree-side-panel { border-color: #334155; background: #1e293b; }
+    .tree-side-panel .sp-header { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; flex-shrink: 0; background: #fff; z-index: 2; }
+    [data-theme=dark] .tree-side-panel .sp-header { background: #1e293b; border-color: #334155; }
+    .tree-side-panel .sp-close { cursor: pointer; border: none; background: none; color: #94a3b8; padding: 4px; border-radius: 6px; line-height: 1; }
+    .tree-side-panel .sp-close:hover { background: #f1f5f9; color: #1e293b; }
+    [data-theme=dark] .tree-side-panel .sp-close:hover { background: #334155; color: #e2e8f0; }
+    .tree-side-panel .chat-input-area { padding: 10px 14px; border-top: 1px solid #e2e8f0; background: #fff; flex-shrink: 0; }
+    [data-theme=dark] .tree-side-panel .chat-input-area { border-color: #334155; background: #1e293b; }
+    [data-theme=dark] #chatMessages { background: #0f172a; }
+    [data-theme=dark] #chatInput { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+
+    /* Chat bubbles */
+    .chat-msg { display: flex; }
+    .chat-msg.chat-bot { justify-content: flex-start; }
+    .chat-msg.chat-user { justify-content: flex-end; }
+    .chat-bubble { max-width: 95%; padding: 10px 14px; border-radius: 14px; font-size: 12px; line-height: 1.6; }
+    .chat-bot .chat-bubble { background: #f1f5f9; color: #334155; border-bottom-left-radius: 4px; }
+    .chat-user .chat-bubble { background: #605DFF; color: #fff; border-bottom-right-radius: 4px; }
+    [data-theme=dark] .chat-bot .chat-bubble { background: #1e293b; color: #e2e8f0; }
+    .chat-suggestions { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chat-suggest-btn { font-size: 11px; padding: 4px 10px; border-radius: 14px; border: 1px solid #CBD5E1; background: #fff; color: #475569; cursor: pointer; transition: all 0.15s; }
+    .chat-suggest-btn:hover { border-color: #605DFF; background: #EEF2FF; color: #605DFF; }
+    [data-theme=dark] .chat-suggest-btn { background: #0f172a; color: #94a3b8; border-color: #334155; }
+    [data-theme=dark] .chat-suggest-btn:hover { border-color: #605DFF; background: #1e1b4b; color: #a5b4fc; }
+    .chat-file-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; margin: 6px 0; cursor: pointer; transition: all 0.15s; }
+    .chat-file-card:hover { border-color: #605DFF; box-shadow: 0 2px 8px rgba(96,93,255,0.1); }
+    [data-theme=dark] .chat-file-card { background: #0f172a; border-color: #334155; }
+    .chat-risk-bar { height: 4px; border-radius: 2px; background: #f1f5f9; overflow: hidden; margin-top: 4px; }
+    [data-theme=dark] .chat-risk-bar { background: #334155; }
+    .chat-risk-fill { height: 100%; border-radius: 2px; }
+
+    /* Collapsible summary */
+    .tree-summary-collapse { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+    .tree-summary-collapse.open { max-height: 600px; }
+
+    /* Custom scrollbars */
+    #dagTreeContainer::-webkit-scrollbar, #chatMessages::-webkit-scrollbar { width: 6px; height: 6px; }
+    #dagTreeContainer::-webkit-scrollbar-track, #chatMessages::-webkit-scrollbar-track { background: transparent; }
+    #dagTreeContainer::-webkit-scrollbar-thumb, #chatMessages::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+    #dagTreeContainer::-webkit-scrollbar-thumb:hover, #chatMessages::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    [data-theme=dark] #dagTreeContainer::-webkit-scrollbar-thumb, [data-theme=dark] #chatMessages::-webkit-scrollbar-thumb { background: #475569; }
+    #dagTreeContainer, #chatMessages { scrollbar-width: thin; scrollbar-color: #CBD5E1 transparent; }
+    [data-theme=dark] #dagTreeContainer, [data-theme=dark] #chatMessages { scrollbar-color: #475569 transparent; }
+
+    /* Quick action buttons shown under file card */
+    .chat-quick-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+    .chat-quick-btn { font-size: 10px; padding: 3px 10px; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff; color: #605DFF; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 3px; }
+    .chat-quick-btn:hover { background: #EEF2FF; border-color: #605DFF; }
+    [data-theme=dark] .chat-quick-btn { background: #0f172a; color: #a5b4fc; border-color: #334155; }
+    [data-theme=dark] .chat-quick-btn:hover { background: #1e1b4b; border-color: #605DFF; }
+
+    /* AI confidence badge */
+    .chat-confidence { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; color: #94a3b8; margin-top: 4px; }
+    .chat-confidence-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+    /* Typing animation */
+    .chat-typing-dots span { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #605DFF; margin: 0 2px; animation: chat-dot-bounce 1.4s infinite ease-in-out both; }
+    .chat-typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+    .chat-typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes chat-dot-bounce { 0%,80%,100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+    /* Export button */
+    .chat-export-btn { font-size: 10px; color: #94a3b8; cursor: pointer; border: none; background: none; padding: 2px; }
+    .chat-export-btn:hover { color: #605DFF; }
+
+    /* Inline code viewer in chat */
+    .chat-code-viewer { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin: 6px 0; font-size: 11px; }
+    [data-theme=dark] .chat-code-viewer { border-color: #334155; }
+    .chat-code-header { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; }
+    [data-theme=dark] .chat-code-header { background: #1e293b; border-color: #334155; }
+    .chat-code-header .file-name { font-family: monospace; font-size: 10px; font-weight: 600; color: #605DFF; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chat-code-header .code-tab { font-size: 10px; padding: 2px 8px; border-radius: 4px; border: 1px solid transparent; background: none; color: #64748b; cursor: pointer; }
+    .chat-code-header .code-tab.active { background: #fff; border-color: #e2e8f0; color: #1e293b; font-weight: 600; }
+    [data-theme=dark] .chat-code-header .code-tab.active { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+    .chat-code-body { max-height: 360px; overflow: auto; background: #1e1e2e; color: #cdd6f4; padding: 10px 12px; font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace; font-size: 11px; line-height: 1.6; white-space: pre; tab-size: 4; }
+    .chat-code-body::-webkit-scrollbar { width: 5px; height: 5px; }
+    .chat-code-body::-webkit-scrollbar-thumb { background: #45475a; border-radius: 3px; }
+    .chat-code-body .line-num { display: inline-block; min-width: 32px; color: #585b70; text-align: right; padding-right: 12px; user-select: none; }
+    .chat-code-body .diff-add { background: rgba(16,185,129,0.15); display: block; }
+    .chat-code-body .diff-del { background: rgba(239,68,68,0.15); display: block; }
+    .chat-code-body .diff-hdr { color: #89b4fa; font-weight: bold; }
+    .chat-code-stats { display: flex; gap: 8px; font-size: 10px; color: #94a3b8; padding: 4px 10px; background: #f8fafc; border-top: 1px solid #e2e8f0; }
+    [data-theme=dark] .chat-code-stats { background: #0f172a; border-color: #334155; }
+
+    /* Full-screen code preview modal */
+    .code-preview-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: none; backdrop-filter: blur(4px); }
+    .code-preview-overlay.show { display: flex; align-items: center; justify-content: center; }
+    .code-preview-modal { width: 92vw; max-width: 1200px; height: 85vh; background: #1e1e2e; border-radius: 14px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 48px rgba(0,0,0,0.4); }
+    .code-preview-modal .cpm-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; background: #181825; border-bottom: 1px solid #313244; flex-shrink: 0; }
+    .code-preview-modal .cpm-header .file-info { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .code-preview-modal .cpm-header .file-name { font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace; font-size: 13px; color: #cba6f7; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .code-preview-modal .cpm-header .file-path { font-family: monospace; font-size: 11px; color: #6c7086; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .code-preview-modal .cpm-toolbar { display: flex; align-items: center; gap: 6px; padding: 8px 20px; background: #11111b; border-bottom: 1px solid #313244; flex-shrink: 0; flex-wrap: wrap; }
+    .code-preview-modal .cpm-tab { font-size: 12px; padding: 5px 14px; border-radius: 6px; border: 1px solid transparent; background: none; color: #a6adc8; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .code-preview-modal .cpm-tab.active { background: #313244; color: #cdd6f4; border-color: #45475a; font-weight: 600; }
+    .code-preview-modal .cpm-tab:hover:not(.active) { background: #1e1e2e; color: #cdd6f4; }
+    .code-preview-modal .cpm-stats { display: flex; gap: 14px; margin-left: auto; font-size: 11px; color: #6c7086; }
+    .code-preview-modal .cpm-stats .stat-badge { display: flex; align-items: center; gap: 4px; }
+    .code-preview-modal .cpm-stats .stat-add { color: #a6e3a1; }
+    .code-preview-modal .cpm-stats .stat-del { color: #f38ba8; }
+    .code-preview-modal .cpm-body { flex: 1; overflow: auto; padding: 16px 20px; font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace; font-size: 13px; line-height: 1.7; color: #cdd6f4; white-space: pre; tab-size: 4; }
+    .code-preview-modal .cpm-body::-webkit-scrollbar { width: 8px; height: 8px; }
+    .code-preview-modal .cpm-body::-webkit-scrollbar-thumb { background: #45475a; border-radius: 4px; }
+    .code-preview-modal .cpm-body::-webkit-scrollbar-track { background: #1e1e2e; }
+    .code-preview-modal .cpm-body .line-num { display: inline-block; min-width: 48px; color: #45475a; text-align: right; padding-right: 16px; user-select: none; border-right: 1px solid #313244; margin-right: 16px; }
+    .code-preview-modal .cpm-body .diff-add { background: rgba(166,227,161,0.1); display: block; }
+    .code-preview-modal .cpm-body .diff-del { background: rgba(243,139,168,0.1); display: block; }
+    .code-preview-modal .cpm-body .diff-hdr { color: #89b4fa; font-weight: bold; }
+    .code-preview-modal .cpm-close { background: none; border: none; color: #6c7086; cursor: pointer; padding: 6px; border-radius: 8px; line-height: 1; transition: all 0.15s; }
+    .code-preview-modal .cpm-close:hover { background: #313244; color: #f38ba8; }
+    .code-preview-modal .cpm-action-bar { display: flex; align-items: center; gap: 6px; }
+    .code-preview-modal .cpm-action { font-size: 11px; padding: 4px 10px; border-radius: 5px; border: 1px solid #313244; background: #181825; color: #a6adc8; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.15s; }
+    .code-preview-modal .cpm-action:hover { background: #313244; color: #cdd6f4; border-color: #45475a; }
+
+    /* Tree legend — floating bottom-left */
+    .tree-legend { position: absolute; bottom: 12px; left: 12px; background: rgba(255,255,255,0.95); border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; z-index: 10; backdrop-filter: blur(8px); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    [data-theme=dark] .tree-legend { background: rgba(30,41,59,0.95); border-color: #334155; }
+    .tree-legend-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; margin-bottom: 6px; }
+    .tree-legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #475569; line-height: 1.8; }
+    [data-theme=dark] .tree-legend-item { color: #94a3b8; }
+    .tree-legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+
+    /* Speech-to-text button */
+    .chat-mic-btn { border: none; background: none; color: #94a3b8; padding: 4px; border-radius: 50%; cursor: pointer; transition: all 0.15s; }
+    .chat-mic-btn:hover { color: #605DFF; background: rgba(96,93,255,0.1); }
+    .chat-mic-btn.recording { color: #EF4444; animation: mic-pulse 1s infinite; }
+    @keyframes mic-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+
+    /* Highlighted nodes/edges */
+    #dagTreeSvg .node-highlighted rect, #dagTreeSvg .node-highlighted circle { filter: drop-shadow(0 0 8px rgba(96,93,255,0.6)); }
+    #dagTreeSvg .node-dimmed { opacity: 0.2; }
+    #dagTreeSvg .edge-highlighted path { stroke: #605DFF !important; stroke-width: 3px !important; filter: drop-shadow(0 0 4px rgba(96,93,255,0.4)); }
+    #dagTreeSvg .edge-dimmed path { opacity: 0.1; }
+
+    /* Review item tooltip — positioned below the item, always on-screen */
+    .review-item { position: relative; transition: border-color 0.15s, box-shadow 0.15s; }
+    .review-item:hover { border-color: #CBD5E1 !important; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .review-tooltip { display: none; position: absolute; z-index: 50; left: 0; top: 100%; margin-top: 6px; width: 340px; max-width: calc(100vw - 40px); background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); padding: 14px; pointer-events: none; }
+    .review-item:hover .review-tooltip { display: block; }
+    .review-tooltip::before { content: ''; position: absolute; top: -8px; left: 24px; border: 8px solid transparent; border-bottom-color: #e2e8f0; border-top: 0; }
+    .review-tooltip::after { content: ''; position: absolute; top: -6px; left: 25px; border: 7px solid transparent; border-bottom-color: #fff; border-top: 0; }
+    [data-theme=dark] .review-tooltip { background: #1e293b; border-color: #334155; }
+    [data-theme=dark] .review-tooltip::after { border-bottom-color: #1e293b; }
+    [data-theme=dark] .review-tooltip::before { border-bottom-color: #334155; }
+
+    /* Review filter buttons */
+    #reviewFilterBtns .btn.active { font-weight: 600; }
+    #reviewFilterBtns .btn { padding: 2px 8px; }
+
     /* Score Factor Accordion */
     .score-factor-row { cursor: pointer; transition: background 0.15s; border-radius: 6px; }
     .score-factor-row:hover { background: rgba(96,93,255,0.04); }
@@ -231,23 +401,102 @@
     .review-item .review-file-link { color: #605DFF; text-decoration: none; font-weight: 500; font-size: 12px; }
     .review-item .review-file-link:hover { text-decoration: underline; }
     [data-theme=dark] .review-item { border-color: #334155 !important; }[data-theme=dark] .review-item:hover { border-color: #605DFF !important; }
+
+    /* Collapse icon rotation */
+    #reviewCollapseBody.show ~ .card-body #reviewCollapseIcon,
+    .collapsed #reviewCollapseIcon { transform: rotate(180deg); }
+
+    /* Floating scroll nav arrows */
+    .scroll-nav { position: fixed; bottom: 24px; right: 24px; z-index: 100; display: flex; flex-direction: column; gap: 6px; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .scroll-nav.visible { opacity: 1; pointer-events: auto; }
+    .scroll-nav-btn { width: 38px; height: 38px; border-radius: 10px; border: 1px solid #e2e8f0; background: #fff; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.15s; }
+    .scroll-nav-btn:hover { background: #605DFF; color: #fff; border-color: #605DFF; }
+    [data-theme=dark] .scroll-nav-btn { background: #1e293b; border-color: #334155; color: #94a3b8; }
+    [data-theme=dark] .scroll-nav-btn:hover { background: #605DFF; color: #fff; border-color: #605DFF; }
+
+    /* Full-screen modal code highlight selection */
+    .code-preview-modal .cpm-body ::selection { background: rgba(249,115,22,0.35); color: inherit; }
+    .code-preview-modal .cpm-body .code-highlight { background: rgba(249,115,22,0.25); border-left: 3px solid #F97316; padding-left: 8px; display: block; }
+    .code-preview-modal .cpm-body .code-highlight.selected { background: rgba(249,115,22,0.4); }
+
+    /* Code attachment in chat */
+    .chat-code-attachment { background: #FFF7ED; border: 1px solid #FDBA74; border-radius: 8px; padding: 8px 12px; margin: 6px 0; font-size: 11px; }
+    [data-theme=dark] .chat-code-attachment { background: #431407; border-color: #9A3412; }
+    .chat-code-attachment .att-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: #EA580C; display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+    .chat-code-attachment pre { margin: 0; font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace; font-size: 11px; line-height: 1.5; color: #1e293b; white-space: pre-wrap; word-break: break-all; max-height: 120px; overflow: auto; }
+    [data-theme=dark] .chat-code-attachment pre { color: #fed7aa; }
+
+    /* Multi-file panel in full-screen modal */
+    .cpm-file-panel { width: 0; overflow: hidden; border-right: 1px solid #313244; background: #11111b; transition: width 0.3s; flex-shrink: 0; display: flex; flex-direction: column; }
+    .cpm-file-panel.open { width: 220px; }
+    .cpm-file-panel .fp-header { padding: 10px 14px; border-bottom: 1px solid #313244; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .cpm-file-panel .fp-header span { font-size: 12px; font-weight: 600; color: #a6adc8; }
+    .cpm-file-panel .fp-list { flex: 1; overflow-y: auto; padding: 6px 0; }
+    .cpm-file-item { padding: 6px 14px; font-size: 11px; color: #6c7086; cursor: pointer; display: flex; align-items: center; gap: 6px; border-left: 2px solid transparent; transition: all 0.15s; }
+    .cpm-file-item:hover { background: #1e1e2e; color: #cdd6f4; }
+    .cpm-file-item.active { background: #1e1e2e; color: #cba6f7; border-left-color: #cba6f7; font-weight: 600; }
+
+    /* TTS speaker icon */
+    .dw-tts-btn { border: none; background: none; color: #94a3b8; cursor: pointer; padding: 2px; border-radius: 4px; line-height: 1; transition: all 0.15s; }
+    .dw-tts-btn:hover { color: #605DFF; background: rgba(96,93,255,0.08); }
+    .dw-tts-btn.playing { color: #605DFF; animation: tts-pulse 1.5s infinite; }
+    @keyframes tts-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 </style>
 @endpush
 
 @section('content')
+
+    {{-- APPROVAL GATE BANNER — shows when pipeline is paused awaiting human review --}}
+    @if($pullRequest->pipeline_paused)
+        <div class="bg-warning bg-opacity-15 border border-warning border-opacity-25 rounded-3 mb-4 p-4 dw-banner">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="wh-48 bg-warning bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0">
+                        <span class="material-symbols-outlined text-warning" style="font-size:28px;">front_hand</span>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1">Pipeline Paused — Awaiting Approval</h6>
+                        <p class="text-secondary fs-13 mb-0">
+                            {{ $pullRequest->paused_reason ?? 'Manual approval required before the Negotiator agent makes its decision.' }}
+                        </p>
+                        @if($pullRequest->paused_at)
+                            <span class="fs-11 text-secondary">Paused {{ $pullRequest->paused_at->diffForHumans() }} at the <strong>{{ ucfirst($pullRequest->paused_at_stage ?? 'negotiator') }}</strong> stage</span>
+                        @endif
+                    </div>
+                </div>
+                <div class="d-flex gap-2 flex-shrink-0">
+                    <form action="{{ route('driftwatch.resume-pipeline', $pullRequest) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn btn-success" onclick="return confirm('Resume the pipeline? The Negotiator will make its deploy decision.')">
+                            <span class="material-symbols-outlined align-middle me-1" style="font-size:16px;">play_arrow</span>
+                            Resume Pipeline
+                        </button>
+                    </form>
+                    <form action="{{ route('driftwatch.block', $pullRequest) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Block this deployment?')">
+                            <span class="material-symbols-outlined align-middle me-1" style="font-size:16px;">block</span>
+                            Block
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
 
     {{-- DEPLOY DECISION BANNER — full-width, top of page, impossible to miss --}}
     @if($pullRequest->deploymentDecision)
         @php
             $bannerDecision = $pullRequest->deploymentDecision->decision;
             $bannerConfig = match($bannerDecision) {
-                'approved' =>['bg' => 'bg-success', 'label' => '✅ SAFE TO DEPLOY'],
-                'blocked' =>['bg' => 'bg-danger', 'label' => '🚫 DEPLOYMENT BLOCKED'],
-                default =>['bg' => 'bg-warning text-dark', 'label' => '⏳ AWAITING HUMAN DECISION'],
+                'approved' =>['bg' => 'bg-success', 'label' => 'SAFE TO DEPLOY', 'icon' => 'verified'],
+                'blocked' =>['bg' => 'bg-danger', 'label' => 'DEPLOYMENT BLOCKED', 'icon' => 'block'],
+                default =>['bg' => 'bg-warning text-dark', 'label' => 'AWAITING HUMAN DECISION', 'icon' => 'hourglass_top'],
             };
         @endphp
         <div class="{{ $bannerConfig['bg'] }} rounded-3 mb-4 dw-banner shadow-sm" style="min-height: 80px; display: flex; align-items: center;">
             <div class="d-flex align-items-center justify-content-center gap-3 p-4 w-100">
+                <span class="material-symbols-outlined @if($bannerDecision == 'pending_review') text-dark @else text-white @endif" style="font-size: 36px;">{{ $bannerConfig['icon'] }}</span>
                 <span class="fw-bold fs-3 text-uppercase letter-spacing-1 @if($bannerDecision == 'pending_review') text-dark @else text-white @endif">
                     {{ $bannerConfig['label'] }}
                 </span>
@@ -346,6 +595,48 @@
                     @endif
                 @endforeach
                 <span class="ms-auto badge bg-secondary bg-opacity-10 text-secondary fs-12">{{ $stepsComplete }}/4</span>
+            </div>
+
+            {{-- Pipeline Controls: Environment + Template --}}
+            <div class="d-flex align-items-center gap-3 pt-3 border-top flex-wrap">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="material-symbols-outlined text-secondary" style="font-size:16px;">dns</span>
+                    <span class="fs-12 text-secondary fw-medium">Environment:</span>
+                    <form action="{{ route('driftwatch.update-environment', $pullRequest) }}" method="POST" class="d-inline">
+                        @csrf
+                        <select name="target_environment" class="form-select form-select-sm" style="width:auto;font-size:12px;" onchange="this.form.submit()">
+                            @foreach(['production', 'staging', 'development'] as $env)
+                                <option value="{{ $env }}" {{ ($pullRequest->target_environment ?? 'production') === $env ? 'selected' : '' }}>
+                                    {{ ucfirst($env) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </form>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="material-symbols-outlined text-secondary" style="font-size:16px;">tune</span>
+                    <span class="fs-12 text-secondary fw-medium">Template:</span>
+                    <form action="{{ route('driftwatch.update-template', $pullRequest) }}" method="POST" class="d-inline">
+                        @csrf
+                        <select name="pipeline_template" class="form-select form-select-sm" style="width:auto;font-size:12px;" onchange="this.form.submit()">
+                            @php $templates = \App\Models\PipelineConfig::all(); @endphp
+                            @foreach($templates as $tpl)
+                                <option value="{{ $tpl->name }}" {{ ($pullRequest->pipeline_template ?? 'full') === $tpl->name ? 'selected' : '' }}>
+                                    {{ $tpl->label }}
+                                </option>
+                            @endforeach
+                            @if($templates->isEmpty())
+                                <option value="full" selected>Full Analysis</option>
+                            @endif
+                        </select>
+                    </form>
+                </div>
+                @if($pullRequest->pipeline_paused)
+                    <span class="badge bg-warning bg-opacity-10 text-warning ms-auto">
+                        <span class="material-symbols-outlined align-middle" style="font-size:14px;">pause_circle</span>
+                        Paused at {{ ucfirst($pullRequest->paused_at_stage ?? 'unknown') }}
+                    </span>
+                @endif
             </div>
         </div>
     </div>
@@ -560,6 +851,102 @@
         </div>
     @endif
 
+    {{-- Deployment Weather — Environmental Risk at Deploy Time --}}
+    @if($pullRequest->deploymentDecision && $pullRequest->deploymentDecision->weather_checks)
+        @php
+            $weatherScore = $pullRequest->deploymentDecision->weather_score ?? 0;
+            $weatherChecks = $pullRequest->deploymentDecision->weather_checks ?? [];
+            $firedChecks = collect($weatherChecks)->where('fired', true);
+            $clearChecks = collect($weatherChecks)->where('fired', false);
+
+            // Weather system based on environmental score
+            if ($weatherScore <= 10) {
+                $envWeather = 'Clear Skies'; $envWeatherIcon = 'wb_sunny'; $envWeatherColor = 'success';
+                $envRecommendation = 'Now is a good time to deploy. All environmental checks are clear.';
+            } elseif ($weatherScore <= 30) {
+                $envWeather = 'Partly Cloudy'; $envWeatherIcon = 'partly_cloudy_day'; $envWeatherColor = 'primary';
+                $envRecommendation = 'Conditions are acceptable but not ideal. Proceed with monitoring.';
+            } elseif ($weatherScore <= 50) {
+                $envWeather = 'Storm Warning'; $envWeatherIcon = 'thunderstorm'; $envWeatherColor = 'warning';
+                $envRecommendation = 'Conditions are unfavorable — consider waiting for a better window.';
+            } else {
+                $envWeather = 'Severe Storm'; $envWeatherIcon = 'severe_cold'; $envWeatherColor = 'danger';
+                $envRecommendation = 'Conditions are dangerous. Strongly recommend delaying this deployment.';
+            }
+        @endphp
+        <div class="card border-0 rounded-3 mb-4 dw-card" style="border-left: 4px solid var(--bs-{{ $envWeatherColor }}) !important;">
+            <div class="card-body p-4">
+                <div class="row">
+                    {{-- Weather Score Circle --}}
+                    <div class="col-lg-3 text-center mb-3 mb-lg-0">
+                        <div class="d-flex flex-column align-items-center">
+                            <div class="position-relative d-inline-flex align-items-center justify-content-center mb-2" style="width: 100px; height: 100px; border-radius: 50%; border: 4px solid var(--bs-{{ $envWeatherColor }}); box-shadow: 0 0 16px rgba(var(--bs-{{ $envWeatherColor }}-rgb), 0.25);">
+                                <span class="fw-bold text-{{ $envWeatherColor }}" style="font-size: 32px;">{{ $weatherScore }}</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 mt-1">
+                                <span class="material-symbols-outlined text-{{ $envWeatherColor }}" style="font-size: 22px;">{{ $envWeatherIcon }}</span>
+                                <span class="fw-bold fs-14 text-{{ $envWeatherColor }}">{{ $envWeather }}</span>
+                            </div>
+                            <span class="fs-11 text-secondary mt-1">Environmental Risk Score</span>
+                        </div>
+                    </div>
+
+                    {{-- Weather Details --}}
+                    <div class="col-lg-9">
+                        <h6 class="fw-bold mb-2 dw-section-title">
+                            <span class="material-symbols-outlined" style="font-size: 20px;">cloud</span>
+                            Deployment Weather
+                        </h6>
+                        <p class="fs-13 text-secondary mb-3">{{ $envRecommendation }}</p>
+
+                        {{-- Individual Weather Checks --}}
+                        <div class="row g-2">
+                            @foreach($weatherChecks as $check)
+                                @php
+                                    $checkColor = $check['fired'] ? 'danger' : 'success';
+                                    $checkBg = $check['fired'] ? 'rgba(220,53,69,0.06)' : 'rgba(25,135,84,0.04)';
+                                @endphp
+                                <div class="col-md-6">
+                                    <div class="d-flex gap-2 p-2 rounded-2" style="background: {{ $checkBg }}; border: 1px solid rgba({{ $check['fired'] ? '220,53,69' : '25,135,84' }},0.1);">
+                                        <div class="flex-shrink-0 d-flex align-items-center">
+                                            <span class="material-symbols-outlined text-{{ $checkColor }}" style="font-size: 20px;">{{ $check['icon'] ?? 'check_circle' }}</span>
+                                        </div>
+                                        <div class="flex-grow-1 min-w-0">
+                                            <div class="d-flex align-items-center gap-2 mb-1">
+                                                <span class="fs-12 fw-bold">{{ $check['label'] }}</span>
+                                                @if($check['fired'])
+                                                    <span class="badge bg-danger bg-opacity-10 text-danger fs-10">+{{ $check['points'] }} pts</span>
+                                                @else
+                                                    <span class="badge bg-success bg-opacity-10 text-success fs-10">Clear</span>
+                                                @endif
+                                            </div>
+                                            <span class="fs-11 text-secondary d-block" style="line-height: 1.3;">{{ $check['detail'] }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        {{-- Summary bar --}}
+                        <div class="mt-3 pt-2 border-top d-flex align-items-center gap-3">
+                            <span class="fs-12 text-secondary">
+                                <span class="material-symbols-outlined align-middle text-success" style="font-size: 14px;">check_circle</span>
+                                {{ $clearChecks->count() }} clear
+                            </span>
+                            <span class="fs-12 text-secondary">
+                                <span class="material-symbols-outlined align-middle text-danger" style="font-size: 14px;">warning</span>
+                                {{ $firedChecks->count() }} flagged
+                            </span>
+                            <span class="fs-11 text-secondary ms-auto">
+                                Checked at {{ $pullRequest->deploymentDecision->updated_at->format('H:i') }} · Max possible: 95 pts
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- Time Bomb Detection --}}
     @if($pullRequest->blastRadius)
         @php
@@ -640,20 +1027,46 @@
             </div>
         </div>
 
-        {{-- What to Review — AI-powered review checklist (MOVED UP FOR VISIBILITY) --}}
+        {{-- What to Review — AI-powered review checklist (collapsible) --}}
         <div class="card bg-white border-0 rounded-3 mb-4 dw-card">
             <div class="card-body p-4">
-                <h6 class="fw-bold mb-3 dw-section-title">
-                    <span class="material-symbols-outlined align-middle text-primary" style="font-size: 18px;">rate_review</span>
-                    What to Review
-                    <span class="fs-12 fw-normal text-secondary ms-2">Prioritized checklist for this PR</span>
-                </h6>
-                <div id="reviewChecklist" class="mt-3"></div>
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                    <h6 class="fw-bold mb-0 dw-section-title" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#reviewCollapseBody">
+                        <span class="material-symbols-outlined align-middle text-primary" style="font-size: 18px;">rate_review</span>
+                        What to Review
+                        <span class="fs-12 fw-normal text-secondary ms-2">Prioritized checklist for this PR</span>
+                        <span class="material-symbols-outlined align-middle text-secondary ms-1" style="font-size: 16px; transition: transform 0.3s;" id="reviewCollapseIcon">expand_more</span>
+                    </h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="input-group input-group-sm" style="width: 200px;">
+                            <span class="input-group-text border-end-0 bg-transparent" style="border-radius: 20px 0 0 20px;">
+                                <span class="material-symbols-outlined" style="font-size: 14px; color: #94a3b8;">search</span>
+                            </span>
+                            <input type="text" class="form-control border-start-0" id="reviewFilterSearch"
+                                   placeholder="Filter files..." autocomplete="off"
+                                   style="font-size: 12px; border-radius: 0 20px 20px 0;">
+                        </div>
+                        <div class="btn-group btn-group-sm" id="reviewFilterBtns">
+                            <button class="btn btn-outline-secondary fs-11 active" data-filter="all">All</button>
+                            <button class="btn btn-outline-danger fs-11" data-filter="critical">Critical</button>
+                            <button class="btn btn-outline-warning fs-11" data-filter="high">High</button>
+                            <button class="btn btn-outline-secondary fs-11" data-filter="medium">Medium</button>
+                            <button class="btn btn-outline-success fs-11" data-filter="low">Low</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse show" id="reviewCollapseBody">
+                    <div id="reviewChecklist" class="mt-2" style="max-height: 600px; overflow-y: auto;"></div>
+                    <div id="reviewEmpty" class="text-center py-3 text-secondary fs-13" style="display: none;">
+                        <span class="material-symbols-outlined d-block mb-1" style="font-size: 28px;">filter_list_off</span>
+                        No files match the current filter.
+                    </div>
+                </div>
             </div>
         </div>
     @endif
 
-    {{-- Summary Row: Blast Radius | Decision Audit Log | AI Recommendation --}}
+    {{-- Summary Row: Blast Radius | Decision Audit Log | DriftWatch Recommendation --}}
     <div class="row">
         {{-- Blast Radius Summary --}}
         <div class="col-xl-4 col-lg-6 mb-4">
@@ -744,13 +1157,13 @@
             </div>
         </div>
 
-        {{-- AI Recommendation --}}
+        {{-- DriftWatch Recommendation --}}
         <div class="col-xl-4 col-lg-12 mb-4">
             <div class="card bg-white border-0 rounded-3 h-100 dw-card">
                 <div class="card-body p-4">
                     <h6 class="fw-bold mb-3 dw-section-title">
                         <span class="material-symbols-outlined align-middle text-primary" style="font-size: 18px;">smart_toy</span>
-                        AI Recommendation
+                        DriftWatch Recommendation
                     </h6>
                     @if($pullRequest->riskAssessment && $pullRequest->riskAssessment->recommendation)
                         <div class="p-3 bg-light rounded-3 mb-3 border">
@@ -901,81 +1314,135 @@
 
                 {{-- Dependency Tree — hierarchical LR DAG (default tab) --}}
                 <div id="blastDependencyTree">
-                    <div id="dagTreeContainer" style="width: 100%; min-height: 500px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc;">
-                        <svg id="dagTreeSvg" width="100%" height="500"></svg>
-                    </div>
-                    {{-- Edge hover tooltip (lightweight, stays) --}}
-                    <div id="dagEdgeTooltip"></div>
-                </div>
 
-                {{-- File Detail Modal --}}
-                <div class="modal fade" id="fileDetailModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered modal-lg">
-                        <div class="modal-content shadow-lg">
-                            <div class="modal-header">
-                                <div class="d-flex align-items-center gap-3 w-100">
-                                    <div id="fdIconWrap" class="d-flex align-items-center justify-content-center rounded-3" style="width:40px;height:40px;flex-shrink:0;">
-                                        <span class="material-symbols-outlined text-white" style="font-size:20px;" id="fdIcon">description</span>
-                                    </div>
-                                    <div class="flex-grow-1 min-w-0">
-                                        <h6 class="fw-bold mb-0 text-truncate" id="fdTitle"></h6>
-                                        <div class="d-flex align-items-center gap-2 mt-1">
-                                            <span class="fs-12 text-secondary" id="fdType"></span>
-                                            <span id="fdRiskBadge" class="badge rounded-pill fs-11"></span>
+                    {{-- Collapsible Impact Summary --}}
+                    <div class="mb-3">
+                        <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 w-100 justify-content-between py-2 px-3"
+                                onclick="toggleTreeSummary()" id="treeSummaryToggle" style="border-radius: 10px; text-align: left;">
+                            <span class="d-flex align-items-center gap-2">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">summarize</span>
+                                <span class="fw-medium">Impact Summary</span>
+                                <span class="badge bg-primary bg-opacity-10 text-primary ms-1" id="treeSummaryBadge"></span>
+                            </span>
+                            <span class="material-symbols-outlined" style="font-size: 18px; transition: transform 0.3s;" id="treeSummaryChevron">expand_more</span>
+                        </button>
+                        <div class="tree-summary-collapse" id="treeSummaryBody">
+                            <div class="p-3 mt-2 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-3">
+                                        <div class="text-center">
+                                            <div class="fw-bold fs-20" id="tsSummaryFiles">0</div>
+                                            <div class="fs-11 text-secondary">Files Changed</div>
                                         </div>
                                     </div>
-                                    <div id="fdScoreCircle" class="text-center" style="display:none;">
-                                        <div class="d-flex align-items-center justify-content-center rounded-circle" style="width:48px;height:48px;border-width:3px;border-style:solid;" id="fdScoreRing">
-                                            <span class="fw-bold fs-14" id="fdScoreNum"></span>
+                                    <div class="col-md-3">
+                                        <div class="text-center">
+                                            <div class="fw-bold fs-20" id="tsSummaryServices">0</div>
+                                            <div class="fs-11 text-secondary">Services Affected</div>
                                         </div>
-                                        <span class="fs-10 text-secondary">pts</span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="text-center">
+                                            <div class="fw-bold fs-20" id="tsSummaryDeps">0</div>
+                                            <div class="fs-11 text-secondary">Dependencies</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="text-center">
+                                            <div class="fw-bold fs-20" id="tsSummaryEndpoints">0</div>
+                                            <div class="fs-11 text-secondary">Endpoints</div>
+                                        </div>
                                     </div>
                                 </div>
-                                <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                {{-- File path --}}
-                                <div class="fd-section" id="fdPathSection">
-                                    <code class="fs-12 text-secondary" id="fdPath" style="word-break:break-all;"></code>
+                                <div class="fs-13 mb-3" id="tsSummaryText" style="line-height: 1.7;"></div>
+                                <div id="tsSummaryHighRisk" style="display: none;">
+                                    <div class="fw-bold fs-12 text-uppercase text-secondary mb-2">Highest Risk Files</div>
+                                    <div id="tsSummaryHighRiskList"></div>
                                 </div>
-
-                                {{-- AI Summary --}}
-                                <div class="fd-section" id="fdSummarySection" style="display:none;">
-                                    <div class="fd-label">What this file does</div>
-                                    <div class="fd-summary" id="fdSummary"></div>
-                                </div>
-
-                                {{-- Risk bar + explanation --}}
-                                <div class="fd-section" id="fdRiskSection" style="display:none;">
-                                    <div class="fd-label">Risk Assessment</div>
-                                    <div class="fd-risk-bar mb-2">
-                                        <div class="fd-risk-fill" id="fdRiskBar"></div>
-                                    </div>
-                                    <div class="fs-13" id="fdRiskText"></div>
-                                </div>
-
-                                {{-- How it affects downstream --}}
-                                <div class="fd-section" id="fdAffectsSection" style="display:none;">
-                                    <div class="fd-label">Impact on Other Files</div>
-                                    <div class="fs-13" id="fdAffects"></div>
-                                </div>
-
-                                {{-- Downstream dependents --}}
-                                <div class="fd-section" id="fdDepsSection" style="display:none;">
-                                    <div class="fd-label">Downstream Dependents</div>
-                                    <div id="fdDeps"></div>
-                                </div>
-
-                                {{-- Change classification --}}
-                                <div class="fd-section" id="fdClassSection" style="display:none;">
-                                    <div class="fd-label">Change Classification</div>
-                                    <div class="fs-13" id="fdClass"></div>
-                                </div>
-                            </div>
-                            <div class="modal-footer justify-content-start gap-2" id="fdLinks">
                             </div>
                         </div>
                     </div>
+
+                    {{-- Graph + Chat Panel Layout --}}
+                    <div class="tree-layout" id="treeLayout">
+                        <div class="tree-graph-area" style="position: relative;">
+                            <div id="dagTreeContainer" style="width: 100%; height: 100%; overflow: auto; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc;">
+                                <svg id="dagTreeSvg" width="100%" height="100%"></svg>
+                            </div>
+                            {{-- Floating legend --}}
+                            <div class="tree-legend" id="treeLegend">
+                                <div class="tree-legend-title">Legend</div>
+                                <div class="tree-legend-item"><span class="tree-legend-dot" style="background: #605DFF;"></span> PR Origin</div>
+                                <div class="tree-legend-item"><span class="tree-legend-dot" style="background: #FEE2E2; border: 2px solid #EF4444;"></span> Changed File</div>
+                                <div class="tree-legend-item"><span class="tree-legend-dot" style="background: #DBEAFE; border: 2px solid #3B82F6;"></span> Dependency</div>
+                                <div class="tree-legend-item"><span class="tree-legend-dot" style="background: #D1FAE5; border: 2px solid #10B981; border-radius: 3px; transform: rotate(45deg);"></span> Service</div>
+                                <div class="tree-legend-item"><span class="tree-legend-dot" style="background: #FEF9C3; border: 2px solid #F59E0B;"></span> Endpoint</div>
+                                <div class="tree-legend-item"><span class="tree-legend-dot" style="background: rgba(96,93,255,0.2); border: 2px solid #605DFF;"></span> Highlighted</div>
+                            </div>
+                        </div>
+
+                        {{-- Chat Side Panel --}}
+                        <div class="tree-side-panel" id="treeSidePanel">
+                            <div class="resize-handle" id="panelResizeHandle"></div>
+                            {{-- Chat header --}}
+                            <div class="sp-header" style="padding: 12px 16px;">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="material-symbols-outlined" style="font-size: 20px; color: #605DFF;">forum</span>
+                                        <span class="fw-bold fs-13">Impact Chat</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <button class="chat-export-btn" id="chatExportBtn" title="Export conversation">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">download</span>
+                                        </button>
+                                        <button class="sp-close" onclick="clearChatHighlights()" title="Clear highlights">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">filter_alt_off</span>
+                                        </button>
+                                        <button class="sp-close" onclick="closeSidePanel()" title="Close panel">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">close</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Chat messages area --}}
+                            <div id="chatMessages" style="flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; min-height: 0;">
+                                {{-- Welcome message --}}
+                                <div class="chat-msg chat-bot">
+                                    <div class="chat-bubble">
+                                        <div class="fw-medium fs-12 mb-1">DriftWatch Assistant</div>
+                                        <div class="fs-12">Click a node or ask me about the impact. Try:</div>
+                                        <div class="chat-suggestions mt-2">
+                                            <button class="chat-suggest-btn" data-query="Show me the highest risk files">highest risk files</button>
+                                            <button class="chat-suggest-btn" data-query="What services are affected?">affected services</button>
+                                            <button class="chat-suggest-btn" data-query="Show auth and middleware changes">auth changes</button>
+                                            <button class="chat-suggest-btn" data-query="What depends on the most-changed file?">dependency chain</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Chat input — sticky at bottom --}}
+                            <div class="chat-input-area">
+                                <div class="d-flex gap-2 align-items-center">
+                                    <input type="text" class="form-control form-control-sm" id="chatInput"
+                                           placeholder="Ask about files, risk, dependencies..."
+                                           autocomplete="off" style="font-size: 12px; border-radius: 20px; padding: 8px 16px;">
+                                    <button class="chat-mic-btn" id="chatMicBtn" type="button" title="Voice input" style="display: none;">
+                                        <span class="material-symbols-outlined" style="font-size: 18px;">mic</span>
+                                    </button>
+                                    <button class="btn btn-sm btn-primary d-flex align-items-center justify-content-center"
+                                            id="chatSendBtn" type="button"
+                                            style="border-radius: 50%; width: 34px; height: 34px; min-width: 34px; flex-shrink: 0;">
+                                        <span class="material-symbols-outlined" style="font-size: 16px;">send</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Edge hover tooltip --}}
+                    <div id="dagEdgeTooltip"></div>
                 </div>
 
                 {{-- Summary View --}}
@@ -983,20 +1450,46 @@
                     <div id="impactSummaryContent"></div>
                 </div>
 
-                {{-- Blast Map — bubble cluster visualization --}}
-                <div id="blastRadiusDynamic" style="height: 600px; display: none; position: relative;">
+                {{-- Blast Map — animated concentric radius visualization --}}
+                <div id="blastRadiusDynamic" style="height: 650px; display: none; position: relative; overflow: hidden; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #0f172a 100%) !important; border-radius: 12px;">
+                    <svg id="blastRadiusSvg" width="100%" height="100%" style="position:absolute; top:0; left:0;">
+                        <defs>
+                            <radialGradient id="pulseGrad1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#605DFF" stop-opacity="0.15"/><stop offset="100%" stop-color="#605DFF" stop-opacity="0"/></radialGradient>
+                            <radialGradient id="pulseGrad2" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#EF4444" stop-opacity="0.1"/><stop offset="100%" stop-color="#EF4444" stop-opacity="0"/></radialGradient>
+                            <radialGradient id="pulseGrad3" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#F59E0B" stop-opacity="0.08"/><stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/></radialGradient>
+                            <radialGradient id="pulseGrad4" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#06B6D4" stop-opacity="0.06"/><stop offset="100%" stop-color="#06B6D4" stop-opacity="0"/></radialGradient>
+                            <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                            <filter id="glowStrong"><feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                        </defs>
+                    </svg>
                     {{-- Floating info card on hover --}}
                     <div id="graphHoverCard" style="display:none; position:absolute; z-index:20; pointer-events:none; min-width:260px; max-width:340px;">
-                        <div class="card border-0 shadow-lg rounded-3" style="backdrop-filter:blur(12px); background:rgba(255,255,255,0.97);">
+                        <div class="card border-0 shadow-lg rounded-3" style="backdrop-filter:blur(12px); background:rgba(15,23,42,0.95); border: 1px solid rgba(96,93,255,0.3);">
                             <div class="card-body p-3">
                                 <div class="d-flex align-items-center gap-2 mb-2">
                                     <div id="hoverBadge"></div>
-                                    <span class="fw-bold fs-13" id="hoverTitle"></span>
+                                    <span class="fw-bold fs-13 text-white" id="hoverTitle"></span>
                                 </div>
                                 <div class="fs-12 text-secondary mb-2" id="hoverPath"></div>
-                                <div id="hoverDescription" class="fs-12 mb-2"></div>
+                                <div id="hoverDescription" class="fs-12 mb-2" style="color:#cbd5e1;"></div>
                                 <div id="hoverDeps" class="fs-12"></div>
                             </div>
+                        </div>
+                    </div>
+                    {{-- Stats overlay --}}
+                    <div id="blastMapStats" style="position:absolute; top:16px; left:16px; z-index:10; pointer-events:none;">
+                        <div class="d-flex flex-column gap-2">
+                            <div class="d-flex align-items-center gap-2"><div style="width:10px;height:10px;border-radius:50%;background:#EF4444;box-shadow:0 0 8px #EF4444;"></div><span class="fs-11 text-white fw-medium" id="bmStatChanged">0 changed</span></div>
+                            <div class="d-flex align-items-center gap-2"><div style="width:10px;height:10px;border-radius:50%;background:#F59E0B;box-shadow:0 0 8px #F59E0B;"></div><span class="fs-11 text-white fw-medium" id="bmStatAffected">0 affected</span></div>
+                            <div class="d-flex align-items-center gap-2"><div style="width:10px;height:10px;border-radius:50%;background:#3B82F6;box-shadow:0 0 8px #3B82F6;"></div><span class="fs-11 text-white fw-medium" id="bmStatServices">0 services</span></div>
+                            <div class="d-flex align-items-center gap-2"><div style="width:10px;height:10px;border-radius:50%;background:#06B6D4;box-shadow:0 0 8px #06B6D4;"></div><span class="fs-11 text-white fw-medium" id="bmStatEndpoints">0 endpoints</span></div>
+                        </div>
+                    </div>
+                    {{-- Risk score overlay --}}
+                    <div id="blastMapRisk" style="position:absolute; top:16px; right:16px; z-index:10; pointer-events:none;">
+                        <div class="text-end">
+                            <div class="fs-11 text-secondary text-uppercase fw-bold mb-1" style="letter-spacing:1px;">Blast Radius</div>
+                            <div class="fs-28 fw-bold" id="bmRiskScore" style="color:#605DFF; text-shadow: 0 0 20px rgba(96,93,255,0.5);">—</div>
                         </div>
                     </div>
                 </div>
@@ -1253,6 +1746,163 @@
         </div>
     @endif
 
+    {{-- Stacked / Related PRs --}}
+    @if($pullRequest->deploymentDecision && !empty($pullRequest->deploymentDecision->stacked_pr_ids))
+        @php
+            $stackedIds = $pullRequest->deploymentDecision->stacked_pr_ids;
+            $stackedPRs = \App\Models\PullRequest::whereIn('id', $stackedIds)
+                ->with(['riskAssessment', 'blastRadius'])
+                ->get();
+            $combinedScore = $pullRequest->deploymentDecision->combined_blast_radius_score;
+        @endphp
+        @if($stackedPRs->count() > 0)
+            <div class="card bg-white border-0 rounded-3 mb-4 dw-card" style="border-left: 4px solid #8B5CF6 !important;">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                        <h6 class="fw-bold mb-0 dw-section-title">
+                            <span class="material-symbols-outlined align-middle text-purple" style="font-size: 18px; color: #8B5CF6;">stacks</span>
+                            Stacked / Related PRs
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary fs-11 ms-2">{{ $stackedPRs->count() }} related</span>
+                        </h6>
+                        @if($combinedScore)
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fs-12 text-secondary">Combined blast radius:</span>
+                                <span class="badge bg-{{ $combinedScore >= 80 ? 'danger' : ($combinedScore >= 40 ? 'warning' : 'success') }} bg-opacity-10 text-{{ $combinedScore >= 80 ? 'danger' : ($combinedScore >= 40 ? 'warning' : 'success') }} px-3 py-1 fw-bold">
+                                    {{ $combinedScore }} pts
+                                </span>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="alert alert-warning bg-warning bg-opacity-10 border-warning border-opacity-25 d-flex align-items-center gap-2 mb-3 fs-13">
+                        <span class="material-symbols-outlined text-warning">warning</span>
+                        <span>These PRs share files or branch dependencies — merging them together increases blast radius. Review combined impact carefully.</span>
+                    </div>
+                    <div class="row g-3">
+                        @foreach($stackedPRs as $stacked)
+                            <div class="col-md-6">
+                                <a href="{{ route('driftwatch.show', $stacked) }}" class="text-decoration-none">
+                                    <div class="p-3 rounded-3 border h-100" style="transition: all 0.15s;">
+                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                            <span class="badge bg-{{ $stacked->status_color }} bg-opacity-10 text-{{ $stacked->status_color }} fs-11">{{ $stacked->status }}</span>
+                                            <span class="fw-bold fs-13 text-dark">PR #{{ $stacked->pr_number }}</span>
+                                            @if($stacked->riskAssessment)
+                                                <span class="badge bg-{{ $stacked->risk_color }} bg-opacity-10 text-{{ $stacked->risk_color }} fs-11 ms-auto">{{ $stacked->riskAssessment->risk_score }}/100</span>
+                                            @endif
+                                        </div>
+                                        <p class="text-secondary fs-12 mb-1 text-truncate">{{ $stacked->pr_title }}</p>
+                                        <div class="d-flex gap-2 fs-11 text-secondary">
+                                            <span>{{ $stacked->pr_author }}</span>
+                                            <span>{{ $stacked->head_branch }} &rarr; {{ $stacked->base_branch }}</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endif
+
+    {{-- Pipeline Timeline & Artifacts --}}
+    @if($pullRequest->agentRuns->count() > 0)
+        <div class="card bg-white border-0 rounded-3 mb-4 dw-card">
+            <div class="card-body p-4">
+                <h6 class="fw-bold mb-3 dw-section-title">
+                    <span class="material-symbols-outlined align-middle" style="font-size: 18px;">timeline</span>
+                    Pipeline Timeline
+                    <span class="fs-12 fw-normal text-secondary ms-2">Agent execution trace with artifacts</span>
+                </h6>
+
+                {{-- Timeline visualization --}}
+                @php
+                    $totalDuration = $pullRequest->agentRuns->sum('duration_ms');
+                    $runOrder = ['archaeologist', 'historian', 'negotiator', 'chronicler'];
+                    $sortedRuns = $pullRequest->agentRuns->sortBy(function ($run) use ($runOrder) {
+                        return array_search($run->agent_name, $runOrder);
+                    });
+                    $agentColors = ['archaeologist' => 'primary', 'historian' => 'warning', 'negotiator' => 'danger', 'chronicler' => 'success'];
+                    $agentIcons = ['archaeologist' => 'explore', 'historian' => 'history', 'negotiator' => 'gavel', 'chronicler' => 'auto_stories'];
+                @endphp
+
+                {{-- Duration bar --}}
+                <div class="d-flex align-items-center gap-1 mb-4" style="height:28px;">
+                    @foreach($sortedRuns as $run)
+                        @php
+                            $pct = $totalDuration > 0 ? max(($run->duration_ms / $totalDuration) * 100, 8) : 25;
+                            $color = $agentColors[$run->agent_name] ?? 'secondary';
+                        @endphp
+                        <div class="bg-{{ $color }} bg-opacity-75 rounded-2 d-flex align-items-center justify-content-center text-white"
+                             style="width:{{ $pct }}%; height:100%; min-width:60px; font-size:11px; font-weight:600; cursor:pointer;"
+                             data-bs-toggle="collapse" data-bs-target="#artifact_{{ $run->id }}"
+                             title="{{ ucfirst($run->agent_name) }}: {{ number_format($run->duration_ms) }}ms">
+                            {{ ucfirst(substr($run->agent_name, 0, 4)) }}
+                            <span class="ms-1 opacity-75">{{ $run->duration_ms }}ms</span>
+                        </div>
+                    @endforeach
+                    <span class="fs-11 text-secondary ms-2 flex-shrink-0">Total: {{ number_format($totalDuration) }}ms</span>
+                </div>
+
+                {{-- Agent run cards --}}
+                @foreach($sortedRuns as $run)
+                    @php
+                        $color = $agentColors[$run->agent_name] ?? 'secondary';
+                        $icon = $agentIcons[$run->agent_name] ?? 'smart_toy';
+                    @endphp
+                    <div class="border rounded-3 mb-2 overflow-hidden">
+                        <div class="d-flex align-items-center gap-3 p-3" style="cursor:pointer;" data-bs-toggle="collapse" data-bs-target="#artifact_{{ $run->id }}">
+                            <div class="wh-36 bg-{{ $color }} bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0">
+                                <span class="material-symbols-outlined text-{{ $color }}" style="font-size:18px;">{{ $icon }}</span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-bold fs-13">{{ ucfirst($run->agent_name) }}</span>
+                                    <span class="badge bg-{{ $run->status_color }} bg-opacity-10 text-{{ $run->status_color }} fs-10">{{ $run->status }}</span>
+                                    @if($run->score_contribution > 0)
+                                        <span class="fs-11 text-secondary">+{{ $run->score_contribution }} pts</span>
+                                    @endif
+                                </div>
+                                <span class="fs-11 text-secondary">{{ $run->duration_ms }}ms | {{ $run->tokens_used > 0 ? number_format($run->tokens_used) . ' tokens' : '~' . number_format(max(150, strlen(json_encode($run->output_payload ?? [])) / 4)) . ' est. tokens' }} | {{ $run->model_used }}</span>
+                            </div>
+                            <span class="material-symbols-outlined text-secondary" style="font-size:18px;">expand_more</span>
+                        </div>
+
+                        {{-- Collapsible artifact inspector --}}
+                        <div class="collapse" id="artifact_{{ $run->id }}">
+                            <div class="border-top p-3" style="background: #fafbfc;">
+                                @if($run->reasoning)
+                                    <div class="mb-3">
+                                        <span class="fs-11 fw-bold text-uppercase text-secondary d-block mb-1">Reasoning</span>
+                                        <p class="fs-12 text-secondary mb-0">{{ \Illuminate\Support\Str::limit($run->reasoning, 500) }}</p>
+                                    </div>
+                                @endif
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <span class="fs-11 fw-bold text-uppercase text-secondary d-block mb-1">Input Payload (Briefing Pack)</span>
+                                        <div style="max-height:200px;overflow:auto;">
+                                            <pre class="fs-11 bg-white border rounded-2 p-2 mb-0" style="white-space:pre-wrap;word-break:break-word;">{{ json_encode($run->input_payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="fs-11 fw-bold text-uppercase text-secondary d-block mb-1">Output Payload</span>
+                                        <div style="max-height:200px;overflow:auto;">
+                                            <pre class="fs-11 bg-white border rounded-2 p-2 mb-0" style="white-space:pre-wrap;word-break:break-word;">{{ json_encode($run->output_payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-3 mt-2 fs-11 text-secondary">
+                                    <span>Attempt: {{ $run->output_payload['attempt'] ?? 1 }}</span>
+                                    <span>Cost: ${{ number_format($run->cost_usd, 6) }}</span>
+                                    <span>Hash: <code>{{ substr($run->input_hash, 0, 8) }}</code></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     {{-- Agent Runs Debug Panel (only visible with ?debug=1) --}}
     @if(request()->get('debug') == '1' && $pullRequest->agentRuns->count() > 0)
         <div class="card bg-white border-0 rounded-3 mb-4 dw-card">
@@ -1286,7 +1936,7 @@
                                         <span class="badge bg-{{ $run->status_color }}">{{ $run->status }}</span>
                                     </td>
                                     <td>{{ number_format($run->duration_ms) }}ms</td>
-                                    <td>{{ number_format($run->tokens_used) }}</td>
+                                    <td>{!! $run->tokens_used > 0 ? number_format($run->tokens_used) : '~' . number_format(max(150, strlen(json_encode($run->output_payload ?? [])) / 4)) !!}</td>
                                     <td>${{ number_format($run->cost_usd, 6) }}</td>
                                     <td>
                                         <span class="fw-bold">{{ $run->score_contribution }}</span>
@@ -1319,7 +1969,11 @@
                 </div>
                 <div class="d-flex gap-3 mt-3 text-secondary fs-12">
                     <span>Total Duration: <strong>{{ number_format($pullRequest->agentRuns->sum('duration_ms')) }}ms</strong></span>
-                    <span>Total Tokens: <strong>{{ number_format($pullRequest->agentRuns->sum('tokens_used')) }}</strong></span>
+                    @php
+                        $totalTokens = $pullRequest->agentRuns->sum('tokens_used');
+                        $estTokens = $totalTokens > 0 ? $totalTokens : (int) $pullRequest->agentRuns->sum(fn($r) => max(150, strlen(json_encode($r->output_payload ?? [])) / 4));
+                    @endphp
+                    <span>Total Tokens: <strong>{{ $totalTokens > 0 ? number_format($totalTokens) : '~' . number_format($estTokens) . ' est.' }}</strong></span>
                     <span>Total Cost: <strong>${{ number_format($pullRequest->agentRuns->sum('cost_usd'), 6) }}</strong></span>
                 </div>
             </div>
@@ -1327,6 +1981,16 @@
     @endif
 
     {{-- Re-analyze Loading Overlay --}}
+    {{-- Floating scroll nav arrows --}}
+    <div class="scroll-nav" id="scrollNav">
+        <button class="scroll-nav-btn" id="scrollToTopBtn" title="Scroll to top">
+            <span class="material-symbols-outlined" style="font-size: 20px;">keyboard_arrow_up</span>
+        </button>
+        <button class="scroll-nav-btn" id="scrollToBottomBtn" title="Scroll to bottom">
+            <span class="material-symbols-outlined" style="font-size: 20px;">keyboard_arrow_down</span>
+        </button>
+    </div>
+
     <div id="agentLoadingOverlay" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(10,15,30,0.92); backdrop-filter:blur(8px);">
         <div class="d-flex flex-column align-items-center justify-content-center h-100 text-white px-4">
             <div class="mb-4">
@@ -1358,6 +2022,60 @@
                 @endforeach
             </div>
             <p class="text-white-50 fs-13 mt-4" id="loadingElapsed">0s elapsed</p>
+        </div>
+    </div>
+    {{-- Full-screen Code Preview Modal --}}
+    <div class="code-preview-overlay" id="codePreviewOverlay">
+        <div class="code-preview-modal" style="display: flex; flex-direction: row;">
+            {{-- Side file panel --}}
+            <div class="cpm-file-panel" id="cpmFilePanel">
+                <div class="fp-header">
+                    <span>Open Files</span>
+                    <button class="cpm-close" id="cpmFilePanelClose" title="Close panel" style="padding:2px;">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">close</span>
+                    </button>
+                </div>
+                <div class="fp-list" id="cpmFileList"></div>
+            </div>
+            {{-- Main content --}}
+            <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+                <div class="cpm-header">
+                    <div class="file-info">
+                        <span class="material-symbols-outlined" style="font-size: 20px; color: #cba6f7;">code</span>
+                        <div>
+                            <div class="file-name" id="cpmFileName"></div>
+                            <div class="file-path" id="cpmFilePath"></div>
+                        </div>
+                    </div>
+                    <div class="cpm-action-bar">
+                        <button class="cpm-action" id="cpmAddFileBtn" title="Open another file side-by-side">
+                            <span class="material-symbols-outlined" style="font-size: 14px;">add</span> Add File
+                        </button>
+                        <button class="cpm-action" id="cpmSendToChat" title="Send selected code to chat" style="display:none;">
+                            <span class="material-symbols-outlined" style="font-size: 14px; color: #F97316;">chat</span> Send to Chat
+                        </button>
+                        <button class="cpm-action" id="cpmCopyBtn" title="Copy file contents">
+                            <span class="material-symbols-outlined" style="font-size: 14px;">content_copy</span> Copy
+                        </button>
+                        <button class="cpm-action" id="cpmGithubLink" title="View on GitHub" style="display:none;">
+                            <span class="material-symbols-outlined" style="font-size: 14px;">open_in_new</span> GitHub
+                        </button>
+                        <button class="cpm-close" id="cpmCloseBtn" title="Close">
+                            <span class="material-symbols-outlined" style="font-size: 22px;">close</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="cpm-toolbar">
+                    <button class="cpm-tab active" data-cpm-tab="diff" id="cpmDiffTab">
+                        <span class="material-symbols-outlined" style="font-size: 13px; vertical-align: -2px;">difference</span> Changes
+                    </button>
+                    <button class="cpm-tab" data-cpm-tab="source" id="cpmSourceTab">
+                        <span class="material-symbols-outlined" style="font-size: 13px; vertical-align: -2px;">code</span> Full Source
+                    </button>
+                    <div class="cpm-stats" id="cpmStats"></div>
+                </div>
+                <div class="cpm-body" id="cpmBody"></div>
+            </div>
         </div>
     </div>
 @endsection
@@ -1453,6 +2171,21 @@ document.addEventListener('DOMContentLoaded', function() {
     );
     var prUrl = @json($pullRequest->pr_url ?? '');
     var repoFullName = @json($pullRequest->repo_full_name ?? '');
+    var negotiatorComment = @json(
+        collect($pullRequest->agentRuns ?? [])
+            ->where('agent_name', 'negotiator')
+            ->pluck('output_payload')
+            ->first()['pr_comment'] ?? ''
+    );
+    var negotiatorReasoning = @json(
+        collect($pullRequest->agentRuns ?? [])
+            ->where('agent_name', 'negotiator')
+            ->pluck('reasoning')
+            ->first() ?? ''
+    );
+    var riskScore = @json($pullRequest->riskAssessment->risk_score ?? 0);
+    var riskLevel = @json($pullRequest->riskAssessment->risk_level ?? 'unknown');
+    var decisionText = @json($pullRequest->deploymentDecision->decision ?? 'pending');
 
     // Build lookup maps for quick access
     var fileDescMap = {};
@@ -1526,12 +2259,64 @@ document.addEventListener('DOMContentLoaded', function() {
         return groups;
     }
 
+    // Helper: strip emoji characters from text
+    function stripEmojis(text) {
+        if (!text) return '';
+        return text.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, '').replace(/\s{2,}/g, ' ').trim();
+    }
+
+    // Helper: convert markdown-ish text to simple HTML
+    function renderNegotiatorComment(text) {
+        if (!text) return '';
+        text = stripEmojis(text);
+        // Bold
+        text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        // Headers (### -> h6, ## -> h6)
+        text = text.replace(/^###\s+(.+)$/gm, '<h6 class="fw-bold fs-14 mt-3 mb-1">$1</h6>');
+        text = text.replace(/^##\s+(.+)$/gm, '<h6 class="fw-bold fs-14 mt-3 mb-1">$1</h6>');
+        // Horizontal rules
+        text = text.replace(/^---+$/gm, '<hr class="my-2 opacity-25">');
+        // List items
+        text = text.replace(/^- (.+)$/gm, '<div class="d-flex align-items-start gap-2 mb-1"><span class="material-symbols-outlined text-secondary flex-shrink-0" style="font-size:14px;margin-top:2px;">chevron_right</span><span class="fs-12">$1</span></div>');
+        // Paragraphs (double newlines)
+        text = text.replace(/\n\n/g, '</p><p class="fs-13 text-secondary mb-2">');
+        // Single newlines
+        text = text.replace(/\n/g, '<br>');
+        return '<p class="fs-13 text-secondary mb-2">' + text + '</p>';
+    }
+
     // === SUMMARY VIEW (default) — directory-grouped, readable ===
     (function() {
         var el = document.getElementById('impactSummaryContent');
         if (!el) return;
 
         var html = '';
+
+        // Negotiator Risk Summary (if available)
+        var commentText = negotiatorComment || negotiatorReasoning || '';
+        if (commentText.length > 20) {
+            var decisionColors = { 'approved': 'success', 'blocked': 'danger', 'pending_review': 'warning' };
+            var decisionIcons = { 'approved': 'verified', 'blocked': 'block', 'pending_review': 'hourglass_top' };
+            var dColor = decisionColors[decisionText] || 'secondary';
+            var dIcon = decisionIcons[decisionText] || 'gavel';
+            var scoreColor = riskScore <= 20 ? 'success' : (riskScore <= 45 ? 'primary' : (riskScore <= 70 ? 'warning' : 'danger'));
+
+            html += '<div class="mb-4 p-3 rounded-3 border" style="border-left: 4px solid var(--bs-' + dColor + ') !important;">';
+            html += '<div class="d-flex align-items-center gap-3 mb-3">';
+            html += '<div class="d-flex align-items-center justify-content-center rounded-circle bg-' + dColor + ' bg-opacity-10" style="width:44px;height:44px;flex-shrink:0;">';
+            html += '<span class="material-symbols-outlined text-' + dColor + '" style="font-size:22px;">' + dIcon + '</span>';
+            html += '</div>';
+            html += '<div class="flex-grow-1">';
+            html += '<div class="d-flex align-items-center gap-2">';
+            html += '<span class="fw-bold fs-14">Negotiator Risk Assessment</span>';
+            html += '<span class="badge bg-' + dColor + ' bg-opacity-10 text-' + dColor + ' fs-11 text-uppercase">' + decisionText.replace('_', ' ') + '</span>';
+            html += '</div>';
+            html += '<span class="fs-12 text-secondary">Risk Score: <strong class="text-' + scoreColor + '">' + riskScore + '/100</strong> (' + riskLevel + ')</span>';
+            html += '</div>';
+            html += '</div>';
+            html += renderNegotiatorComment(commentText);
+            html += '</div>';
+        }
 
         // Quick stats bar
         var changedCount = depKeys.length;
@@ -1842,12 +2627,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Fit to container
         var graphWidth = g.graph().width + 60;
         var graphHeight = g.graph().height + 60;
-        var containerWidth = document.getElementById('dagTreeContainer').offsetWidth;
-        var scale = Math.min(containerWidth / graphWidth, 1);
+        var container = document.getElementById('dagTreeContainer');
+        var containerWidth = container.offsetWidth;
+        var containerHeight = container.offsetHeight || 580;
+        var scale = Math.min(containerWidth / graphWidth, containerHeight / graphHeight, 1);
         var xOffset = (containerWidth - graphWidth * scale) / 2;
 
-        svg.attr('height', Math.max(500, graphHeight * scale + 40));
-        svg.attr('width', containerWidth);
+        svg.attr('height', Math.max(containerHeight, graphHeight * scale + 40));
+        svg.attr('width', Math.max(containerWidth, graphWidth * scale));
         inner.attr('transform', 'translate(' + (xOffset + 20) + ',20) scale(' + scale + ')');
 
         // Add zoom behavior
@@ -1857,181 +2644,26 @@ document.addEventListener('DOMContentLoaded', function() {
         svg.call(zoom);
         svg.call(zoom.transform, d3.zoomIdentity.translate(xOffset + 20, 20).scale(scale));
 
-        // Rich node click — open Bootstrap modal with AI summaries
+        // Store graph reference for search highlighting
+        window._dagGraph = g;
+        window._dagInner = inner;
+        window._dagSvg = svg;
+        window._dagAddedNodes = addedNodes;
+
+        // Node click — open side panel with file details
         inner.selectAll('g.node').on('click', function(event, nodeId) {
             var nodeData = g.node(nodeId);
             if (!nodeData) return;
             event.stopPropagation();
+            openSidePanel(nodeId, g);
+        });
 
-            var realId = nodeId.replace(/^(file_|dep_|svc_|ep_)/, '');
-            var shortName = nodeData.label.split('\n')[0];
-            var desc = fileDescMap[realId] || null;
-            var classInfo = changeClassMap[realId] || null;
-
-            // Header: icon, title, type
-            var icon = 'description';
-            var typeText = '';
-            var iconBg = '#605DFF';
-            if (nodeId === 'pr_origin') { typeText = 'Pull Request Origin'; icon = 'account_tree'; iconBg = '#605DFF'; }
-            else if (nodeId.startsWith('file_')) { typeText = (desc && desc.role) ? desc.role : 'Changed File'; icon = getFileIcon(realId); iconBg = '#3B82F6'; }
-            else if (nodeId.startsWith('dep_')) { typeText = (desc && desc.role) ? desc.role + ' (downstream)' : 'Downstream Dependency'; icon = 'call_split'; iconBg = '#F59E0B'; }
-            else if (nodeId.startsWith('svc_')) { typeText = 'Affected Service'; icon = 'dns'; iconBg = '#8B5CF6'; }
-            else if (nodeId.startsWith('ep_')) { typeText = 'Exposed Endpoint'; icon = 'api'; iconBg = '#EC4899'; }
-
-            document.getElementById('fdIcon').textContent = icon;
-            document.getElementById('fdIconWrap').style.background = iconBg;
-            document.getElementById('fdTitle').textContent = shortName;
-            document.getElementById('fdType').textContent = typeText;
-
-            // Risk badge + score circle
-            var riskBadge = document.getElementById('fdRiskBadge');
-            var scoreCircle = document.getElementById('fdScoreCircle');
-            var scoreRing = document.getElementById('fdScoreRing');
-            var scoreNum = document.getElementById('fdScoreNum');
-            if (classInfo && classInfo.risk_score) {
-                var score = classInfo.risk_score;
-                var badgeColor = score >= 25 ? '#EF4444' : score >= 15 ? '#F97316' : score >= 5 ? '#F59E0B' : '#10B981';
-                var badgeLabel = score >= 25 ? 'Critical' : score >= 15 ? 'High' : score >= 5 ? 'Medium' : 'Low';
-                riskBadge.textContent = badgeLabel;
-                riskBadge.style.background = badgeColor + '20';
-                riskBadge.style.color = badgeColor;
-                riskBadge.style.display = 'inline-block';
-                scoreNum.textContent = score;
-                scoreRing.style.borderColor = badgeColor;
-                scoreCircle.style.display = 'block';
-            } else {
-                riskBadge.style.display = 'none';
-                scoreCircle.style.display = 'none';
+        // Click on SVG background closes the side panel
+        svg.on('click', function(event) {
+            if (event.target === svg.node() || event.target.tagName === 'svg') {
+                closeSidePanel();
+                clearTreeSearch();
             }
-
-            // File path
-            document.getElementById('fdPath').textContent = realId;
-
-            // AI Summary
-            var summarySection = document.getElementById('fdSummarySection');
-            var summaryEl = document.getElementById('fdSummary');
-            if (desc && desc.summary) {
-                summaryEl.textContent = desc.summary;
-                summarySection.style.display = 'block';
-            } else if (nodeId === 'pr_origin') {
-                summaryEl.textContent = blastSummary || 'Root node representing the pull request being analyzed.';
-                summarySection.style.display = 'block';
-            } else if (nodeId.startsWith('svc_')) {
-                summaryEl.textContent = 'This service is in the blast radius. Changes to affected files may alter its behavior.';
-                summarySection.style.display = 'block';
-            } else if (nodeId.startsWith('ep_')) {
-                summaryEl.textContent = 'This API endpoint is exposed through an affected service. Test it after deployment.';
-                summarySection.style.display = 'block';
-            } else {
-                summarySection.style.display = 'none';
-            }
-
-            // Risk bar + explanation
-            var riskSection = document.getElementById('fdRiskSection');
-            var riskBar = document.getElementById('fdRiskBar');
-            var riskText = document.getElementById('fdRiskText');
-            
-            var hasDescRisk = desc && desc.risk;
-            var isLowRiskText = hasDescRisk && desc.risk.toLowerCase().includes('low risk');
-            
-            if (hasDescRisk) {
-                // Fix: if text says 'low risk', override the generic default to prevent confusing orange UI
-                var defaultScore = isLowRiskText ? 2 : 10;
-                var rScore = (classInfo && classInfo.risk_score !== undefined) ? classInfo.risk_score : defaultScore;
-                var rColor = rScore >= 25 ? '#EF4444' : rScore >= 15 ? '#F97316' : rScore >= 5 ? '#F59E0B' : '#10B981';
-                
-                var rIcon = isLowRiskText || rScore < 5 ? 'check_circle' : 'warning';
-                var rIconColor = isLowRiskText || rScore < 5 ? 'text-success' : 'text-warning';
-                if(rScore >= 25) rIconColor = 'text-danger';
-                
-                riskBar.style.width = Math.min(rScore * 2.5, 100) + '%';
-                riskBar.style.background = rColor;
-                riskText.innerHTML = '<span class="material-symbols-outlined align-middle ' + rIconColor + '" style="font-size:14px;">' + rIcon + '</span> <span class="text-secondary">' + desc.risk + '</span>';
-                riskSection.style.display = 'block';
-            } else if (classInfo && classInfo.reasoning) {
-                var rScore2 = classInfo.risk_score || 10;
-                var rColor2 = rScore2 >= 25 ? '#EF4444' : rScore2 >= 15 ? '#F97316' : rScore2 >= 5 ? '#F59E0B' : '#10B981';
-                
-                var rIcon2 = rScore2 < 5 ? 'check_circle' : 'warning';
-                var rIconColor2 = rScore2 >= 25 ? 'text-danger' : rScore2 >= 15 ? 'text-warning' : rScore2 >= 5 ? 'text-warning' : 'text-success';
-                
-                riskBar.style.width = Math.min(rScore2 * 2.5, 100) + '%';
-                riskBar.style.background = rColor2;
-                riskText.innerHTML = '<span class="material-symbols-outlined align-middle ' + rIconColor2 + '" style="font-size:14px;">' + rIcon2 + '</span> <span class="text-secondary">' + classInfo.reasoning + '</span>';
-                riskSection.style.display = 'block';
-            } else {
-                riskSection.style.display = 'none';
-            }
-
-            // How it affects downstream
-            var affectsSection = document.getElementById('fdAffectsSection');
-            var affectsEl = document.getElementById('fdAffects');
-            if (desc && desc.affects && !desc.affects.includes('No known downstream')) {
-                affectsEl.textContent = desc.affects;
-                affectsSection.style.display = 'block';
-            } else if (depGraph[realId] && Array.isArray(depGraph[realId]) && depGraph[realId].length > 0) {
-                affectsEl.textContent = 'Changes here propagate to ' + depGraph[realId].length + ' downstream file(s). Breaking changes could cause failures in: ' + depGraph[realId].map(function(d) { return d.split('/').pop(); }).join(', ') + '.';
-                affectsSection.style.display = 'block';
-            } else {
-                affectsSection.style.display = 'none';
-            }
-
-            // Downstream dependents
-            var depsSection = document.getElementById('fdDepsSection');
-            var depsEl = document.getElementById('fdDeps');
-            if (depGraph[realId] && Array.isArray(depGraph[realId]) && depGraph[realId].length > 0) {
-                var depHtml = '';
-                depGraph[realId].forEach(function(d) {
-                    var dShort = d.split('/').pop();
-                    var dDesc = fileDescMap[d];
-                    depHtml += '<div class="fd-dep-item d-flex align-items-start gap-2">'
-                        + '<span class="material-symbols-outlined text-warning" style="font-size:14px;margin-top:2px;">subdirectory_arrow_right</span>'
-                        + '<div><span class="fw-medium fs-13">' + dShort + '</span>';
-                    if (dDesc && dDesc.summary) {
-                        depHtml += '<div class="text-secondary fs-12">' + dDesc.summary + '</div>';
-                    }
-                    depHtml += '</div></div>';
-                });
-                depsEl.innerHTML = depHtml;
-                depsSection.style.display = 'block';
-            } else {
-                depsSection.style.display = 'none';
-            }
-
-            // Change classification
-            var classSection = document.getElementById('fdClassSection');
-            var classEl = document.getElementById('fdClass');
-            if (classInfo) {
-                var typeLabel = (classInfo.change_type || '').replace(/_/g, ' ');
-                classEl.innerHTML = '<code class="fs-12 px-2 py-1 bg-primary bg-opacity-10 rounded">' + typeLabel + '</code>'
-                    + (classInfo.full_file_read ? ' <span class="text-success fs-12 ms-1">(full content analyzed)</span>' : '');
-                classSection.style.display = 'block';
-            } else {
-                classSection.style.display = 'none';
-            }
-
-            // Footer links
-            var linksEl = document.getElementById('fdLinks');
-            var linksHtml = '';
-            if (nodeId.startsWith('file_') || nodeId.startsWith('dep_')) {
-                if (prUrl) {
-                    linksHtml += '<a href="' + prUrl + '/files#diff-' + btoa(realId).replace(/=/g, '') + '" target="_blank" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1">'
-                        + '<span class="material-symbols-outlined" style="font-size:16px;">open_in_new</span> View Diff</a>';
-                }
-                if (repoFullName) {
-                    linksHtml += '<a href="https://github.com/' + repoFullName + '/blob/HEAD/' + realId + '" target="_blank" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1">'
-                        + '<span class="material-symbols-outlined" style="font-size:16px;">code</span> View Source</a>';
-                }
-            } else if (nodeId.startsWith('ep_')) {
-                linksHtml += '<span class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 disabled">'
-                    + '<span class="material-symbols-outlined" style="font-size:16px;">api</span> ' + realId + '</span>';
-            }
-            linksEl.innerHTML = linksHtml;
-            linksEl.style.display = linksHtml ? 'flex' : 'none';
-
-            // Show the modal
-            var modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('fileDetailModal'));
-            modal.show();
         });
 
         // Edge hover tooltip showing relationship
@@ -2094,308 +2726,1826 @@ document.addEventListener('DOMContentLoaded', function() {
             window._initDagTree();
             var treeEl = document.getElementById('blastDependencyTree');
             if (treeEl) treeEl.dataset.rendered = 'true';
+            initTreeSummary();
+            initTreeSearch();
         }
     }, 500);
 
-    // === Blast Map — physics-based bubble cluster (lazy loaded) ===
-    window._graphNetwork = null;
-    window._graphNodeMeta = {};
-    window._graphNodesDS = null;
-    window._graphEdgesDS = null;
+    // === Chat Panel Engine ===
+    var _chatSearchIndex = [];
 
-    window._initVisGraph = function() {
-        var nodes = [];
-        var edges =[];
-        var nodeId = 1;
-        var nodeMap = {};
-        var meta = {};
+    function buildChatSearchIndex() {
+        _chatSearchIndex = [];
+        var allNodes = window._dagAddedNodes || {};
+        var g = window._dagGraph;
+        if (!g) return;
+        Object.keys(allNodes).forEach(function(nodeId) {
+            var nd = g.node(nodeId);
+            if (!nd) return;
+            var label = (nd.label || '').split('\n')[0];
+            var realId = nodeId.replace(/^(file_|dep_|svc_|ep_)/, '');
+            var ci = changeClassMap[realId] || null;
+            var desc = fileDescMap[realId] || null;
+            var type = 'unknown';
+            if (nodeId === 'pr_origin') type = 'pr';
+            else if (nodeId.startsWith('file_')) type = 'file';
+            else if (nodeId.startsWith('dep_')) type = 'dependency';
+            else if (nodeId.startsWith('svc_')) type = 'service';
+            else if (nodeId.startsWith('ep_')) type = 'endpoint';
+            _chatSearchIndex.push({
+                nodeId: nodeId, label: label, fullPath: realId, type: type,
+                score: ci ? (ci.risk_score || 0) : 0,
+                changeType: ci ? (ci.change_type || '') : '',
+                reasoning: ci ? (ci.reasoning || '') : '',
+                summary: desc ? (desc.summary || '') : '',
+                affects: desc ? (desc.affects || '') : '',
+                linesChanged: ci ? (ci.lines_changed || 0) : 0,
+                fullFileRead: ci ? (ci.full_file_read || false) : false,
+                searchText: (label + ' ' + realId + ' ' + type + ' ' + (ci ? ci.change_type || '' : '') + ' ' + (ci ? ci.reasoning || '' : '') + ' ' + (desc ? desc.summary || '' : '')).toLowerCase()
+            });
+        });
+    }
 
-        // Helper: rich HTML tooltip (used in hover card, not vis tooltip)
-        function fileDesc(filePath, isSource, depCount) {
-            var name = filePath.split('/').pop().toLowerCase();
-            var dir = filePath.split('/').slice(0, -1).join('/');
-            var parts =[];
+    function openSidePanel(nodeId, g) {
+        var panel = document.getElementById('treeSidePanel');
+        if (!panel.classList.contains('open')) {
+            panel.classList.add('open');
+        }
+        // Add a file info message to chat
+        var nd = g.node(nodeId);
+        if (!nd) return;
+        addNodeInfoToChat(nodeId);
+        highlightNodePath(nodeId);
+    }
 
-            // What type of file
-            if (name.includes('test') || name.includes('spec')) parts.push('<span class="badge bg-info bg-opacity-10 text-info fs-11 me-1">Test</span>');
-            else if (name.includes('controller')) parts.push('<span class="badge bg-danger bg-opacity-10 text-danger fs-11 me-1">Controller</span>');
-            else if (name.includes('model') || name.includes('schema')) parts.push('<span class="badge bg-warning bg-opacity-10 text-warning fs-11 me-1">Model</span>');
-            else if (name.includes('route') || name.includes('router')) parts.push('<span class="badge bg-primary bg-opacity-10 text-primary fs-11 me-1">Routes</span>');
-            else if (name.includes('middleware')) parts.push('<span class="badge bg-secondary bg-opacity-10 text-secondary fs-11 me-1">Middleware</span>');
-            else if (name.includes('migration')) parts.push('<span class="badge bg-danger bg-opacity-10 text-danger fs-11 me-1">Migration</span>');
-            else if (name.includes('service') || name.includes('provider')) parts.push('<span class="badge bg-success bg-opacity-10 text-success fs-11 me-1">Service</span>');
-            else if (name.match(/\.(blade\.php|html|vue|jsx|tsx)$/)) parts.push('<span class="badge bg-info bg-opacity-10 text-info fs-11 me-1">View</span>');
-            else if (name.match(/\.(css|scss|less)$/)) parts.push('<span class="badge bg-info bg-opacity-10 text-info fs-11 me-1">Styles</span>');
-            else if (name.match(/\.(json|yaml|yml|toml|ini|env)$/)) parts.push('<span class="badge bg-warning bg-opacity-10 text-warning fs-11 me-1">Config</span>');
-            else parts.push('<span class="badge bg-secondary bg-opacity-10 text-secondary fs-11 me-1">' + getFileType(filePath) + '</span>');
+    // Track last clicked file for contextual queries
+    var _lastClickedFile = null;
+    var _lastClickedNodeId = null;
 
-            // What role it plays
-            if (isSource) {
-                parts.push('Directly changed in this PR.');
-                if (depCount > 0) parts.push('<strong>' + depCount + ' file' + (depCount > 1 ? 's' : '') + '</strong> depend on this — changes here ripple outward.');
-                else parts.push('No downstream dependencies detected.');
-            } else {
-                parts.push('In the blast radius — may be affected by changes upstream.');
-            }
+    // Add a file info card to chat when a node is clicked
+    function addNodeInfoToChat(nodeId) {
+        var g = window._dagGraph;
+        var nd = g.node(nodeId);
+        if (!nd) return;
+        var realId = nodeId.replace(/^(file_|dep_|svc_|ep_)/, '');
+        var shortName = nd.label.split('\n')[0];
+        var desc = fileDescMap[realId] || null;
+        var ci = changeClassMap[realId] || null;
 
-            return parts.join(' ');
+        // Track context
+        _lastClickedFile = realId;
+        _lastClickedNodeId = nodeId;
+
+        var html = '<div class="chat-file-card" data-node-id="' + nodeId + '">';
+        html += '<div class="d-flex align-items-center gap-2 mb-1">';
+        html += '<span class="material-symbols-outlined" style="font-size:16px;color:#605DFF;">';
+        if (nodeId.startsWith('svc_')) html += 'dns';
+        else if (nodeId.startsWith('ep_')) html += 'api';
+        else if (nodeId.startsWith('dep_')) html += 'call_split';
+        else html += 'description';
+        html += '</span>';
+        html += '<span class="fw-bold fs-12">' + shortName + '</span>';
+        if (ci && ci.risk_score) {
+            var c = ci.risk_score >= 25 ? '#EF4444' : ci.risk_score >= 15 ? '#F97316' : ci.risk_score >= 5 ? '#F59E0B' : '#10B981';
+            html += '<span class="badge rounded-pill fs-10 ms-auto" style="background:' + c + '20;color:' + c + ';">' + ci.risk_score + ' pts</span>';
+        }
+        html += '</div>';
+        html += '<div class="fs-11 text-secondary text-truncate mb-1">' + realId + '</div>';
+
+        // Summary
+        var summary = '';
+        if (desc && desc.summary) summary = desc.summary;
+        else if (ci && ci.reasoning) summary = ci.reasoning;
+        else if (nodeId.startsWith('svc_')) summary = 'Service in the blast radius.';
+        else if (nodeId.startsWith('ep_')) summary = 'API endpoint exposed through affected service.';
+        if (summary) html += '<div class="fs-11" style="line-height:1.5;">' + summary + '</div>';
+
+        // Risk bar
+        if (ci && ci.risk_score) {
+            var rc = ci.risk_score >= 25 ? '#EF4444' : ci.risk_score >= 15 ? '#F97316' : '#F59E0B';
+            html += '<div class="chat-risk-bar"><div class="chat-risk-fill" style="width:' + Math.min(ci.risk_score * 2.5, 100) + '%;background:' + rc + ';"></div></div>';
         }
 
-        // === PR center node ===
-        var prId = nodeId++;
-        nodes.push({
-            id: prId, label: 'PR #{{ $pullRequest->pr_number }}',
-            shape: 'box', borderWidth: 3, widthConstraint: { minimum: 120, maximum: 160 },
-            color: { background: '#605DFF', border: '#4b49cc', highlight: { background: '#7c7aff', border: '#605DFF' } },
-            font: { color: '#fff', size: 14, bold: { color: '#fff' } },
-            shadow: { enabled: true, color: 'rgba(96,93,255,0.25)', size: 12 },
-            mass: 3, fixed: { x: true, y: true }, x: 0, y: 0
-        });
-        meta[prId] = { category: 'pr', type: 'Pull Request', name: 'PR #{{ $pullRequest->pr_number }}',
-            html: '<p class="mb-1">' + (blastSummary || 'Impact analysis for {{ $pullRequest->pr_title }}') + '</p>'
-                + '<div class="d-flex gap-2 flex-wrap"><span class="badge bg-danger bg-opacity-10 text-danger">' + depKeys.length + ' changed</span>'
-                + '<span class="badge bg-warning bg-opacity-10 text-warning">' + (files.length - depKeys.length) + ' affected</span>'
-                + '<span class="badge bg-primary bg-opacity-10 text-primary">' + services.length + ' services</span></div>' };
+        // Deps count
+        if (depGraph[realId] && Array.isArray(depGraph[realId]) && depGraph[realId].length > 0) {
+            html += '<div class="fs-11 text-secondary mt-1"><span class="material-symbols-outlined align-middle" style="font-size:12px;">subdirectory_arrow_right</span> ' + depGraph[realId].length + ' downstream dependent(s)</div>';
+        }
 
-        // === Services — large circles around PR ===
-        services.forEach(function(s, i) {
-            var id = nodeId++;
-            nodeMap['svc_' + s] = id;
-            nodes.push({
-                id: id, label: s,
-                shape: 'box', borderWidth: 2, widthConstraint: { minimum: 90, maximum: 160 },
-                color: { background: '#3B82F6', border: '#2563EB', highlight: { background: '#60A5FA', border: '#3B82F6' } },
-                font: { color: '#fff', size: 12 },
-                shadow: { enabled: true, color: 'rgba(59,130,246,0.2)', size: 8 },
-                mass: 2
-            });
-            edges.push({ from: prId, to: id, color: { color: '#3B82F6', opacity: 0.6 }, width: 2.5,
-                arrows: { to: { enabled: true, scaleFactor: 0.8 } }, smooth: { type: 'curvedCW', roundness: 0.15 } });
-            meta[id] = { category: 'service', type: 'Service', name: s,
-                html: '<p class="mb-0">Service <strong>' + s + '</strong> is in the blast radius of this PR. Monitor error rates and latency after deployment.</p>' };
+        // Change type
+        if (ci && ci.change_type) {
+            html += '<div class="fs-10 mt-1"><code class="px-1 bg-primary bg-opacity-10 rounded">' + ci.change_type.replace(/_/g, ' ') + '</code>';
+            if (ci.full_file_read) html += ' <span class="text-success fs-10">full code read</span>';
+            html += '</div>';
+        }
+
+        // Quick action buttons — contextual to the clicked file
+        html += '<div class="chat-quick-actions">';
+        var safeFile = realId.replace(/"/g, '&quot;');
+        html += '<button class="chat-quick-btn" data-query="Explain what ' + safeFile + ' does and why it matters"><span class="material-symbols-outlined" style="font-size:11px;">help</span> Explain this file</button>';
+        html += '<button class="chat-quick-btn" data-query="What depends on ' + safeFile + '? Show the dependency chain"><span class="material-symbols-outlined" style="font-size:11px;">account_tree</span> Dependencies</button>';
+        if (ci && ci.risk_score >= 10) {
+            html += '<button class="chat-quick-btn" data-query="Why is ' + safeFile + ' risky? Break down the risk factors"><span class="material-symbols-outlined" style="font-size:11px;">warning</span> Why risky?</button>';
+        }
+        html += '<button class="chat-quick-btn" data-query="What services and endpoints are affected by changes to ' + safeFile + '?"><span class="material-symbols-outlined" style="font-size:11px;">hub</span> Impact</button>';
+        html += '<button class="chat-quick-btn" data-file-preview="' + safeFile + '" style="border-color:#605DFF;"><span class="material-symbols-outlined" style="font-size:11px;">code</span> View code</button>';
+        html += '</div>';
+
+        html += '</div>';
+
+        addBotMessage(html, true);
+    }
+
+    // Chat message helpers
+    function addBotMessage(content, isHtml) {
+        var el = document.createElement('div');
+        el.className = 'chat-msg chat-bot';
+        var bubble = document.createElement('div');
+        bubble.className = 'chat-bubble';
+        if (isHtml) bubble.innerHTML = content;
+        else bubble.textContent = content;
+        el.appendChild(bubble);
+        var container = document.getElementById('chatMessages');
+        container.appendChild(el);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function addUserMessage(text) {
+        var el = document.createElement('div');
+        el.className = 'chat-msg chat-user';
+        var bubble = document.createElement('div');
+        bubble.className = 'chat-bubble';
+        bubble.textContent = text;
+        el.appendChild(bubble);
+        var container = document.getElementById('chatMessages');
+        container.appendChild(el);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    // Add AI source badge to bot messages
+    function addConfidenceBadge(source) {
+        var colors = { agent: '#10B981', openai: '#3B82F6', local: '#F59E0B' };
+        var labels = { agent: 'Navigator Agent', openai: 'Azure OpenAI', local: 'Local Analysis' };
+        var c = colors[source] || colors.local;
+        var l = labels[source] || labels.local;
+        return '<div class="chat-confidence"><span class="chat-confidence-dot" style="background:' + c + ';"></span> ' + l + '</div>';
+    }
+
+    // Export the chat conversation as markdown
+    function exportChatConversation() {
+        var msgs = document.querySelectorAll('#chatMessages .chat-msg');
+        var md = '# DriftWatch Impact Chat — PR #' + @json($pullRequest->pr_number) + '\n';
+        md += '_Exported: ' + new Date().toLocaleString() + '_\n\n---\n\n';
+        msgs.forEach(function(msg) {
+            var isUser = msg.classList.contains('chat-user');
+            var bubble = msg.querySelector('.chat-bubble');
+            if (!bubble) return;
+            var text = bubble.innerText || bubble.textContent || '';
+            if (text.trim()) {
+                md += (isUser ? '**You**: ' : '**Navigator**: ') + text.trim() + '\n\n';
+            }
         });
 
-        // === Changed files — red bubbles, size based on downstream impact ===
-        depKeys.forEach(function(f) {
-            var id = nodeId++;
-            nodeMap['file_' + f] = id;
-            var depCount = (depGraph[f] && Array.isArray(depGraph[f])) ? depGraph[f].length : 0;
-            var size = Math.max(20, Math.min(45, 18 + depCount * 6));
-            nodes.push({
-                id: id, label: f.split('/').pop(),
-                shape: 'dot', size: size, borderWidth: 3,
-                color: { background: '#EF4444', border: '#DC2626', highlight: { background: '#F87171', border: '#EF4444' } },
-                font: { color: '#334155', size: 11, strokeWidth: 3, strokeColor: '#ffffff' },
-                shadow: { enabled: true, color: 'rgba(239,68,68,0.2)', size: 8 },
-                mass: 1.5 + depCount * 0.3
-            });
-            edges.push({ from: prId, to: id, color: { color: '#EF4444', opacity: 0.5 }, width: 2,
-                arrows: { to: { enabled: true, scaleFactor: 0.6 } }, smooth: { type: 'curvedCW', roundness: 0.1 } });
-            meta[id] = { category: 'changed', type: 'Changed File', name: f.split('/').pop(),
-                html: '<div class="text-secondary fs-12 mb-2">' + f + '</div>' + fileDesc(f, true, depCount),
-                deps: depCount > 0 ? depGraph[f].map(function(d) { return d.split('/').pop(); }) :[] };
-        });
+        var blob = new Blob([md], { type: 'text/markdown' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'driftwatch-chat-pr-' + @json($pullRequest->pr_number) + '.md';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
 
-        // === Affected files — amber bubbles ===
-        files.forEach(function(f) {
-            if (sourceFiles[f] || nodeMap['file_' + f]) return;
-            var id = nodeId++;
-            nodeMap['file_' + f] = id;
-            nodes.push({
-                id: id, label: f.split('/').pop(),
-                shape: 'dot', size: 18, borderWidth: 2,
-                color: { background: '#F59E0B', border: '#D97706', highlight: { background: '#FBBF24', border: '#F59E0B' } },
-                font: { color: '#334155', size: 10, strokeWidth: 2, strokeColor: '#ffffff' },
-                mass: 1
+    // === Inline Code Viewer ===
+    function fetchFilePreview(filePath) {
+        addUserMessage('Show me the code for ' + filePath.split('/').pop());
+
+        var loadId = 'code-load-' + Date.now();
+        addBotMessage('<div id="' + loadId + '" class="d-flex align-items-center gap-2"><div class="chat-typing-dots"><span></span><span></span><span></span></div><span class="fs-11 text-secondary ms-1">Fetching source code...</span></div>', true);
+
+        fetch('/api/file-preview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+            body: JSON.stringify({ pr_id: @json($pullRequest->id), file_path: filePath })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            var loader = document.getElementById(loadId);
+            if (loader) loader.closest('.chat-msg').remove();
+
+            if (data.content) {
+                renderCodeViewer(data);
+            } else if (data.message) {
+                addBotMessage('<div class="fs-11"><span class="material-symbols-outlined align-middle text-warning" style="font-size:12px;">info</span> ' + data.message + '</div>', true);
+            } else {
+                addBotMessage('<div class="fs-11 text-secondary">No source code available for this file. Set <code>GITHUB_TOKEN</code> in your environment to enable live code inspection.</div>', true);
+            }
+        })
+        .catch(function(err) {
+            var loader = document.getElementById(loadId);
+            if (loader) loader.closest('.chat-msg').remove();
+            addBotMessage('<div class="fs-11 text-warning">Failed to fetch code preview. Check your GitHub token configuration.</div>', true);
+        });
+    }
+
+    function renderCodeViewer(data) {
+        var shortName = data.file_path.split('/').pop();
+        var hasDiff = data.diff && data.diff.length > 0;
+        var ext = data.language || '';
+
+        var html = '<div class="chat-code-viewer">';
+
+        // Header with file name and tabs
+        html += '<div class="chat-code-header">';
+        html += '<span class="file-name" title="' + data.file_path.replace(/"/g, '&quot;') + '"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:-2px;">code</span> ' + shortName + '</span>';
+        html += '<div class="d-flex gap-1 align-items-center">';
+        if (hasDiff) {
+            html += '<button class="code-tab active" data-tab="diff">Diff</button>';
+            html += '<button class="code-tab" data-tab="source">Source</button>';
+        }
+        html += '<button class="code-tab" data-expand-code="1" title="Full screen preview" style="margin-left:4px;"><span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px;">fullscreen</span></button>';
+        html += '</div>';
+        html += '</div>';
+
+        // Code body — show diff by default if available, otherwise source
+        if (hasDiff) {
+            html += '<div class="chat-code-body" data-view="diff">' + formatDiff(data.diff) + '</div>';
+            html += '<div class="chat-code-body" data-view="source" style="display:none;">' + formatSourceCode(data.content, ext) + '</div>';
+        } else {
+            html += '<div class="chat-code-body">' + formatSourceCode(data.content, ext) + '</div>';
+        }
+
+        // Stats bar
+        html += '<div class="chat-code-stats">';
+        html += '<span>' + ext.toUpperCase() + '</span>';
+        if (data.size) html += '<span>' + formatFileSize(data.size) + '</span>';
+        html += '<span>' + (data.content.split('\n').length) + ' lines</span>';
+        if (data.source === 'github') html += '<span style="color:#10B981;">Live from GitHub</span>';
+        else if (data.source === 'cached') html += '<span style="color:#F59E0B;">Cached from pipeline</span>';
+        html += '</div>';
+
+        html += '</div>';
+
+        // Add ask-about-code suggestion
+        html += '<div class="chat-quick-actions mt-1">';
+        var sf = data.file_path.replace(/"/g, '&quot;');
+        html += '<button class="chat-quick-btn" data-query="Analyze the code in ' + sf + ' — what are the key changes and potential issues?"><span class="material-symbols-outlined" style="font-size:11px;">analytics</span> Analyze code</button>';
+        html += '<button class="chat-quick-btn" data-query="Are there any security concerns in the changes to ' + sf + '?"><span class="material-symbols-outlined" style="font-size:11px;">shield</span> Security check</button>';
+        html += '</div>';
+
+        addBotMessage(html, true);
+
+        // Bind tab switching + expand button
+        setTimeout(function() {
+            var viewers = document.querySelectorAll('.chat-code-viewer');
+            var lastViewer = viewers[viewers.length - 1];
+            if (lastViewer) {
+                lastViewer._codeData = data;
+                lastViewer.querySelectorAll('.code-tab').forEach(function(tab) {
+                    tab.addEventListener('click', function() {
+                        if (tab.dataset.expandCode) {
+                            openCodePreviewModal(lastViewer._codeData);
+                            return;
+                        }
+                        lastViewer.querySelectorAll('.code-tab').forEach(function(t) { if (!t.dataset.expandCode) t.classList.remove('active'); });
+                        tab.classList.add('active');
+                        var view = tab.dataset.tab;
+                        lastViewer.querySelectorAll('.chat-code-body').forEach(function(body) {
+                            body.style.display = body.dataset.view === view ? '' : 'none';
+                        });
+                    });
+                });
+            }
+        }, 100);
+    }
+
+    function formatDiff(diffText) {
+        var lines = diffText.split('\n');
+        var html = '';
+        lines.forEach(function(line) {
+            var escaped = escapeHtml(line);
+            if (line.startsWith('@@')) {
+                html += '<span class="diff-hdr">' + escaped + '</span>\n';
+            } else if (line.startsWith('+') && !line.startsWith('+++')) {
+                html += '<span class="diff-add">' + escaped + '</span>';
+            } else if (line.startsWith('-') && !line.startsWith('---')) {
+                html += '<span class="diff-del">' + escaped + '</span>';
+            } else if (line.startsWith('diff --git')) {
+                html += '<span class="diff-hdr">' + escaped + '</span>\n';
+            } else {
+                html += escaped + '\n';
+            }
+        });
+        return html;
+    }
+
+    function formatSourceCode(content, ext) {
+        var lines = content.split('\n');
+        var html = '';
+        var maxLines = Math.min(lines.length, 500); // Cap at 500 lines
+        for (var i = 0; i < maxLines; i++) {
+            html += '<span class="line-num">' + (i + 1) + '</span>' + escapeHtml(lines[i]) + '\n';
+        }
+        if (lines.length > 500) {
+            html += '\n<span style="color:#f38ba8;">// ... ' + (lines.length - 500) + ' more lines truncated ...</span>\n';
+        }
+        return html;
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+
+    // Process chat queries — calls the Navigator AI agent API, falls back to local matching
+    var _prId = @json($pullRequest->id);
+
+    function processChatQuery(query) {
+        // Inject last-clicked file context for vague queries
+        var q = query.toLowerCase().trim();
+        if (_lastClickedFile && (q.match(/^(what does it|explain this|what is this|tell me about this|why is it|what does this|this file|explain it|what is it)/))) {
+            query = query + ' (referring to: ' + _lastClickedFile + ')';
+        }
+
+        // Show typing indicator with animated dots
+        var typingId = 'typing-' + Date.now();
+        addBotMessage('<div id="' + typingId + '" class="d-flex align-items-center gap-2"><div class="chat-typing-dots"><span></span><span></span><span></span></div><span class="fs-11 text-secondary ms-1">Navigator is analyzing...</span></div>', true);
+
+        // Disable send button while processing
+        var sendBtn = document.getElementById('chatSendBtn');
+        if (sendBtn) sendBtn.disabled = true;
+
+        fetch('/api/impact-chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+            body: JSON.stringify({ pr_id: _prId, query: query })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            // Remove typing indicator
+            var typing = document.getElementById(typingId);
+            if (typing) typing.closest('.chat-msg').remove();
+
+            // Render the AI response (supports markdown-ish formatting)
+            var responseHtml = '<div class="fs-12">' + formatChatResponse(data.response || 'No response.') + '</div>';
+
+            // Highlight nodes if the agent returned any
+            var nodesToHighlight = data.highlight_nodes || [];
+            if (nodesToHighlight.length > 0) {
+                // Map file paths to dag node IDs (prefix with file_)
+                var dagNodeIds = nodesToHighlight.map(function(f) { return 'file_' + f; }).filter(function(nid) {
+                    return window._dagAddedNodes && window._dagAddedNodes[nid];
+                });
+                // Also try without prefix
+                nodesToHighlight.forEach(function(f) {
+                    if (window._dagAddedNodes && window._dagAddedNodes[f]) dagNodeIds.push(f);
+                });
+                if (dagNodeIds.length > 0) {
+                    highlightMultipleNodes(dagNodeIds);
+                    responseHtml += '<div class="fs-10 text-secondary mt-1"><span class="material-symbols-outlined align-middle" style="font-size:11px;">visibility</span> ' + dagNodeIds.length + ' node(s) highlighted in the tree</div>';
+                }
+            }
+
+            // Add source confidence badge
+            responseHtml += addConfidenceBadge(data.source || 'local');
+
+            addBotMessage(responseHtml, true);
+
+            // Render suggested follow-ups (use data-query + event delegation)
+            var followups = data.suggested_followups || [];
+            if (followups.length > 0) {
+                var sugHtml = '<div class="chat-suggestions mt-1">';
+                followups.forEach(function(f) {
+                    sugHtml += '<button class="chat-suggest-btn" data-query="' + f.replace(/"/g, '&quot;') + '">' + f + '</button>';
+                });
+                sugHtml += '</div>';
+                addBotMessage(sugHtml, true);
+            }
+        })
+        .catch(function(err) {
+            // Remove typing indicator
+            var typing = document.getElementById(typingId);
+            if (typing) typing.closest('.chat-msg').remove();
+
+            // Fallback to local matching
+            processLocalChatQuery(query);
+        })
+        .finally(function() {
+            if (sendBtn) sendBtn.disabled = false;
+        });
+    }
+
+    // Format AI response — basic markdown to HTML
+    function formatChatResponse(text) {
+        return text
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n\n/g, '<br><br>')
+            .replace(/\n/g, '<br>');
+    }
+
+    // Local fallback — keyword matching (used when API is unavailable)
+    function processLocalChatQuery(query) {
+        var q = query.toLowerCase().trim();
+        var matches = [];
+        var responseHtml = '';
+
+        if (q.match(/highest risk|most dangerous|riskiest|critical|top risk/)) {
+            var sorted = _chatSearchIndex.slice().sort(function(a, b) { return b.score - a.score; });
+            matches = sorted.filter(function(n) { return n.score > 0; }).slice(0, 5);
+            if (matches.length > 0) {
+                responseHtml = '<div class="fw-medium fs-12 mb-2">Top ' + matches.length + ' highest risk items:</div>';
+                matches.forEach(function(m) { responseHtml += buildChatFileCard(m); });
+                highlightMultipleNodes(matches.map(function(m) { return m.nodeId; }));
+            } else { responseHtml = 'No risk scores found in the current analysis.'; }
+        }
+        else if (q.match(/service|affected service|what service/)) {
+            matches = _chatSearchIndex.filter(function(n) { return n.type === 'service'; });
+            if (matches.length > 0) {
+                responseHtml = '<div class="fw-medium fs-12 mb-2">' + matches.length + ' affected service(s):</div>';
+                matches.forEach(function(m) { responseHtml += buildChatFileCard(m); });
+                highlightMultipleNodes(matches.map(function(m) { return m.nodeId; }));
+            } else { responseHtml = 'No services identified.'; }
+        }
+        else if (q.match(/depend|downstream|chain|import/)) {
+            var withDeps = _chatSearchIndex.filter(function(n) {
+                return depGraph[n.fullPath] && Array.isArray(depGraph[n.fullPath]) && depGraph[n.fullPath].length > 0;
+            }).sort(function(a, b) { return (depGraph[b.fullPath] || []).length - (depGraph[a.fullPath] || []).length; });
+            if (withDeps.length > 0) {
+                responseHtml = '<div class="fw-medium fs-12 mb-2">Files with downstream dependencies:</div>';
+                withDeps.slice(0, 5).forEach(function(m) {
+                    var deps = depGraph[m.fullPath] || [];
+                    responseHtml += buildChatFileCard(m, deps.length + ' dep(s): ' + deps.map(function(d) { return d.split('/').pop(); }).join(', '));
+                });
+                highlightMultipleNodes(withDeps.slice(0, 5).map(function(m) { return m.nodeId; }));
+            } else { responseHtml = 'No dependency chains found.'; }
+        }
+        else if (q.match(/summary|overview|what changed|tell me|explain/)) {
+            responseHtml = '<div class="fw-medium fs-12 mb-1">Impact Overview</div>';
+            responseHtml += '<div class="fs-12">' + files.length + ' files changed across ' + services.length + ' service(s).</div>';
+            if (blastSummary) responseHtml += '<div class="fs-12 mt-1">' + blastSummary + '</div>';
+        }
+        else {
+            var words = q.split(/\s+/);
+            matches = _chatSearchIndex.filter(function(n) {
+                return words.some(function(w) { return w.length >= 2 && n.searchText.indexOf(w) >= 0; });
+            }).slice(0, 8);
+            if (matches.length > 0) {
+                responseHtml = '<div class="fw-medium fs-12 mb-2">Found ' + matches.length + ' match(es):</div>';
+                matches.forEach(function(m) { responseHtml += buildChatFileCard(m); });
+                highlightMultipleNodes(matches.map(function(m) { return m.nodeId; }));
+            } else {
+                responseHtml = 'No matches found. Try asking about <strong>risk</strong>, <strong>services</strong>, <strong>dependencies</strong>, or search for a file name.';
+            }
+        }
+
+        addBotMessage(responseHtml, true);
+    }
+
+    function buildChatFileCard(item, extraInfo) {
+        var html = '<div class="chat-file-card" data-node-id="' + (item.nodeId || '').replace(/"/g, '&quot;') + '">';
+        html += '<div class="d-flex align-items-center gap-2">';
+        var iconMap = { file: 'description', dependency: 'call_split', service: 'dns', endpoint: 'api', pr: 'account_tree' };
+        html += '<span class="material-symbols-outlined" style="font-size:14px;color:#605DFF;">' + (iconMap[item.type] || 'description') + '</span>';
+        html += '<span class="fw-medium fs-11 text-truncate flex-grow-1">' + item.label + '</span>';
+        if (item.score > 0) {
+            var c = item.score >= 25 ? '#EF4444' : item.score >= 15 ? '#F97316' : '#F59E0B';
+            html += '<span class="fs-10 fw-bold" style="color:' + c + ';">' + item.score + '</span>';
+        }
+        html += '</div>';
+        if (item.reasoning) html += '<div class="fs-10 text-secondary mt-1 text-truncate">' + item.reasoning + '</div>';
+        if (extraInfo) html += '<div class="fs-10 text-secondary mt-1">' + extraInfo + '</div>';
+        if (item.score > 0) {
+            var rc = item.score >= 25 ? '#EF4444' : item.score >= 15 ? '#F97316' : '#F59E0B';
+            html += '<div class="chat-risk-bar mt-1"><div class="chat-risk-fill" style="width:' + Math.min(item.score * 2.5, 100) + '%;background:' + rc + ';"></div></div>';
+        }
+        html += '</div>';
+        return html;
+    }
+
+    function sendChatFromInput() {
+        var input = document.getElementById('chatInput');
+        var text = input.value.trim();
+        if (!text) return;
+        input.value = '';
+        addUserMessage(text);
+        setTimeout(function() { processChatQuery(text); }, 150);
+    }
+
+    function sendChatQuery(text) {
+        addUserMessage(text);
+        setTimeout(function() { processChatQuery(text); }, 150);
+    }
+
+    function closeSidePanel() {
+        document.getElementById('treeSidePanel').classList.remove('open');
+        clearChatHighlights();
+    }
+
+    function clearChatHighlights() {
+        var inner = window._dagInner;
+        if (inner) {
+            inner.selectAll('g.node').classed('node-dimmed', false).classed('node-highlighted', false);
+            inner.selectAll('g.edgePath').classed('edge-dimmed', false).classed('edge-highlighted', false);
+        }
+    }
+
+    // Highlight full path from PR origin to a specific node
+    function highlightNodePath(targetNodeId) {
+        var g = window._dagGraph;
+        var inner = window._dagInner;
+        if (!g || !inner) return;
+
+        var ancestors = {};
+        var queue = [targetNodeId];
+        ancestors[targetNodeId] = true;
+        while (queue.length > 0) {
+            var current = queue.shift();
+            (g.predecessors(current) || []).forEach(function(pred) {
+                if (!ancestors[pred]) { ancestors[pred] = true; queue.push(pred); }
             });
-            // Connect to the source file that impacts it
-            var conn = false;
-            depKeys.forEach(function(src) {
-                if (Array.isArray(depGraph[src]) && depGraph[src].indexOf(f) >= 0 && nodeMap['file_' + src]) {
-                    edges.push({ from: nodeMap['file_' + src], to: id, color: { color: '#F59E0B', opacity: 0.4 }, width: 1.5,
-                        dashes: [6, 4], arrows: { to: { enabled: true, scaleFactor: 0.5 } }, smooth: { type: 'curvedCW', roundness: 0.2 } });
-                    conn = true;
+        }
+        var descendants = {};
+        queue = [targetNodeId];
+        descendants[targetNodeId] = true;
+        while (queue.length > 0) {
+            var cur = queue.shift();
+            (g.successors(cur) || []).forEach(function(succ) {
+                if (!descendants[succ]) { descendants[succ] = true; queue.push(succ); }
+            });
+        }
+        var allRelevant = Object.assign({}, ancestors, descendants);
+
+        inner.selectAll('g.node').classed('node-dimmed', true).classed('node-highlighted', false);
+        inner.selectAll('g.edgePath').classed('edge-dimmed', true).classed('edge-highlighted', false);
+        inner.selectAll('g.node').each(function(d) {
+            if (allRelevant[d]) d3.select(this).classed('node-dimmed', false).classed('node-highlighted', true);
+        });
+        inner.selectAll('g.edgePath').each(function() {
+            var ed = d3.select(this).datum();
+            if (ed && allRelevant[ed.v] && allRelevant[ed.w]) d3.select(this).classed('edge-dimmed', false).classed('edge-highlighted', true);
+        });
+    }
+
+    function highlightMultipleNodes(nodeIds) {
+        var inner = window._dagInner;
+        if (!inner) return;
+        var matchSet = {};
+        nodeIds.forEach(function(nid) { matchSet[nid] = true; });
+
+        inner.selectAll('g.node').classed('node-dimmed', true).classed('node-highlighted', false);
+        inner.selectAll('g.edgePath').classed('edge-dimmed', true).classed('edge-highlighted', false);
+        inner.selectAll('g.node').each(function(d) {
+            if (matchSet[d]) d3.select(this).classed('node-dimmed', false).classed('node-highlighted', true);
+        });
+        inner.selectAll('g.edgePath').each(function() {
+            var ed = d3.select(this).datum();
+            if (ed && (matchSet[ed.v] || matchSet[ed.w])) d3.select(this).classed('edge-dimmed', false).classed('edge-highlighted', true);
+        });
+    }
+
+    // === Collapsible Impact Summary ===
+    function toggleTreeSummary() {
+        var body = document.getElementById('treeSummaryBody');
+        var chevron = document.getElementById('treeSummaryChevron');
+        body.classList.toggle('open');
+        chevron.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : '';
+    }
+
+    function initTreeSummary() {
+        var totalDeps = 0;
+        Object.keys(depGraph).forEach(function(k) { if (Array.isArray(depGraph[k])) totalDeps += depGraph[k].length; });
+        document.getElementById('tsSummaryFiles').textContent = files.length;
+        document.getElementById('tsSummaryServices').textContent = services.length;
+        document.getElementById('tsSummaryDeps').textContent = totalDeps;
+        document.getElementById('tsSummaryEndpoints').textContent = endpoints.length;
+        document.getElementById('treeSummaryBadge').textContent = files.length + ' files, ' + services.length + ' services';
+
+        var text = blastSummary || ('This PR modifies ' + files.length + ' file(s) affecting ' + services.length + ' service(s).' + (totalDeps > 0 ? ' ' + totalDeps + ' downstream dependencies.' : '') + (endpoints.length > 0 ? ' ' + endpoints.length + ' endpoint(s) exposed.' : ''));
+        document.getElementById('tsSummaryText').textContent = text;
+
+        var sorted = changeClassifications.slice().sort(function(a, b) { return (b.risk_score || 0) - (a.risk_score || 0); });
+        var highRisk = sorted.filter(function(c) { return (c.risk_score || 0) >= 10; }).slice(0, 5);
+        if (highRisk.length > 0) {
+            var hrHtml = '';
+            highRisk.forEach(function(c) {
+                var score = c.risk_score || 0;
+                var color = score >= 25 ? '#EF4444' : score >= 15 ? '#F97316' : '#F59E0B';
+                hrHtml += '<div class="d-flex align-items-center gap-2 mb-2 p-2 rounded-2" style="background:' + color + '10;border:1px solid ' + color + '30;cursor:pointer;" onclick="highlightNodePath(\'file_' + c.file + '\')">'
+                    + '<span class="fw-bold fs-12" style="color:' + color + ';min-width:28px;">' + score + '</span>'
+                    + '<div class="flex-grow-1 min-w-0"><div class="fw-medium fs-12 text-truncate">' + (c.file || '').split('/').pop() + '</div><div class="fs-11 text-secondary">' + (c.change_type || '').replace(/_/g, ' ') + '</div></div>'
+                    + '<span class="material-symbols-outlined text-secondary" style="font-size:14px;">chevron_right</span></div>';
+            });
+            document.getElementById('tsSummaryHighRiskList').innerHTML = hrHtml;
+            document.getElementById('tsSummaryHighRisk').style.display = 'block';
+        }
+    }
+
+    function initTreeSearch() {
+        buildChatSearchIndex();
+        // Chat input — Enter to send
+        var chatInput = document.getElementById('chatInput');
+        if (chatInput) {
+            chatInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); sendChatFromInput(); }
+            });
+        }
+        // Send button — click to send
+        var sendBtn = document.getElementById('chatSendBtn');
+        if (sendBtn) {
+            sendBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                sendChatFromInput();
+            });
+        }
+        // Event delegation for all dynamic buttons in chat
+        var chatContainer = document.getElementById('chatMessages');
+        if (chatContainer) {
+            chatContainer.addEventListener('click', function(e) {
+                // Suggestion buttons (follow-ups)
+                var sugBtn = e.target.closest('.chat-suggest-btn');
+                if (sugBtn && sugBtn.dataset.query) {
+                    e.preventDefault();
+                    sendChatQuery(sugBtn.dataset.query);
+                    return;
+                }
+                // Quick action buttons (on file cards)
+                var quickBtn = e.target.closest('.chat-quick-btn');
+                if (quickBtn) {
+                    e.preventDefault();
+                    // Check if it's a code preview button
+                    if (quickBtn.dataset.filePreview) {
+                        fetchFilePreview(quickBtn.dataset.filePreview);
+                        return;
+                    }
+                    if (quickBtn.dataset.query) {
+                        sendChatQuery(quickBtn.dataset.query);
+                        return;
+                    }
+                }
+                // File card clicks for highlighting
+                var card = e.target.closest('.chat-file-card');
+                if (card && card.dataset.nodeId) {
+                    highlightNodePath(card.dataset.nodeId);
                 }
             });
-            if (!conn) {
-                edges.push({ from: prId, to: id, color: { color: '#F59E0B', opacity: 0.3 }, width: 1.5,
-                    arrows: { to: { enabled: true, scaleFactor: 0.5 } } });
+        }
+        // Export conversation button
+        var exportBtn = document.getElementById('chatExportBtn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', exportChatConversation);
+        }
+        // Initialize speech-to-text if supported
+        initSpeechToText();
+    }
+
+    // === Speech-to-Text (Web Speech API) ===
+    var _speechRecognition = null;
+    var _isRecording = false;
+
+    function initSpeechToText() {
+        var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return; // Browser doesn't support it
+
+        var micBtn = document.getElementById('chatMicBtn');
+        if (!micBtn) return;
+        micBtn.style.display = ''; // Show the mic button
+
+        _speechRecognition = new SpeechRecognition();
+        _speechRecognition.continuous = false;
+        _speechRecognition.interimResults = true;
+        _speechRecognition.lang = 'en-US';
+
+        _speechRecognition.onstart = function() {
+            _isRecording = true;
+            micBtn.classList.add('recording');
+            micBtn.title = 'Listening... (click to stop)';
+            document.getElementById('chatInput').placeholder = 'Listening...';
+        };
+
+        _speechRecognition.onresult = function(event) {
+            var transcript = '';
+            for (var i = event.resultIndex; i < event.results.length; i++) {
+                transcript += event.results[i][0].transcript;
             }
-            meta[id] = { category: 'affected', type: 'Affected File', name: f.split('/').pop(),
-                html: '<div class="text-secondary fs-12 mb-2">' + f + '</div>' + fileDesc(f, false, 0) };
+            document.getElementById('chatInput').value = transcript;
+
+            // If this is a final result, send it
+            if (event.results[event.results.length - 1].isFinal) {
+                stopSpeechRecognition();
+                if (transcript.trim()) {
+                    setTimeout(function() { sendChatFromInput(); }, 200);
+                }
+            }
+        };
+
+        _speechRecognition.onerror = function(event) {
+            stopSpeechRecognition();
+            if (event.error !== 'aborted' && event.error !== 'no-speech') {
+                addBotMessage('<span class="fs-11 text-warning"><span class="material-symbols-outlined align-middle" style="font-size:12px;">warning</span> Voice input error: ' + event.error + '. Try typing instead.</span>', true);
+            }
+        };
+
+        _speechRecognition.onend = function() {
+            stopSpeechRecognition();
+        };
+
+        micBtn.addEventListener('click', function() {
+            if (_isRecording) {
+                _speechRecognition.stop();
+            } else {
+                try { _speechRecognition.start(); }
+                catch(e) { /* already started */ }
+            }
+        });
+    }
+
+    function stopSpeechRecognition() {
+        _isRecording = false;
+        var micBtn = document.getElementById('chatMicBtn');
+        if (micBtn) {
+            micBtn.classList.remove('recording');
+            micBtn.title = 'Voice input';
+        }
+        var input = document.getElementById('chatInput');
+        if (input) input.placeholder = 'Ask about files, risk, dependencies...';
+    }
+
+    // === Panel Resize Handle ===
+    (function() {
+        var handle = document.getElementById('panelResizeHandle');
+        var panel = document.getElementById('treeSidePanel');
+        if (!handle || !panel) return;
+        var startX, startW;
+        handle.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            startX = e.clientX;
+            startW = panel.offsetWidth;
+            handle.classList.add('dragging');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('mouseup', onUp);
+        });
+        function onDrag(e) {
+            var diff = startX - e.clientX;
+            var newW = Math.min(Math.max(startW + diff, 320), 800);
+            panel.style.width = newW + 'px';
+            panel.style.transition = 'none';
+        }
+        function onUp() {
+            handle.classList.remove('dragging');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            panel.style.transition = '';
+            document.removeEventListener('mousemove', onDrag);
+            document.removeEventListener('mouseup', onUp);
+        }
+    })();
+
+    // === Full-Screen Code Preview Modal ===
+    var _cpmData = null;
+    function openCodePreviewModal(data) {
+        _cpmData = data;
+        var overlay = document.getElementById('codePreviewOverlay');
+        var shortName = data.file_path.split('/').pop();
+        document.getElementById('cpmFileName').textContent = shortName;
+        document.getElementById('cpmFilePath').textContent = data.file_path;
+
+        var hasDiff = data.diff && data.diff.length > 0;
+        var diffTab = document.getElementById('cpmDiffTab');
+        var srcTab = document.getElementById('cpmSourceTab');
+        diffTab.style.display = hasDiff ? '' : 'none';
+        if (!hasDiff) {
+            srcTab.classList.add('active');
+            diffTab.classList.remove('active');
+        } else {
+            diffTab.classList.add('active');
+            srcTab.classList.remove('active');
+        }
+
+        // Stats
+        var statsHtml = '';
+        if (data.language) statsHtml += '<span class="stat-badge">' + data.language.toUpperCase() + '</span>';
+        if (data.size) statsHtml += '<span class="stat-badge">' + formatFileSize(data.size) + '</span>';
+        var lines = data.content ? data.content.split('\n').length : 0;
+        statsHtml += '<span class="stat-badge">' + lines + ' lines</span>';
+        if (hasDiff) {
+            var adds = (data.diff.match(/^\+[^+]/gm) || []).length;
+            var dels = (data.diff.match(/^-[^-]/gm) || []).length;
+            statsHtml += '<span class="stat-badge stat-add">+' + adds + '</span>';
+            statsHtml += '<span class="stat-badge stat-del">-' + dels + '</span>';
+        }
+        if (data.source === 'github') statsHtml += '<span class="stat-badge" style="color:#a6e3a1;">Live from GitHub</span>';
+        document.getElementById('cpmStats').innerHTML = statsHtml;
+
+        // GitHub link
+        var ghLink = document.getElementById('cpmGithubLink');
+        @if($pullRequest->repo_full_name)
+        ghLink.style.display = '';
+        ghLink.onclick = function() { window.open('https://github.com/{{ $pullRequest->repo_full_name }}/blob/{{ $pullRequest->head_branch ?? "main" }}/' + data.file_path, '_blank'); };
+        @endif
+
+        // Render body
+        renderCpmBody(hasDiff ? 'diff' : 'source');
+        overlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function renderCpmBody(view) {
+        var body = document.getElementById('cpmBody');
+        if (!_cpmData) return;
+        if (view === 'diff' && _cpmData.diff) {
+            body.innerHTML = formatDiff(_cpmData.diff);
+        } else {
+            body.innerHTML = formatSourceCodeExpanded(_cpmData.content, _cpmData.language || '');
+        }
+    }
+
+    function formatSourceCodeExpanded(content, lang) {
+        if (!content) return '<span style="color:#6c7086;">No source code available</span>';
+        var lines = content.split('\n');
+        var html = '';
+        for (var i = 0; i < lines.length; i++) {
+            html += '<span class="line-num">' + (i + 1) + '</span>' + escapeHtml(lines[i]) + '\n';
+        }
+        return html;
+    }
+
+    function closeCodePreviewModal() {
+        document.getElementById('codePreviewOverlay').classList.remove('show');
+        document.body.style.overflow = '';
+        _cpmData = null;
+    }
+
+    // Modal event bindings
+    (function() {
+        var overlay = document.getElementById('codePreviewOverlay');
+        if (!overlay) return;
+
+        document.getElementById('cpmCloseBtn').addEventListener('click', closeCodePreviewModal);
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) closeCodePreviewModal();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && overlay.classList.contains('show')) closeCodePreviewModal();
         });
 
-        // === Downstream dependencies — yellow smaller bubbles ===
-        depKeys.forEach(function(srcFile) {
+        document.getElementById('cpmDiffTab').addEventListener('click', function() {
+            document.getElementById('cpmSourceTab').classList.remove('active');
+            this.classList.add('active');
+            renderCpmBody('diff');
+        });
+        document.getElementById('cpmSourceTab').addEventListener('click', function() {
+            document.getElementById('cpmDiffTab').classList.remove('active');
+            this.classList.add('active');
+            renderCpmBody('source');
+        });
+
+        document.getElementById('cpmCopyBtn').addEventListener('click', function() {
+            if (_cpmData && _cpmData.content) {
+                navigator.clipboard.writeText(_cpmData.content).then(function() {
+                    var btn = document.getElementById('cpmCopyBtn');
+                    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">check</span> Copied!';
+                    setTimeout(function() { btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">content_copy</span> Copy'; }, 2000);
+                });
+            }
+        });
+    })();
+
+    // === Scroll Navigation Arrows (section-based) ===
+    (function() {
+        var nav = document.getElementById('scrollNav');
+        var topBtn = document.getElementById('scrollToTopBtn');
+        var bottomBtn = document.getElementById('scrollToBottomBtn');
+        if (!nav) return;
+
+        // Gather all major section cards on the page
+        function getSections() {
+            return Array.from(document.querySelectorAll('.dw-card, .dw-banner, .card.bg-white'));
+        }
+
+        var hideTimeout;
+        window.addEventListener('scroll', function() {
+            clearTimeout(hideTimeout);
+            var scrollY = window.scrollY || window.pageYOffset;
+            if (scrollY > 200) {
+                nav.classList.add('visible');
+            } else {
+                nav.classList.remove('visible');
+            }
+            hideTimeout = setTimeout(function() {
+                if ((window.scrollY || window.pageYOffset) < 200) nav.classList.remove('visible');
+            }, 3000);
+        });
+
+        // Up arrow: scroll to previous section
+        topBtn.addEventListener('click', function() {
+            var sections = getSections();
+            var scrollY = window.scrollY || window.pageYOffset;
+            for (var i = sections.length - 1; i >= 0; i--) {
+                var top = sections[i].getBoundingClientRect().top + scrollY - 80;
+                if (top < scrollY - 10) {
+                    window.scrollTo({ top: top, behavior: 'smooth' });
+                    return;
+                }
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Down arrow: scroll to next section
+        bottomBtn.addEventListener('click', function() {
+            var sections = getSections();
+            var scrollY = window.scrollY || window.pageYOffset;
+            for (var i = 0; i < sections.length; i++) {
+                var top = sections[i].getBoundingClientRect().top + scrollY - 80;
+                if (top > scrollY + 10) {
+                    window.scrollTo({ top: top, behavior: 'smooth' });
+                    return;
+                }
+            }
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        });
+    })();
+
+    // === Review Section Collapse Icon ===
+    (function() {
+        var body = document.getElementById('reviewCollapseBody');
+        var icon = document.getElementById('reviewCollapseIcon');
+        if (!body || !icon) return;
+        body.addEventListener('hide.bs.collapse', function() { icon.style.transform = 'rotate(180deg)'; });
+        body.addEventListener('show.bs.collapse', function() { icon.style.transform = 'rotate(0)'; });
+    })();
+
+    // === Full-screen Modal: Code Selection + Send to Chat ===
+    var _cpmSelectedText = '';
+    var _cpmOpenFiles = [];
+    var _cpmActiveFileIndex = 0;
+
+    (function() {
+        var body = document.getElementById('cpmBody');
+        var sendBtn = document.getElementById('cpmSendToChat');
+        if (!body || !sendBtn) return;
+
+        body.addEventListener('mouseup', function() {
+            var sel = window.getSelection();
+            var text = sel ? sel.toString().trim() : '';
+            if (text.length > 5) {
+                _cpmSelectedText = text;
+                sendBtn.style.display = '';
+            } else {
+                _cpmSelectedText = '';
+                sendBtn.style.display = 'none';
+            }
+        });
+
+        sendBtn.addEventListener('click', function() {
+            if (!_cpmSelectedText || !_cpmData) return;
+            var fileName = _cpmData.file_path.split('/').pop();
+            var attachHtml = '<div class="chat-code-attachment">';
+            attachHtml += '<div class="att-label"><span class="material-symbols-outlined" style="font-size:12px;">attach_file</span> Code from ' + escapeHtml(fileName) + '</div>';
+            attachHtml += '<pre>' + escapeHtml(_cpmSelectedText) + '</pre>';
+            attachHtml += '</div>';
+            addBotMessage(attachHtml, true);
+
+            // Auto-query the AI about this code
+            var query = 'Analyze this code snippet from ' + fileName + ':\n```\n' + _cpmSelectedText.substring(0, 500) + '\n```\nWhat are the potential issues or risks?';
+            sendChatQuery(query);
+
+            _cpmSelectedText = '';
+            sendBtn.style.display = 'none';
+            closeCodePreviewModal();
+        });
+
+        // Add File button
+        var addFileBtn = document.getElementById('cpmAddFileBtn');
+        var filePanel = document.getElementById('cpmFilePanel');
+        var filePanelClose = document.getElementById('cpmFilePanelClose');
+        var fileList = document.getElementById('cpmFileList');
+
+        if (addFileBtn && filePanel) {
+            addFileBtn.addEventListener('click', function() {
+                filePanel.classList.toggle('open');
+                if (filePanel.classList.contains('open')) renderFilePanel();
+            });
+            filePanelClose.addEventListener('click', function() { filePanel.classList.remove('open'); });
+        }
+
+        function renderFilePanel() {
+            // Show all PR files from blast radius as options
+            var files = @json($pullRequest->blastRadius?->affected_files ?? []);
+            var html = '';
+
+            // Show currently open files first
+            _cpmOpenFiles.forEach(function(f, idx) {
+                var name = (f.file_path || '').split('/').pop();
+                html += '<div class="cpm-file-item ' + (idx === _cpmActiveFileIndex ? 'active' : '') + '" data-cpm-open-idx="' + idx + '">';
+                html += '<span class="material-symbols-outlined" style="font-size:13px;">description</span>';
+                html += '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(name) + '</span>';
+                html += '</div>';
+            });
+
+            if (files.length > 0) {
+                html += '<div style="padding:6px 14px 4px; font-size:10px; font-weight:600; text-transform:uppercase; color:#45475a; margin-top:6px;">PR Files</div>';
+                files.forEach(function(file) {
+                    var fp = file.file_path || file.path || file;
+                    var name = fp.split('/').pop();
+                    var alreadyOpen = _cpmOpenFiles.some(function(o) { return o.file_path === fp; });
+                    if (alreadyOpen) return;
+                    html += '<div class="cpm-file-item" data-cpm-load-file="' + escapeHtml(fp) + '">';
+                    html += '<span class="material-symbols-outlined" style="font-size:13px;">add_circle_outline</span>';
+                    html += '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(name) + '</span>';
+                    html += '</div>';
+                });
+            }
+            fileList.innerHTML = html;
+
+            // Bind clicks
+            fileList.querySelectorAll('[data-cpm-open-idx]').forEach(function(el) {
+                el.addEventListener('click', function() {
+                    var idx = parseInt(this.dataset.cpmOpenIdx);
+                    switchCpmFile(idx);
+                });
+            });
+            fileList.querySelectorAll('[data-cpm-load-file]').forEach(function(el) {
+                el.addEventListener('click', function() {
+                    var fp = this.dataset.cpmLoadFile;
+                    loadFileIntoCpm(fp);
+                });
+            });
+        }
+
+        window.renderFilePanel = renderFilePanel;
+    })();
+
+    function switchCpmFile(idx) {
+        if (idx >= 0 && idx < _cpmOpenFiles.length) {
+            _cpmActiveFileIndex = idx;
+            _cpmData = _cpmOpenFiles[idx];
+            document.getElementById('cpmFileName').textContent = _cpmData.file_path.split('/').pop();
+            document.getElementById('cpmFilePath').textContent = _cpmData.file_path;
+            var hasDiff = _cpmData.diff && _cpmData.diff.length > 0;
+            document.getElementById('cpmDiffTab').style.display = hasDiff ? '' : 'none';
+            renderCpmBody(hasDiff ? 'diff' : 'source');
+            if (typeof renderFilePanel === 'function') renderFilePanel();
+        }
+    }
+
+    function loadFileIntoCpm(filePath) {
+        fetch('/api/file-preview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+            body: JSON.stringify({ pr_id: @json($pullRequest->id), file_path: filePath })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.content) {
+                _cpmOpenFiles.push(data);
+                switchCpmFile(_cpmOpenFiles.length - 1);
+            }
+        });
+    }
+
+    // Track open files when opening modal
+    var _origOpenCodePreviewModal = openCodePreviewModal;
+    openCodePreviewModal = function(data) {
+        if (!_cpmOpenFiles.some(function(f) { return f.file_path === data.file_path; })) {
+            _cpmOpenFiles.push(data);
+        }
+        _cpmActiveFileIndex = _cpmOpenFiles.findIndex(function(f) { return f.file_path === data.file_path; });
+        _origOpenCodePreviewModal(data);
+    };
+
+    var _origCloseCodePreviewModal = closeCodePreviewModal;
+    closeCodePreviewModal = function() {
+        _cpmOpenFiles = [];
+        _cpmActiveFileIndex = 0;
+        document.getElementById('cpmFilePanel').classList.remove('open');
+        _origCloseCodePreviewModal();
+    };
+
+    // === Text-to-Speech (Azure Speech) ===
+    var _ttsAudio = null;
+    var _ttsActiveBtn = null;
+
+    // Extract only meaningful text from a card — skip icons, badges, buttons, metadata
+    function extractImportantText(el) {
+        var clone = el.cloneNode(true);
+        // Remove elements that aren't useful to read aloud
+        clone.querySelectorAll('button, .btn, .badge, .material-symbols-outlined, code, .form-control, .form-check, input, select, .progress, svg, canvas, .chat-quick-actions, .dw-tts-btn, .chat-tts-btn, .fs-10, style, script').forEach(function(e) { e.remove(); });
+        var text = clone.innerText || clone.textContent || '';
+        // Clean up: remove icon text residue, excessive whitespace
+        text = text.replace(/volume_up|volume_off|expand_more|expand_less|content_copy/g, '')
+                   .replace(/\s{3,}/g, '. ')
+                   .replace(/\n{2,}/g, '. ')
+                   .trim()
+                   .substring(0, 3000);
+        return text;
+    }
+
+    function initTtsButtons() {
+        document.querySelectorAll('.dw-section-title').forEach(function(title) {
+            if (title.querySelector('.dw-tts-btn')) return;
+            var btn = document.createElement('button');
+            btn.className = 'dw-tts-btn';
+            btn.type = 'button';
+            btn.title = 'Listen to this section';
+            btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">volume_up</span>';
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var card = title.closest('.card-body') || title.closest('.card');
+                if (!card) return;
+                var text = extractImportantText(card);
+                speakText(text, btn);
+            });
+            title.appendChild(btn);
+        });
+
+        // Also add TTS to chat messages
+        addTtsToChatMessages();
+    }
+
+    // Add TTS speaker icons to chat bot messages
+    function addTtsToChatMessages() {
+        document.querySelectorAll('.chat-msg.chat-bot .chat-bubble').forEach(function(bubble) {
+            if (bubble.querySelector('.chat-tts-btn')) return;
+            var text = (bubble.innerText || '').trim();
+            if (text.length < 20) return;
+            var btn = document.createElement('button');
+            btn.className = 'chat-tts-btn';
+            btn.type = 'button';
+            btn.title = 'Listen';
+            btn.style.cssText = 'position:absolute;top:4px;right:4px;background:none;border:none;cursor:pointer;opacity:0.4;transition:opacity 0.2s;padding:2px;line-height:1;';
+            btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;color:#605DFF;">volume_up</span>';
+            btn.addEventListener('mouseenter', function() { btn.style.opacity = '1'; });
+            btn.addEventListener('mouseleave', function() { if (!btn.classList.contains('playing')) btn.style.opacity = '0.4'; });
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                speakText(extractImportantText(bubble), btn);
+            });
+            bubble.style.position = 'relative';
+            bubble.appendChild(btn);
+        });
+    }
+
+    // Watch for new chat messages and add TTS buttons
+    var _chatMsgEl = document.getElementById('chatMessages');
+    if (_chatMsgEl) {
+        new MutationObserver(function() { setTimeout(addTtsToChatMessages, 100); }).observe(_chatMsgEl, { childList: true, subtree: true });
+    }
+
+    function speakText(text, btn) {
+        // If already playing, stop
+        if (_ttsAudio && _ttsActiveBtn === btn) {
+            _ttsAudio.pause();
+            _ttsAudio = null;
+            btn.classList.remove('playing');
+            btn.querySelector('.material-symbols-outlined').textContent = 'volume_up';
+            _ttsActiveBtn = null;
+            return;
+        }
+        // Stop any other playing audio
+        if (_ttsAudio) {
+            _ttsAudio.pause();
+            if (_ttsActiveBtn) {
+                _ttsActiveBtn.classList.remove('playing');
+                _ttsActiveBtn.querySelector('.material-symbols-outlined').textContent = 'volume_up';
+            }
+        }
+
+        btn.classList.add('playing');
+        btn.querySelector('.material-symbols-outlined').textContent = 'volume_off';
+        _ttsActiveBtn = btn;
+
+        fetch('/api/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'audio/mpeg', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+            body: JSON.stringify({ text: text })
+        })
+        .then(function(res) {
+            if (!res.ok) throw new Error('TTS failed');
+            return res.blob();
+        })
+        .then(function(blob) {
+            var url = URL.createObjectURL(blob);
+            _ttsAudio = new Audio(url);
+            _ttsAudio.play();
+            _ttsAudio.onended = function() {
+                btn.classList.remove('playing');
+                btn.querySelector('.material-symbols-outlined').textContent = 'volume_up';
+                _ttsAudio = null;
+                _ttsActiveBtn = null;
+                URL.revokeObjectURL(url);
+            };
+        })
+        .catch(function(err) {
+            btn.classList.remove('playing');
+            btn.querySelector('.material-symbols-outlined').textContent = 'volume_up';
+            _ttsAudio = null;
+            _ttsActiveBtn = null;
+            console.warn('TTS unavailable:', err);
+        });
+    }
+
+    // Initialize TTS buttons after page load
+    setTimeout(initTtsButtons, 500);
+
+    // === Full-screen Modal: Minimizable/Dockable Mode ===
+    var _cpmDocked = false;
+    (function() {
+        var overlay = document.getElementById('codePreviewOverlay');
+        var modal = overlay ? overlay.querySelector('.code-preview-modal') : null;
+        if (!overlay || !modal) return;
+
+        // Add minimize button to header action bar
+        var actionBar = modal.querySelector('.cpm-action-bar');
+        if (actionBar) {
+            var minBtn = document.createElement('button');
+            minBtn.className = 'cpm-action';
+            minBtn.id = 'cpmMinimizeBtn';
+            minBtn.title = 'Dock to side — keep chatting';
+            minBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">picture_in_picture_alt</span> Dock';
+            actionBar.insertBefore(minBtn, actionBar.querySelector('#cpmCopyBtn'));
+
+            minBtn.addEventListener('click', function() {
+                if (_cpmDocked) {
+                    // Undock — go full screen again
+                    overlay.style.cssText = '';
+                    modal.style.cssText = 'display:flex;flex-direction:row;';
+                    overlay.classList.add('show');
+                    document.body.style.overflow = 'hidden';
+                    minBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">picture_in_picture_alt</span> Dock';
+                    _cpmDocked = false;
+                } else {
+                    // Dock to LEFT side (keeps chat visible on right)
+                    overlay.style.cssText = 'display:flex !important; position:fixed; top:0; left:0; bottom:0; right:auto; width:50vw; max-width:700px; background:none; z-index:999; pointer-events:auto;';
+                    modal.style.cssText = 'display:flex; flex-direction:row; width:100%; height:100%; border-radius:0; box-shadow:4px 0 24px rgba(0,0,0,0.3);';
+                    document.body.style.overflow = '';
+                    minBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">fullscreen</span> Full';
+                    _cpmDocked = true;
+                }
+            });
+        }
+
+        // === Split View Button ===
+        if (actionBar) {
+            var splitBtn = document.createElement('button');
+            splitBtn.className = 'cpm-action';
+            splitBtn.id = 'cpmSplitBtn';
+            splitBtn.title = 'Split view — compare files side by side';
+            splitBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">vertical_split</span> Split';
+            actionBar.insertBefore(splitBtn, actionBar.querySelector('#cpmCopyBtn'));
+
+            var _splitMode = false;
+            splitBtn.addEventListener('click', function() {
+                var codeBody = modal.querySelector('#cpmCodeBody');
+                if (!codeBody) return;
+
+                if (_splitMode) {
+                    // Exit split mode
+                    var rightPane = document.getElementById('cpmSplitRight');
+                    if (rightPane) rightPane.remove();
+                    codeBody.style.width = '';
+                    codeBody.style.flex = '';
+                    splitBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">vertical_split</span> Split';
+                    _splitMode = false;
+                } else {
+                    // Enter split mode — add second pane
+                    codeBody.style.flex = '1';
+                    codeBody.style.width = '50%';
+                    codeBody.style.minWidth = '0';
+
+                    var rightPane = document.createElement('div');
+                    rightPane.id = 'cpmSplitRight';
+                    rightPane.style.cssText = 'flex:1; width:50%; min-width:0; border-left:2px solid #313244; display:flex; flex-direction:column; background:#1e1e2e;';
+
+                    // Header with file selector
+                    var rpHeader = document.createElement('div');
+                    rpHeader.style.cssText = 'padding:8px 12px; background:#181825; border-bottom:1px solid #313244; display:flex; align-items:center; gap:8px; flex-shrink:0;';
+                    rpHeader.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;color:#cdd6f4;">description</span>'
+                        + '<select id="cpmSplitFileSelect" style="flex:1;background:#313244;color:#cdd6f4;border:1px solid #45475a;border-radius:6px;padding:4px 8px;font-size:12px;">'
+                        + '<option value="">Select a file to compare...</option>'
+                        + '</select>'
+                        + '<button id="cpmSplitToggleDiff" class="cpm-action" style="font-size:11px;" title="Toggle diff/source">Diff</button>';
+                    rightPane.appendChild(rpHeader);
+
+                    var rpBody = document.createElement('div');
+                    rpBody.id = 'cpmSplitBody';
+                    rpBody.style.cssText = 'flex:1; overflow:auto; padding:0; font-family:monospace; font-size:13px;';
+                    rpBody.innerHTML = '<div style="padding:40px;text-align:center;color:#6c7086;"><span class="material-symbols-outlined" style="font-size:32px;">compare_arrows</span><p class="mt-2">Select a file from the dropdown to compare side by side</p></div>';
+                    rightPane.appendChild(rpBody);
+
+                    // Insert after codeBody
+                    codeBody.parentNode.insertBefore(rightPane, codeBody.nextSibling);
+
+                    // Populate file select with open files + all blast radius files
+                    var sel = document.getElementById('cpmSplitFileSelect');
+                    if (_cpmOpenFiles && _cpmOpenFiles.length > 0) {
+                        var grp1 = document.createElement('optgroup');
+                        grp1.label = 'Open Files';
+                        _cpmOpenFiles.forEach(function(f, idx) {
+                            var opt = document.createElement('option');
+                            opt.value = 'open:' + idx;
+                            opt.textContent = f.file_path.split('/').pop();
+                            grp1.appendChild(opt);
+                        });
+                        sel.appendChild(grp1);
+                    }
+                    // Add blast radius files
+                    if (typeof files !== 'undefined' && files.length > 0) {
+                        var grp2 = document.createElement('optgroup');
+                        grp2.label = 'PR Files';
+                        files.forEach(function(f) {
+                            var opt = document.createElement('option');
+                            opt.value = 'fetch:' + f;
+                            opt.textContent = f.split('/').pop();
+                            grp2.appendChild(opt);
+                        });
+                        sel.appendChild(grp2);
+                    }
+
+                    // File select handler
+                    sel.addEventListener('change', function() {
+                        var val = sel.value;
+                        if (!val) return;
+                        var body = document.getElementById('cpmSplitBody');
+                        if (val.startsWith('open:')) {
+                            var idx = parseInt(val.split(':')[1]);
+                            var fData = _cpmOpenFiles[idx];
+                            if (fData) renderSplitPane(body, fData);
+                        } else if (val.startsWith('fetch:')) {
+                            var fPath = val.substring(6);
+                            body.innerHTML = '<div style="padding:20px;text-align:center;color:#6c7086;"><div class="chat-typing-dots"><span></span><span></span><span></span></div> Loading...</div>';
+                            fetch('/api/file-preview', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+                                body: JSON.stringify({ pr_id: @json($pullRequest->id), file_path: fPath })
+                            })
+                            .then(function(r) { return r.json(); })
+                            .then(function(d) {
+                                if (d.content) {
+                                    renderSplitPane(body, d);
+                                } else {
+                                    body.innerHTML = '<div style="padding:20px;text-align:center;color:#f38ba8;">File content not available.</div>';
+                                }
+                            })
+                            .catch(function() {
+                                body.innerHTML = '<div style="padding:20px;text-align:center;color:#f38ba8;">Failed to fetch file.</div>';
+                            });
+                        }
+                    });
+
+                    // Diff/Source toggle for split pane
+                    var diffToggle = document.getElementById('cpmSplitToggleDiff');
+                    var _splitShowDiff = true;
+                    if (diffToggle) {
+                        diffToggle.addEventListener('click', function() {
+                            _splitShowDiff = !_splitShowDiff;
+                            diffToggle.textContent = _splitShowDiff ? 'Diff' : 'Source';
+                            var selVal = sel.value;
+                            if (selVal) sel.dispatchEvent(new Event('change'));
+                        });
+                    }
+
+                    splitBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">close</span> Close Split';
+                    _splitMode = true;
+                }
+            });
+
+            function renderSplitPane(container, data) {
+                var hasDiff = data.diff && data.diff.length > 0;
+                var showDiff = document.getElementById('cpmSplitToggleDiff')?.textContent === 'Diff' && hasDiff;
+                var content = showDiff ? data.diff : (data.content || '');
+                var lines = content.split('\n');
+                var html = '<table style="width:100%;border-collapse:collapse;font-size:12px;line-height:1.6;">';
+                lines.forEach(function(line, i) {
+                    var bg = 'transparent';
+                    var color = '#cdd6f4';
+                    if (showDiff) {
+                        if (line.startsWith('+') && !line.startsWith('+++')) { bg = 'rgba(166,227,161,0.1)'; color = '#a6e3a1'; }
+                        else if (line.startsWith('-') && !line.startsWith('---')) { bg = 'rgba(243,139,168,0.1)'; color = '#f38ba8'; }
+                        else if (line.startsWith('@@')) { bg = 'rgba(137,180,250,0.08)'; color = '#89b4fa'; }
+                    }
+                    html += '<tr style="background:' + bg + ';"><td style="padding:0 8px;color:#585b70;text-align:right;user-select:none;width:40px;font-size:11px;">' + (i + 1) + '</td>';
+                    html += '<td style="padding:0 8px;color:' + color + ';white-space:pre-wrap;word-break:break-all;">' + escapeHtml(line) + '</td></tr>';
+                });
+                html += '</table>';
+                container.innerHTML = html;
+                container.scrollTop = 0;
+            }
+
+            function escapeHtml(s) {
+                return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            }
+        }
+    })();
+
+    // Override close to also handle docked state
+    var _origClose2 = closeCodePreviewModal;
+    closeCodePreviewModal = function() {
+        _cpmDocked = false;
+        var overlay = document.getElementById('codePreviewOverlay');
+        var modal = overlay ? overlay.querySelector('.code-preview-modal') : null;
+        if (overlay) overlay.style.cssText = '';
+        if (modal) modal.style.cssText = '';
+        _origClose2();
+    };
+
+    // === Full-screen Modal: Edit Mode ===
+    var _cpmEditMode = false;
+    (function() {
+        var actionBar = document.querySelector('.code-preview-modal .cpm-action-bar');
+        if (!actionBar) return;
+
+        var editBtn = document.createElement('button');
+        editBtn.className = 'cpm-action';
+        editBtn.id = 'cpmEditBtn';
+        editBtn.title = 'Toggle edit mode';
+        editBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">edit</span> Edit';
+        editBtn.style.display = 'none'; // Hidden by default, shown if user is author
+        actionBar.insertBefore(editBtn, actionBar.querySelector('#cpmCopyBtn'));
+
+        // Show edit button if current user is the PR author
+        var prAuthor = @json($pullRequest->pr_author ?? '');
+        if (prAuthor) {
+            editBtn.style.display = '';
+        }
+
+        editBtn.addEventListener('click', function() {
+            if (!_cpmEditMode) {
+                if (!confirm('Enable edit mode? Changes will be staged for review before submitting to GitHub.')) return;
+                _cpmEditMode = true;
+                var body = document.getElementById('cpmBody');
+                body.contentEditable = 'true';
+                body.style.outline = '2px solid #F97316';
+                body.style.outlineOffset = '-2px';
+                editBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;color:#F97316;">edit_off</span> Exit Edit';
+                // Add save button
+                if (!document.getElementById('cpmSaveBtn')) {
+                    var saveBtn = document.createElement('button');
+                    saveBtn.className = 'cpm-action';
+                    saveBtn.id = 'cpmSaveBtn';
+                    saveBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;color:#10B981;">save</span> Save Draft';
+                    saveBtn.addEventListener('click', function() {
+                        alert('Draft saved locally. Submit via GitHub to apply changes to the PR.');
+                        _cpmEditMode = false;
+                        body.contentEditable = 'false';
+                        body.style.outline = '';
+                        body.style.outlineOffset = '';
+                        editBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">edit</span> Edit';
+                        saveBtn.remove();
+                    });
+                    editBtn.parentNode.insertBefore(saveBtn, editBtn.nextSibling);
+                }
+            } else {
+                _cpmEditMode = false;
+                var body = document.getElementById('cpmBody');
+                body.contentEditable = 'false';
+                body.style.outline = '';
+                body.style.outlineOffset = '';
+                editBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">edit</span> Edit';
+                var saveBtn = document.getElementById('cpmSaveBtn');
+                if (saveBtn) saveBtn.remove();
+            }
+        });
+    })();
+
+    // === Blast Map — animated concentric radius visualization (lazy loaded) ===
+    window._graphNodeMeta = {};
+
+    window._initVisGraph = function() {
+        var svg = document.getElementById('blastRadiusSvg');
+        var container = document.getElementById('blastRadiusDynamic');
+        if (!svg || !container) return;
+
+        var W = container.clientWidth || 900;
+        var H = container.clientHeight || 650;
+        var cx = W / 2, cy = H / 2;
+        svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+
+        var meta = {};
+        var nodeElements = [];
+
+        // File type badge helper
+        function fileTypeBadge(filePath) {
+            var name = filePath.split('/').pop().toLowerCase();
+            if (name.includes('test') || name.includes('spec')) return '<span class="badge bg-info bg-opacity-10 text-info fs-11">Test</span>';
+            if (name.includes('controller')) return '<span class="badge bg-danger bg-opacity-10 text-danger fs-11">Controller</span>';
+            if (name.includes('model') || name.includes('schema')) return '<span class="badge bg-warning bg-opacity-10 text-warning fs-11">Model</span>';
+            if (name.includes('route') || name.includes('router')) return '<span class="badge bg-primary bg-opacity-10 text-primary fs-11">Routes</span>';
+            if (name.includes('middleware')) return '<span class="badge bg-secondary bg-opacity-10 text-secondary fs-11">Middleware</span>';
+            if (name.includes('migration')) return '<span class="badge bg-danger bg-opacity-10 text-danger fs-11">Migration</span>';
+            if (name.includes('service') || name.includes('provider')) return '<span class="badge bg-success bg-opacity-10 text-success fs-11">Service</span>';
+            return '<span class="badge bg-secondary bg-opacity-10 text-secondary fs-11">File</span>';
+        }
+
+        // Radius rings
+        var rings = [
+            { r: 90, label: 'CHANGED', color: '#EF4444', opacity: 0.3 },
+            { r: 170, label: 'AFFECTED', color: '#F59E0B', opacity: 0.2 },
+            { r: 250, label: 'SERVICES', color: '#3B82F6', opacity: 0.15 },
+            { r: 310, label: 'ENDPOINTS', color: '#06B6D4', opacity: 0.1 }
+        ];
+
+        // Draw static concentric rings
+        rings.forEach(function(ring, i) {
+            // Filled glow ring
+            var glow = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            glow.setAttribute('cx', cx); glow.setAttribute('cy', cy); glow.setAttribute('r', ring.r);
+            glow.setAttribute('fill', 'url(#pulseGrad' + (i + 1) + ')');
+            glow.style.animation = 'blastPulse ' + (3 + i * 0.5) + 's ease-in-out infinite';
+            glow.style.animationDelay = (i * 0.3) + 's';
+            svg.appendChild(glow);
+
+            // Dashed ring
+            var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', cx); circle.setAttribute('cy', cy); circle.setAttribute('r', ring.r);
+            circle.setAttribute('class', 'blast-ring-static');
+            circle.setAttribute('stroke', ring.color); circle.setAttribute('stroke-opacity', Math.min(ring.opacity * 2.5, 0.7));
+            circle.setAttribute('stroke-width', '1.5');
+            svg.appendChild(circle);
+
+            // Ring label (positioned at top of ring)
+            var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', cx); text.setAttribute('y', cy - ring.r - 6);
+            text.setAttribute('class', 'blast-ring-label');
+            text.setAttribute('fill', ring.color); text.setAttribute('fill-opacity', '0.8');
+            text.textContent = ring.label;
+            svg.appendChild(text);
+        });
+
+        // Animated expanding pulse rings (repeating)
+        for (var p = 0; p < 3; p++) {
+            var pulse = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            pulse.setAttribute('cx', cx); pulse.setAttribute('cy', cy); pulse.setAttribute('r', '0');
+            pulse.setAttribute('fill', 'none'); pulse.setAttribute('stroke', '#605DFF'); pulse.setAttribute('stroke-opacity', '0.4');
+            pulse.style.animation = 'blastRingExpand 4s ease-out infinite';
+            pulse.style.animationDelay = (p * 1.33) + 's';
+            svg.appendChild(pulse);
+        }
+
+        // Create SVG group for connections (drawn below nodes)
+        var connGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        svg.appendChild(connGroup);
+
+        // Create SVG group for nodes (drawn above connections)
+        var nodeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        svg.appendChild(nodeGroup);
+
+        var nodeIdx = 0;
+
+        // Helper: place a node as SVG circle + label
+        function addNode(x, y, radius, color, label, id, metaObj, delay) {
+            // Connection line from center
+            var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', cx); line.setAttribute('y1', cy);
+            line.setAttribute('x2', x); line.setAttribute('y2', y);
+            line.setAttribute('stroke', color); line.setAttribute('stroke-opacity', '0.15');
+            line.setAttribute('stroke-width', '1'); line.setAttribute('class', 'blast-connection');
+            line.setAttribute('stroke-dasharray', '3 5');
+            connGroup.appendChild(line);
+
+            var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            g.setAttribute('class', 'blast-node');
+            g.setAttribute('data-id', id);
+            g.style.animation = 'blastNodeAppear 0.5s ease-out forwards';
+            g.style.animationDelay = delay + 's';
+            g.style.opacity = '0';
+
+            var c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            c.setAttribute('cx', x); c.setAttribute('cy', y); c.setAttribute('r', radius);
+            c.setAttribute('fill', color); c.setAttribute('filter', 'url(#glow)');
+            c.setAttribute('stroke', 'rgba(255,255,255,0.2)'); c.setAttribute('stroke-width', '1');
+            g.appendChild(c);
+
+            // Outer glow ring
+            var glowRing = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            glowRing.setAttribute('cx', x); glowRing.setAttribute('cy', y); glowRing.setAttribute('r', radius + 4);
+            glowRing.setAttribute('fill', 'none'); glowRing.setAttribute('stroke', color); glowRing.setAttribute('stroke-opacity', '0.3');
+            glowRing.setAttribute('stroke-width', '1');
+            glowRing.style.animation = 'blastPulse ' + (2 + Math.random()) + 's ease-in-out infinite';
+            g.appendChild(glowRing);
+
+            var t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            t.setAttribute('x', x); t.setAttribute('y', y + radius + 14);
+            t.setAttribute('class', 'blast-node-label');
+            t.textContent = label.length > 18 ? label.substring(0, 15) + '...' : label;
+            g.appendChild(t);
+
+            nodeGroup.appendChild(g);
+            meta[id] = metaObj;
+            nodeElements.push({ el: g, id: id, x: x, y: y, line: line });
+
+            // Hover + click
+            g.addEventListener('mouseenter', function(e) { showBlastHover(id, e); });
+            g.addEventListener('mouseleave', function() { hideBlastHover(); });
+            g.addEventListener('click', function() { showBlastDetail(id); });
+        }
+
+        // Distribute items evenly around a ring
+        function ringPositions(count, ringR, offsetAngle) {
+            var positions = [];
+            var startAngle = offsetAngle || -Math.PI / 2;
+            for (var i = 0; i < count; i++) {
+                var angle = startAngle + (2 * Math.PI / count) * i;
+                positions.push({ x: cx + ringR * Math.cos(angle), y: cy + ringR * Math.sin(angle) });
+            }
+            return positions;
+        }
+
+        // === CENTER — PR Node ===
+        var prG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        prG.setAttribute('class', 'blast-node');
+        prG.style.animation = 'blastNodeAppear 0.6s ease-out forwards';
+
+        var prCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        prCircle.setAttribute('cx', cx); prCircle.setAttribute('cy', cy); prCircle.setAttribute('r', 32);
+        prCircle.setAttribute('fill', '#605DFF'); prCircle.setAttribute('filter', 'url(#glowStrong)');
+        prCircle.setAttribute('stroke', 'rgba(255,255,255,0.3)'); prCircle.setAttribute('stroke-width', '2');
+        prG.appendChild(prCircle);
+
+        var prGlow = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        prGlow.setAttribute('cx', cx); prGlow.setAttribute('cy', cy); prGlow.setAttribute('r', 40);
+        prGlow.setAttribute('fill', 'none'); prGlow.setAttribute('stroke', '#605DFF'); prGlow.setAttribute('stroke-opacity', '0.4');
+        prGlow.setAttribute('stroke-width', '2');
+        prGlow.style.animation = 'blastPulse 2s ease-in-out infinite';
+        prG.appendChild(prGlow);
+
+        var prLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        prLabel.setAttribute('x', cx); prLabel.setAttribute('y', cy);
+        prLabel.setAttribute('text-anchor', 'middle'); prLabel.setAttribute('dominant-baseline', 'central');
+        prLabel.setAttribute('fill', '#fff'); prLabel.setAttribute('font-size', '13'); prLabel.setAttribute('font-weight', 'bold');
+        prLabel.textContent = 'PR #{{ $pullRequest->pr_number }}';
+        prG.appendChild(prLabel);
+        nodeGroup.appendChild(prG);
+
+        meta['pr'] = { category: 'pr', type: 'Pull Request', name: 'PR #{{ $pullRequest->pr_number }}',
+            html: '<p class="mb-1">' + (blastSummary || 'Impact analysis for this pull request') + '</p>'
+                + '<div class="d-flex gap-2 flex-wrap"><span class="badge" style="background:rgba(239,68,68,0.15);color:#EF4444;">' + depKeys.length + ' changed</span>'
+                + '<span class="badge" style="background:rgba(245,158,11,0.15);color:#F59E0B;">' + files.length + ' total files</span>'
+                + '<span class="badge" style="background:rgba(59,130,246,0.15);color:#3B82F6;">' + services.length + ' services</span></div>' };
+        prG.addEventListener('mouseenter', function(e) { showBlastHover('pr', e); });
+        prG.addEventListener('mouseleave', function() { hideBlastHover(); });
+
+        // === RING 1 — Changed Files (red, r=90) ===
+        var changedPos = ringPositions(depKeys.length, rings[0].r, -Math.PI / 2);
+        depKeys.forEach(function(f, i) {
+            var depCount = (depGraph[f] && Array.isArray(depGraph[f])) ? depGraph[f].length : 0;
+            var size = Math.max(8, Math.min(18, 8 + depCount * 3));
+            var pos = changedPos[i] || { x: cx, y: cy - rings[0].r };
+            addNode(pos.x, pos.y, size, '#EF4444', f.split('/').pop(), 'changed_' + i, {
+                category: 'changed', type: 'Changed File', name: f.split('/').pop(),
+                html: '<div style="color:#94a3b8;" class="fs-12 mb-2">' + f + '</div>' + fileTypeBadge(f)
+                    + ' Directly changed in this PR.'
+                    + (depCount > 0 ? ' <strong>' + depCount + '</strong> downstream dependencies.' : ''),
+                deps: depCount > 0 ? depGraph[f].map(function(d) { return d.split('/').pop(); }) : []
+            }, 0.2 + i * 0.08);
+        });
+
+        // === RING 2 — Affected Files (amber, r=170) ===
+        var affectedFiles = files.filter(function(f) { return !sourceFiles[f]; });
+        var affectedPos = ringPositions(affectedFiles.length, rings[1].r, 0);
+        affectedFiles.forEach(function(f, i) {
+            var pos = affectedPos[i] || { x: cx + rings[1].r, y: cy };
+            addNode(pos.x, pos.y, 7, '#F59E0B', f.split('/').pop(), 'affected_' + i, {
+                category: 'affected', type: 'Affected File', name: f.split('/').pop(),
+                html: '<div style="color:#94a3b8;" class="fs-12 mb-2">' + f + '</div>' + fileTypeBadge(f)
+                    + ' In the blast radius — may be affected by upstream changes.'
+            }, 0.5 + i * 0.06);
+        });
+
+        // === RING 3 — Services (blue, r=250) ===
+        var svcPos = ringPositions(services.length, rings[2].r, -Math.PI / 4);
+        services.forEach(function(s, i) {
+            var pos = svcPos[i] || { x: cx + rings[2].r, y: cy };
+            addNode(pos.x, pos.y, 12, '#3B82F6', s, 'svc_' + i, {
+                category: 'service', type: 'Service', name: s,
+                html: '<p class="mb-0">Service <strong style="color:#60a5fa;">' + s + '</strong> is in the blast radius. Monitor error rates and latency after deployment.</p>'
+            }, 0.8 + i * 0.1);
+        });
+
+        // === RING 4 — Endpoints (cyan, r=310) ===
+        var epPos = ringPositions(endpoints.length, rings[3].r, Math.PI / 6);
+        endpoints.forEach(function(e, i) {
+            var pos = epPos[i] || { x: cx + rings[3].r, y: cy };
+            addNode(pos.x, pos.y, 6, '#06B6D4', e.length > 20 ? e.substring(0, 17) + '...' : e, 'ep_' + i, {
+                category: 'endpoint', type: 'API Endpoint', name: e,
+                html: '<p class="mb-0">Endpoint <code style="color:#22d3ee;">' + e + '</code> is exposed to changes. Verify backwards compatibility.</p>'
+            }, 1.0 + i * 0.08);
+        });
+
+        // Draw dependency connections (changed → affected)
+        depKeys.forEach(function(srcFile, srcIdx) {
             if (!Array.isArray(depGraph[srcFile])) return;
             depGraph[srcFile].forEach(function(dep) {
-                if (nodeMap['file_' + dep]) return;
-                var id = nodeId++;
-                nodeMap['file_' + dep] = id;
-                nodes.push({
-                    id: id, label: dep.split('/').pop(),
-                    shape: 'dot', size: 14, borderWidth: 1,
-                    color: { background: '#FBBF24', border: '#F59E0B', highlight: { background: '#FCD34D', border: '#FBBF24' } },
-                    font: { color: '#64748b', size: 9, strokeWidth: 2, strokeColor: '#ffffff' },
-                    mass: 0.8
-                });
-                if (nodeMap['file_' + srcFile]) {
-                    edges.push({ from: nodeMap['file_' + srcFile], to: id, color: { color: '#F59E0B', opacity: 0.3 }, width: 1,
-                        dashes: [4, 3], arrows: { to: { enabled: true, scaleFactor: 0.4 } }, smooth: { type: 'curvedCW', roundness: 0.25 } });
-                }
-                meta[id] = { category: 'downstream', type: 'Downstream Dependency', name: dep.split('/').pop(),
-                    html: '<div class="text-secondary fs-12 mb-2">' + dep + '</div>'
-                        + '<p class="mb-0">Depends on <strong>' + srcFile.split('/').pop() + '</strong> — if that file\'s API changes, this file may break.</p>' };
+                var depIdx = affectedFiles.indexOf(dep);
+                if (depIdx < 0) return;
+                var from = changedPos[srcIdx], to = affectedPos[depIdx];
+                if (!from || !to) return;
+                var depLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                depLine.setAttribute('x1', from.x); depLine.setAttribute('y1', from.y);
+                depLine.setAttribute('x2', to.x); depLine.setAttribute('y2', to.y);
+                depLine.setAttribute('stroke', '#F59E0B'); depLine.setAttribute('stroke-opacity', '0.2');
+                depLine.setAttribute('stroke-width', '1'); depLine.setAttribute('stroke-dasharray', '2 4');
+                connGroup.appendChild(depLine);
             });
         });
 
-        // === Endpoints — cyan bubbles ===
-        endpoints.forEach(function(e) {
-            var id = nodeId++;
-            nodes.push({
-                id: id, label: e.length > 25 ? e.substring(0, 22) + '...' : e,
-                shape: 'diamond', size: 16, borderWidth: 2,
-                color: { background: '#06B6D4', border: '#0891B2', highlight: { background: '#22D3EE', border: '#06B6D4' } },
-                font: { color: '#334155', size: 10, strokeWidth: 2, strokeColor: '#ffffff' },
-                mass: 1
-            });
-            edges.push({ from: prId, to: id, color: { color: '#06B6D4', opacity: 0.4 }, width: 1.5,
-                dashes: [5, 3], arrows: { to: { enabled: true, scaleFactor: 0.5 } } });
-            meta[id] = { category: 'endpoint', type: 'API Endpoint', name: e,
-                html: '<p class="mb-0">Endpoint <code>' + e + '</code> is exposed to changes in this PR. Verify request/response contracts are backwards compatible.</p>' };
-        });
+        // === Update stats overlay ===
+        var elChanged = document.getElementById('bmStatChanged');
+        var elAffected = document.getElementById('bmStatAffected');
+        var elServices = document.getElementById('bmStatServices');
+        var elEndpoints = document.getElementById('bmStatEndpoints');
+        var elRisk = document.getElementById('bmRiskScore');
+        if (elChanged) elChanged.textContent = depKeys.length + ' changed';
+        if (elAffected) elAffected.textContent = affectedFiles.length + ' affected';
+        if (elServices) elServices.textContent = services.length + ' services';
+        if (elEndpoints) elEndpoints.textContent = endpoints.length + ' endpoints';
+        if (elRisk) {
+            var score = {{ $pullRequest->blastRadiusResult->total_score ?? $pullRequest->blastRadiusResult->blast_radius_score ?? 0 }};
+            elRisk.textContent = score + ' pts';
+            if (score > 60) elRisk.style.color = '#EF4444';
+            else if (score > 30) elRisk.style.color = '#F59E0B';
+            else elRisk.style.color = '#10B981';
+        }
 
-        // === Render with physics-based layout ===
-        var container = document.getElementById('blastRadiusDynamic');
-        if (!container || nodes.length === 0) return;
-
-        var nodesDS = new vis.DataSet(nodes);
-        var edgesDS = new vis.DataSet(edges);
-        window._graphNodesDS = nodesDS;
-        window._graphEdgesDS = edgesDS;
         window._graphNodeMeta = meta;
 
-        var network = new vis.Network(container, { nodes: nodesDS, edges: edgesDS }, {
-            layout: { improvedLayout: true, hierarchical: false },
-            physics: {
-                enabled: true,
-                solver: 'forceAtlas2Based',
-                forceAtlas2Based: { gravitationalConstant: -120, centralGravity: 0.015, springLength: 160, springConstant: 0.06, damping: 0.4, avoidOverlap: 0.8 },
-                stabilization: { iterations: 200, fit: true },
-                maxVelocity: 30
-            },
-            interaction: { hover: true, tooltipDelay: 0, zoomView: true, dragView: true, dragNodes: true, navigationButtons: true, keyboard: false },
-            edges: { smooth: { type: 'curvedCW', roundness: 0.15 } }
-        });
-        window._graphNetwork = network;
-
-        // Stop physics after stabilization
-        network.once('stabilized', function() {
-            network.setOptions({ physics: { enabled: false } });
-            network.fit({ animation: { duration: 600, easingFunction: 'easeOutQuad' } });
-        });
-
-        // === Hover card (floating tooltip) ===
+        // === Hover card ===
         var hoverCard = document.getElementById('graphHoverCard');
-        var hoverBadge = document.getElementById('hoverBadge');
-        var hoverTitle = document.getElementById('hoverTitle');
-        var hoverPath = document.getElementById('hoverPath');
-        var hoverDesc = document.getElementById('hoverDescription');
-        var hoverDeps = document.getElementById('hoverDeps');
-
-        network.on('hoverNode', function(params) {
-            var m = meta[params.node];
-            if (!m || !hoverCard) return;
-            var colors = { pr: '#605DFF', changed: '#EF4444', affected: '#F59E0B', downstream: '#FBBF24', service: '#3B82F6', endpoint: '#06B6D4' };
+        function showBlastHover(id, e) {
+            var m = meta[id]; if (!m || !hoverCard) return;
+            var colors = { pr: '#605DFF', changed: '#EF4444', affected: '#F59E0B', service: '#3B82F6', endpoint: '#06B6D4' };
             var c = colors[m.category] || '#605DFF';
-            hoverBadge.innerHTML = '<span class="badge px-2 py-1 fs-11" style="background:' + c + '20; color:' + c + ';">' + m.type + '</span>';
-            hoverTitle.textContent = m.name;
-            hoverPath.textContent = '';
-            hoverDesc.innerHTML = m.html || '';
+            document.getElementById('hoverBadge').innerHTML = '<span class="badge px-2 py-1 fs-11" style="background:' + c + '30; color:' + c + ';">' + m.type + '</span>';
+            document.getElementById('hoverTitle').textContent = m.name;
+            document.getElementById('hoverPath').textContent = '';
+            document.getElementById('hoverDescription').innerHTML = m.html || '';
+            var hDeps = document.getElementById('hoverDeps');
             if (m.deps && m.deps.length > 0) {
-                hoverDeps.innerHTML = '<div class="border-top pt-2 mt-1"><span class="fs-11 fw-bold text-uppercase text-secondary">Impacts:</span> '
-                    + m.deps.slice(0, 8).map(function(d) { return '<code class="fs-11 px-1 bg-warning bg-opacity-10 rounded">' + d + '</code>'; }).join(' ')
-                    + (m.deps.length > 8 ? ' <span class="fs-11 text-secondary">+' + (m.deps.length - 8) + ' more</span>' : '') + '</div>';
-            } else {
-                hoverDeps.innerHTML = '';
-            }
-
-            // Position relative to node
-            var domPos = network.canvasToDOM(network.getPositions([params.node])[params.node]);
+                hDeps.innerHTML = '<div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;margin-top:4px;"><span class="fs-11 fw-bold text-uppercase" style="color:#64748b;">Impacts:</span> '
+                    + m.deps.slice(0, 6).map(function(d) { return '<code class="fs-11 px-1 rounded" style="background:rgba(245,158,11,0.15);color:#FBBF24;">' + d + '</code>'; }).join(' ')
+                    + (m.deps.length > 6 ? ' <span class="fs-11" style="color:#64748b;">+' + (m.deps.length - 6) + ' more</span>' : '') + '</div>';
+            } else { hDeps.innerHTML = ''; }
             var rect = container.getBoundingClientRect();
-            var left = domPos.x + 20;
-            var top = domPos.y - 30;
-            if (left + 340 > rect.width) left = domPos.x - 360;
+            var left = (e.clientX || e.pageX) - rect.left + 15;
+            var top = (e.clientY || e.pageY) - rect.top - 20;
+            if (left + 340 > rect.width) left = left - 370;
             if (left < 10) left = 10;
             if (top < 10) top = 10;
             hoverCard.style.left = left + 'px';
             hoverCard.style.top = top + 'px';
             hoverCard.style.display = 'block';
 
-            // Highlight connected nodes
-            var connNodes = network.getConnectedNodes(params.node);
-            connNodes.push(params.node);
-            var allIds = nodesDS.getIds();
-            allIds.forEach(function(nid) {
-                if (connNodes.indexOf(nid) >= 0) {
-                    nodesDS.update({ id: nid, opacity: 1.0 });
-                } else {
-                    nodesDS.update({ id: nid, opacity: 0.15 });
-                }
+            // Dim other nodes
+            nodeElements.forEach(function(n) {
+                if (n.id !== id) { n.el.style.opacity = '0.2'; n.line.style.opacity = '0.05'; }
+                else { n.el.style.opacity = '1'; n.line.setAttribute('stroke-opacity', '0.5'); }
             });
-            var allEdges = edgesDS.getIds();
-            var connEdges = network.getConnectedEdges(params.node);
-            allEdges.forEach(function(eid) {
-                if (connEdges.indexOf(eid) >= 0) {
-                    edgesDS.update({ id: eid, hidden: false });
-                } else {
-                    edgesDS.update({ id: eid, hidden: true });
-                }
-            });
-        });
-
-        network.on('blurNode', function() {
+        }
+        function hideBlastHover() {
             if (hoverCard) hoverCard.style.display = 'none';
-            // Reset all node opacity
-            nodesDS.getIds().forEach(function(nid) { nodesDS.update({ id: nid, opacity: 1.0 }); });
-            edgesDS.getIds().forEach(function(eid) { edgesDS.update({ id: eid, hidden: false }); });
-        });
+            nodeElements.forEach(function(n) { n.el.style.opacity = '1'; n.line.setAttribute('stroke-opacity', '0.15'); });
+        }
 
-        // === Click — persistent info panel ===
-        var infoPanel = document.getElementById('blastInfoPanel');
-        var infoHeader = document.getElementById('blastInfoHeader');
-        var infoBody = document.getElementById('blastInfoBody');
-        network.on('click', function(params) {
-            if (params.nodes.length > 0 && infoPanel) {
-                var m = meta[params.nodes[0]];
-                if (m) {
-                    infoPanel.style.display = 'block';
-                    var colors = { pr: 'primary', changed: 'danger', affected: 'warning', downstream: 'warning', service: 'primary', endpoint: 'info' };
-                    var bc = colors[m.category] || 'primary';
-                    infoHeader.innerHTML = '<span class="badge bg-' + bc + ' bg-opacity-10 text-' + bc + '">' + m.type + '</span><span class="fw-bold flex-grow-1">' + m.name + '</span>';
-                    var bodyHtml = m.html || '';
-                    if (m.deps && m.deps.length > 0) {
-                        bodyHtml += '<div class="mt-2 pt-2 border-top"><span class="fw-bold fs-12">Downstream dependencies:</span><div class="d-flex flex-wrap gap-1 mt-1">'
-                            + m.deps.map(function(d) { return '<code class="fs-11 px-1 bg-warning bg-opacity-10 rounded">' + d + '</code>'; }).join('')
-                            + '</div></div>';
-                    }
-                    infoBody.innerHTML = '<div class="fs-13">' + bodyHtml + '</div>';
-                }
-            } else if (infoPanel) {
-                infoPanel.style.display = 'none';
+        // Click — show in detail panel below
+        function showBlastDetail(id) {
+            var m = meta[id]; if (!m) return;
+            var panel = document.getElementById('blastInfoPanel');
+            var header = document.getElementById('blastInfoHeader');
+            var body = document.getElementById('blastInfoBody');
+            if (!panel) return;
+            panel.style.display = 'block';
+            panel.style.background = '#0f172a'; panel.style.border = '1px solid rgba(96,93,255,0.3)';
+            var colors = { pr: 'primary', changed: 'danger', affected: 'warning', service: 'primary', endpoint: 'info' };
+            var bc = colors[m.category] || 'primary';
+            header.style.background = '#1e293b';
+            header.innerHTML = '<span class="badge bg-' + bc + ' bg-opacity-10 text-' + bc + '">' + m.type + '</span><span class="fw-bold flex-grow-1 text-white">' + m.name + '</span>';
+            var bodyHtml = m.html || '';
+            if (m.deps && m.deps.length > 0) {
+                bodyHtml += '<div class="mt-2 pt-2" style="border-top:1px solid rgba(255,255,255,0.1);"><span class="fw-bold fs-12 text-white">Downstream:</span><div class="d-flex flex-wrap gap-1 mt-1">'
+                    + m.deps.map(function(d) { return '<code class="fs-11 px-1 rounded" style="background:rgba(245,158,11,0.15);color:#FBBF24;">' + d + '</code>'; }).join('')
+                    + '</div></div>';
             }
-        });
+            body.innerHTML = '<div class="fs-13" style="color:#cbd5e1;">' + bodyHtml + '</div>';
+        }
     };
 
-    // === Legend filter — toggle node categories ===
+    // === Legend filter — toggle node categories (SVG-based) ===
     window.filterGraphType = function(btn, category) {
         btn.classList.toggle('dimmed');
         var isDimmed = btn.classList.contains('dimmed');
-        if (!window._graphNodesDS || !window._graphNodeMeta) return;
         var meta = window._graphNodeMeta;
-        window._graphNodesDS.getIds().forEach(function(nid) {
-            if (meta[nid] && meta[nid].category === category) {
-                window._graphNodesDS.update({ id: nid, hidden: isDimmed });
+        if (!meta) return;
+        document.querySelectorAll('#blastRadiusSvg .blast-node').forEach(function(el) {
+            var id = el.getAttribute('data-id');
+            if (id && meta[id] && meta[id].category === category) {
+                el.style.display = isDimmed ? 'none' : '';
             }
         });
     };
@@ -2552,10 +4702,11 @@ document.addEventListener('DOMContentLoaded', function() {
         reviewItems.forEach(function(item, idx) {
             var priorityColor = item.score >= 20 ? '#EF4444' : item.score >= 15 ? '#F97316' : item.score >= 5 ? '#F59E0B' : '#10B981';
             var priorityLabel = item.score >= 20 ? 'Critical' : item.score >= 15 ? 'High' : item.score >= 5 ? 'Medium' : 'Low';
+            var filterKey = item.score >= 20 ? 'critical' : item.score >= 15 ? 'high' : item.score >= 5 ? 'medium' : 'low';
             var diffLink = prDiffUrl ? prDiffUrl + '#diff-' + btoa(item.file).replace(/=/g, '') : '';
             var sourceLink = repoFullName ? 'https://github.com/' + repoFullName + '/blob/HEAD/' + item.file : '';
 
-            html += '<div class="review-item d-flex gap-3 p-3 mb-2 border rounded-3">';
+            html += '<div class="review-item d-flex gap-3 p-3 mb-2 border rounded-3" data-priority="' + filterKey + '" data-file="' + item.file.toLowerCase() + '" data-name="' + item.shortName.toLowerCase() + '">';
 
             // Priority indicator
             html += '<div class="flex-shrink-0 d-flex flex-column align-items-center" style="min-width:44px;">';
@@ -2566,7 +4717,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '</div>';
 
             // Content
-            html += '<div class="flex-grow-1">';
+            html += '<div class="flex-grow-1 min-w-0">';
 
             // File name + badge row
             html += '<div class="d-flex align-items-center gap-2 mb-1 flex-wrap">';
@@ -2581,40 +4732,17 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '</div>';
 
             // File path
-            html += '<div class="text-secondary fs-11 mb-1" style="font-family:monospace;">' + item.file + '</div>';
+            html += '<div class="text-secondary fs-11 mb-1 text-truncate" style="font-family:monospace;">' + item.file + '</div>';
 
-            // AI Summary
-            if (item.summary) {
-                html += '<div class="fs-12 mb-1">' + item.summary + '</div>';
-            }
-
-            // Risk reason
-            if (item.risk) {
-                // Fix: Properly style low-risk descriptions with green check icons.
-                var isLowRisk = item.risk.toLowerCase().includes('low risk');
-                var riskIcon = isLowRisk ? 'check_circle' : 'warning';
-                var riskColor = isLowRisk ? 'text-success' : 'text-warning';
-                if (item.score >= 20) riskColor = 'text-danger';
-                
-                html += '<div class="fs-12 mb-1"><span class="material-symbols-outlined align-middle ' + riskColor + '" style="font-size:13px;">' + riskIcon + '</span> <span class="text-secondary">' + item.risk + '</span></div>';
-            }
-
-            // How it affects downstream
-            if (item.affects && !item.affects.includes('No known downstream')) {
-                html += '<div class="fs-12 mb-1"><span class="material-symbols-outlined align-middle text-info" style="font-size:13px;">call_split</span> <span class="text-secondary">' + item.affects + '</span></div>';
-            }
-
-            // Downstream deps compact list
+            // Downstream deps compact
             if (item.deps.length > 0) {
                 html += '<div class="d-flex flex-wrap gap-1 mt-1">';
                 html += '<span class="fs-11 text-secondary fw-medium">Downstream:</span> ';
-                item.deps.slice(0, 5).forEach(function(d) {
+                item.deps.slice(0, 4).forEach(function(d) {
                     var dShort = d.split('/').pop();
-                    var dDesc = fileDescMap[d];
-                    var dTitle = dDesc ? dDesc.summary : d;
-                    html += '<span class="fs-11 px-1 bg-warning bg-opacity-10 rounded" title="' + dTitle.replace(/"/g, '&quot;') + '" style="cursor:help;">' + dShort + '</span>';
+                    html += '<span class="fs-11 px-1 bg-warning bg-opacity-10 rounded">' + dShort + '</span>';
                 });
-                if (item.deps.length > 5) html += '<span class="fs-11 text-secondary">+' + (item.deps.length - 5) + ' more</span>';
+                if (item.deps.length > 4) html += '<span class="fs-11 text-secondary">+' + (item.deps.length - 4) + ' more</span>';
                 html += '</div>';
             }
 
@@ -2631,10 +4759,70 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '</div>';
 
             html += '</div>'; // flex-grow-1
+
+            // Hover tooltip — "Why review this?"
+            html += '<div class="review-tooltip">';
+            html += '<div class="fw-bold fs-12 mb-2 d-flex align-items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px;color:' + priorityColor + ';">info</span> Why review this?</div>';
+            // Risk bar
+            html += '<div class="d-flex align-items-center gap-2 mb-2">';
+            html += '<span class="fs-11 text-secondary" style="min-width:60px;">Risk Score</span>';
+            html += '<div style="flex:1;height:6px;border-radius:3px;background:#f1f5f9;overflow:hidden;"><div style="height:100%;width:' + Math.min(item.score * 2.5, 100) + '%;background:' + priorityColor + ';border-radius:3px;"></div></div>';
+            html += '<span class="fs-11 fw-bold" style="color:' + priorityColor + ';">' + item.score + '</span>';
+            html += '</div>';
+            if (item.risk) {
+                html += '<div class="fs-11 mb-2"><span class="material-symbols-outlined align-middle" style="font-size:12px;color:' + priorityColor + ';">warning</span> ' + item.risk + '</div>';
+            }
+            if (item.summary) {
+                html += '<div class="fs-11 text-secondary mb-2">' + item.summary + '</div>';
+            }
+            if (item.affects && !item.affects.includes('No known downstream')) {
+                html += '<div class="fs-11"><span class="material-symbols-outlined align-middle text-info" style="font-size:12px;">call_split</span> ' + item.affects + '</div>';
+            }
+            if (item.deps.length > 0) {
+                html += '<div class="fs-11 mt-1 text-secondary">' + item.deps.length + ' downstream dependenc' + (item.deps.length === 1 ? 'y' : 'ies') + '</div>';
+            }
+            html += '</div>';
+
             html += '</div>'; // review-item
         });
 
         el.innerHTML = html;
+
+        // === Filter & search logic ===
+        var filterBtns = document.querySelectorAll('#reviewFilterBtns button');
+        var searchInput = document.getElementById('reviewFilterSearch');
+        var emptyMsg = document.getElementById('reviewEmpty');
+        var currentFilter = 'all';
+
+        function applyReviewFilter() {
+            var searchTerm = (searchInput ? searchInput.value : '').toLowerCase().trim();
+            var items = el.querySelectorAll('.review-item');
+            var visible = 0;
+            items.forEach(function(item) {
+                var matchPriority = currentFilter === 'all' || item.dataset.priority === currentFilter;
+                var matchSearch = !searchTerm || item.dataset.file.includes(searchTerm) || item.dataset.name.includes(searchTerm);
+                if (matchPriority && matchSearch) {
+                    item.style.display = '';
+                    visible++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            if (emptyMsg) emptyMsg.style.display = visible === 0 ? '' : 'none';
+        }
+
+        filterBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                filterBtns.forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                applyReviewFilter();
+            });
+        });
+
+        if (searchInput) {
+            searchInput.addEventListener('input', applyReviewFilter);
+        }
     })();
 
     // === Mermaid Structural Flow — grouped by directory ===
@@ -2862,70 +5050,112 @@ document.addEventListener('DOMContentLoaded', function() {
         treemap.render();
     })();
 
-    // === Re-analyze loading animation ===
+    // === Re-analyze / Resume loading animation ===
+    function showAgentLoadingOverlay(startFromStage) {
+        var overlay = document.getElementById('agentLoadingOverlay');
+        if (!overlay) return;
+        overlay.style.display = 'block';
+        overlay.style.opacity = '0';
+        requestAnimationFrame(function() {
+            overlay.style.transition = 'opacity 0.4s ease';
+            overlay.style.opacity = '1';
+        });
+
+        var startTime = Date.now();
+        var elapsedEl = document.getElementById('loadingElapsed');
+        var elapsedTimer = setInterval(function() {
+            var secs = Math.floor((Date.now() - startTime) / 1000);
+            if (elapsedEl) elapsedEl.textContent = secs + 's elapsed';
+        }, 1000);
+
+        var allStages = [
+            { key: 'archaeologist', title: 'Mapping Blast Radius', subtitle: 'Archaeologist scanning dependencies...', icon: 'explore' },
+            { key: 'historian', title: 'Calculating Risk Score', subtitle: 'Historian correlating with incidents...', icon: 'history' },
+            { key: 'negotiator', title: 'Making Deploy Decision', subtitle: 'Negotiator weighing risk vs velocity...', icon: 'gavel' },
+            { key: 'chronicler', title: 'Recording Feedback Loop', subtitle: 'Chronicler capturing analysis...', icon: 'auto_stories' }
+        ];
+
+        var startIdx = 0;
+        if (startFromStage) {
+            for (var si = 0; si < allStages.length; si++) {
+                if (allStages[si].key === startFromStage) { startIdx = si; break; }
+            }
+        }
+
+        // Mark completed stages immediately
+        for (var ci = 0; ci < startIdx; ci++) {
+            var sk = allStages[ci].key;
+            var cimg = document.getElementById('img-' + sk);
+            var clbl = document.getElementById('label-' + sk);
+            var cbar = document.getElementById('bar-' + sk);
+            var cst = document.getElementById('status-' + sk);
+            if (cimg) { cimg.style.opacity = '1'; cimg.style.boxShadow = '0 0 12px rgba(16,185,129,0.3)'; }
+            if (clbl) clbl.style.opacity = '1';
+            if (cbar) cbar.style.width = '100%';
+            if (cst) { cst.textContent = 'Complete'; cst.style.color = '#10B981'; }
+        }
+
+        // Animate remaining stages
+        var remaining = allStages.slice(startIdx);
+        var progressBar = document.getElementById('agentProgressBar');
+        var titleEl = document.getElementById('loadingTitle');
+        var subtitleEl = document.getElementById('loadingSubtitle');
+        var mainIcon = document.getElementById('loadingMainIcon');
+
+        // Set initial progress
+        if (progressBar) progressBar.style.width = Math.round((startIdx / allStages.length) * 100) + '%';
+
+        var baseDelay = 300;
+        var stageDuration = 2200;
+
+        remaining.forEach(function(stage, idx) {
+            var globalIdx = startIdx + idx;
+            var stageDelay = baseDelay + (idx * (stageDuration + 300));
+
+            setTimeout(function() {
+                var img = document.getElementById('img-' + stage.key);
+                var label = document.getElementById('label-' + stage.key);
+                var bar = document.getElementById('bar-' + stage.key);
+                var status = document.getElementById('status-' + stage.key);
+                if (img) { img.style.opacity = '1'; img.style.boxShadow = '0 0 16px rgba(96,93,255,0.4)'; }
+                if (label) label.style.opacity = '1';
+                if (status) { status.textContent = 'Processing...'; status.style.color = '#60a5fa'; }
+                requestAnimationFrame(function() { if (bar) bar.style.width = '100%'; });
+                if (titleEl) titleEl.textContent = stage.title;
+                if (subtitleEl) subtitleEl.textContent = stage.subtitle;
+                if (mainIcon) mainIcon.textContent = stage.icon;
+                if (progressBar) progressBar.style.width = Math.round(((globalIdx + 0.5) / allStages.length) * 100) + '%';
+            }, stageDelay);
+
+            setTimeout(function() {
+                var status = document.getElementById('status-' + stage.key);
+                var img = document.getElementById('img-' + stage.key);
+                if (status) { status.textContent = 'Complete'; status.style.color = '#10B981'; }
+                if (img) img.style.boxShadow = '0 0 12px rgba(16,185,129,0.3)';
+                if (progressBar) progressBar.style.width = Math.round(((globalIdx + 1) / allStages.length) * 100) + '%';
+                if (globalIdx === allStages.length - 1) {
+                    setTimeout(function() {
+                        if (titleEl) titleEl.textContent = 'Analysis Complete';
+                        if (subtitleEl) subtitleEl.textContent = 'Redirecting to results...';
+                        if (mainIcon) { mainIcon.textContent = 'check_circle'; mainIcon.style.color = '#10B981'; }
+                    }, 400);
+                }
+            }, stageDelay + stageDuration);
+        });
+    }
+
+    // Hook to re-analyze form
     var reanalyzeForm = document.querySelector('form[action*="reanalyze"]');
     if (reanalyzeForm) {
-        reanalyzeForm.addEventListener('submit', function(e) {
-            var overlay = document.getElementById('agentLoadingOverlay');
-            if (!overlay) return;
-            overlay.style.display = 'block';
-            overlay.style.opacity = '0';
-            requestAnimationFrame(function() {
-                overlay.style.transition = 'opacity 0.4s ease';
-                overlay.style.opacity = '1';
-            });
+        reanalyzeForm.addEventListener('submit', function() { showAgentLoadingOverlay(null); });
+    }
 
-            var startTime = Date.now();
-            var elapsedEl = document.getElementById('loadingElapsed');
-            setInterval(function() {
-                var secs = Math.floor((Date.now() - startTime) / 1000);
-                if (elapsedEl) elapsedEl.textContent = secs + 's elapsed';
-            }, 1000);
-
-            var stages =[
-                { key: 'archaeologist', title: 'Mapping Blast Radius', subtitle: 'Archaeologist scanning dependencies...', icon: 'explore', delay: 300, duration: 2500 },
-                { key: 'historian', title: 'Calculating Risk Score', subtitle: 'Historian correlating with incidents...', icon: 'history', delay: 3000, duration: 2500 },
-                { key: 'negotiator', title: 'Making Deploy Decision', subtitle: 'Negotiator weighing risk vs velocity...', icon: 'gavel', delay: 5800, duration: 2000 },
-                { key: 'chronicler', title: 'Recording Feedback Loop', subtitle: 'Chronicler capturing analysis...', icon: 'auto_stories', delay: 8000, duration: 1500 }
-            ];
-
-            var progressBar = document.getElementById('agentProgressBar');
-            var titleEl = document.getElementById('loadingTitle');
-            var subtitleEl = document.getElementById('loadingSubtitle');
-            var mainIcon = document.getElementById('loadingMainIcon');
-
-            stages.forEach(function(stage, idx) {
-                setTimeout(function() {
-                    var img = document.getElementById('img-' + stage.key);
-                    var label = document.getElementById('label-' + stage.key);
-                    var bar = document.getElementById('bar-' + stage.key);
-                    var status = document.getElementById('status-' + stage.key);
-                    if (img) { img.style.opacity = '1'; img.style.boxShadow = '0 0 16px rgba(96,93,255,0.4)'; }
-                    if (label) label.style.opacity = '1';
-                    if (status) { status.textContent = 'Processing...'; status.style.color = '#60a5fa'; }
-                    requestAnimationFrame(function() { if (bar) bar.style.width = '100%'; });
-                    if (titleEl) titleEl.textContent = stage.title;
-                    if (subtitleEl) subtitleEl.textContent = stage.subtitle;
-                    if (mainIcon) mainIcon.textContent = stage.icon;
-                    if (progressBar) progressBar.style.width = Math.round(((idx + 0.5) / stages.length) * 100) + '%';
-                }, stage.delay);
-
-                setTimeout(function() {
-                    var status = document.getElementById('status-' + stage.key);
-                    var img = document.getElementById('img-' + stage.key);
-                    if (status) { status.textContent = 'Complete'; status.style.color = '#10B981'; }
-                    if (img) img.style.boxShadow = '0 0 12px rgba(16,185,129,0.3)';
-                    if (progressBar) progressBar.style.width = Math.round(((idx + 1) / stages.length) * 100) + '%';
-                    if (idx === stages.length - 1) {
-                        setTimeout(function() {
-                            if (titleEl) titleEl.textContent = 'Analysis Complete';
-                            if (subtitleEl) subtitleEl.textContent = 'Redirecting to results...';
-                            if (mainIcon) mainIcon.textContent = 'check_circle';
-                            mainIcon.style.color = '#10B981';
-                        }, 400);
-                    }
-                }, stage.delay + stage.duration);
-            });
+    // Hook to resume pipeline form
+    var resumeForm = document.querySelector('form[action*="resume-pipeline"]');
+    if (resumeForm) {
+        resumeForm.addEventListener('submit', function() {
+            var pausedStage = @json($pullRequest->paused_at_stage ?? 'negotiator');
+            showAgentLoadingOverlay(pausedStage);
         });
     }
 });

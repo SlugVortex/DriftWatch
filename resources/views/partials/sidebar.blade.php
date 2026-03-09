@@ -108,6 +108,13 @@
             </li>
 
             <li class="menu-item">
+                <a href="{{ route('driftwatch.explainability') }}" class="menu-link {{ Request::is('driftwatch/explainability*') ? 'active' : '' }}">
+                    <span class="material-symbols-outlined menu-icon">school</span>
+                    <span class="title">Explainability</span>
+                </a>
+            </li>
+
+            <li class="menu-item">
                 <a href="{{ route('driftwatch.settings') }}" class="menu-link {{ Request::is('driftwatch/settings*') ? 'active' : '' }}">
                     <span class="material-symbols-outlined menu-icon">settings</span>
                     <span class="title">Configuration</span>

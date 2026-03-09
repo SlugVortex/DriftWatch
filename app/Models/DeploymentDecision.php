@@ -1,4 +1,5 @@
 <?php
+
 // app/Models/DeploymentDecision.php
 // Stores the output of Agent 3 (Negotiator) - deploy gate decision.
 
@@ -23,6 +24,9 @@ class DeploymentDecision extends Model
         'mrp_payload',
         'mrp_version',
         'weather_score',
+        'weather_checks',
+        'stacked_pr_ids',
+        'combined_blast_radius_score',
         'decided_at',
     ];
 
@@ -35,6 +39,9 @@ class DeploymentDecision extends Model
             'mrp_payload' => 'array',
             'mrp_version' => 'integer',
             'weather_score' => 'integer',
+            'weather_checks' => 'array',
+            'stacked_pr_ids' => 'array',
+            'combined_blast_radius_score' => 'integer',
             'decided_at' => 'datetime',
         ];
     }

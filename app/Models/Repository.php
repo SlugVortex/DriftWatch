@@ -1,4 +1,5 @@
 <?php
+
 // app/Models/Repository.php
 // Represents a connected GitHub repository tracked by DriftWatch.
 
@@ -20,6 +21,7 @@ class Repository extends Model
         'github_url',
         'webhook_secret',
         'is_active',
+        'auto_analyze',
         'last_synced_at',
     ];
 
@@ -27,6 +29,7 @@ class Repository extends Model
     {
         return [
             'is_active' => 'boolean',
+            'auto_analyze' => 'boolean',
             'last_synced_at' => 'datetime',
         ];
     }

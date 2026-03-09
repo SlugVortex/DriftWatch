@@ -1,4 +1,5 @@
 <?php
+
 // config/services.php
 // Third party service credentials including GitHub and DriftWatch AI agent URLs.
 
@@ -31,13 +32,35 @@ return [
         'token' => env('GITHUB_TOKEN'),
     ],
 
+    // DriftWatch: Microsoft Teams incoming webhook for deploy alerts
+    'teams' => [
+        'webhook_url' => env('TEAMS_WEBHOOK_URL'),
+        'notify_above_score' => (int) env('TEAMS_NOTIFY_ABOVE_SCORE', 60),
+    ],
+
     // DriftWatch: AI Agent Azure Function URLs
     'agents' => [
         'archaeologist_url' => env('AGENT_ARCHAEOLOGIST_URL'),
         'historian_url' => env('AGENT_HISTORIAN_URL'),
         'negotiator_url' => env('AGENT_NEGOTIATOR_URL'),
         'chronicler_url' => env('AGENT_CHRONICLER_URL'),
+        'navigator_url' => env('AGENT_NAVIGATOR_URL'),
+        'security_url' => env('AGENT_SECURITY_URL'),
         'function_key' => env('AZURE_FUNCTION_KEY'),
+    ],
+
+    // Azure Speech (Text-to-Speech)
+    'azure_speech' => [
+        'endpoint' => env('AZURE_SPEECH_ENDPOINT'),
+        'key' => env('AZURE_SPEECH_KEY'),
+        'region' => env('AZURE_SPEECH_REGION', 'eastus'),
+    ],
+
+    // Azure AI Search (RAG for Security Agent)
+    'azure_ai_search' => [
+        'endpoint' => env('AZURE_AI_SEARCH_ENDPOINT'),
+        'key' => env('AZURE_AI_SEARCH_KEY'),
+        'index' => env('AZURE_AI_SEARCH_INDEX', 'security-knowledge'),
     ],
 
     // Azure OpenAI

@@ -178,3 +178,244 @@
 - Three evidence cards: Blast Radius, Incident History, CI & Bots
 - Conditions for approval list with checkmarks
 - Audit trail footer showing last action
+
+### Pre-Stage 6: DevOps Research Features — COMPLETE (2026-03-07)
+
+Implemented features from developer forum research on CI/CD pain points. Five feature sets added before starting Stage 6.
+
+**Pipeline Orchestration & Configuration**
+- New `pipeline_configs` table and `PipelineConfig` model
+- 3 built-in templates: Full Analysis, Quick Scan, Gated Deployment
+- Per-agent enable/disable toggles (Archaeologist, Historian, Negotiator, Chronicler)
+- Conditional pipeline rules: path-based matching (`fnmatch`), file count thresholds
+- Rule actions: `skip_all` (all files must match) and `force_gate` (any match triggers)
+- High-traffic window detection (day/hour ranges)
+- Settings page rewritten with pipeline orchestration UI (template cards, agent toggles, threshold config)
+
+**Manual Approval Gates**
+- Pipeline pause/resume mechanism with state preservation
+- `pipeline_paused`, `paused_at_stage`, `paused_at`, `paused_reason` fields on PullRequest
+- `shouldPausePipeline()` evaluates config gates, conditional rules, and environment thresholds
+- `resumePipeline()` continues from paused stage (Negotiator onwards)
+- Approval gate banner on PR detail page with Resume/Block buttons and pause reason
+
+**Stacked PR Detection**
+- `detectStackedPRs()` finds parent, child, and sibling PRs
+- Three strategies: branch parent/child relationships and file overlap detection
+- Combined blast radius score computed across stacked PRs
+- `stacked_pr_ids` and `combined_blast_radius_score` added to DeploymentDecision
+- Stacked PR section on PR detail page with relationship cards and risk scores
+
+**Pipeline Artifacts & Timeline**
+- Agent I/O payloads viewable as collapsible inspector panels
+- Pipeline timeline with duration bar showing relative agent time
+- Drill-down to full agent run details: reasoning, input/output JSON, attempt count, cost, hash
+
+**Environment-Aware Risk Scoring**
+- `target_environment` and `pipeline_template` fields on PullRequest
+- Per-environment risk thresholds (production/staging/development)
+- Per-environment approval requirements
+- Environment overrides agent decisions (e.g., approved → pending_review if score exceeds threshold)
+- Environment and template selector dropdowns on PR detail page
+
+**Pipeline Retry Logic**
+- `runWithRetry()` wrapper for agent function calls
+- Configurable `max_retries_per_agent` and `retry_on_timeout` per template
+- 500ms delay between retry attempts
+
+**UI Glow Up**
+- New CSS classes: `dw-card`, `dw-section-title`, `pipeline-step`, `dw-banner`, `dw-stat`, `dw-bomb-card`
+- Hover effects, shadows, accent underlines, dark mode support
+- Risk score circle with color-matched glow
+- Modal with gradient header for dependency tree node details (replaced floating tooltip)
+- DAG nodes with purple hover glow
+
+**Routes Added**
+- `POST /pr/{pullRequest}/resume-pipeline`
+- `POST /pr/{pullRequest}/update-environment`
+- `POST /pr/{pullRequest}/update-template`
+- `POST /settings/pipeline`
+- `POST /settings/pipeline/reset`
+
+**Files Created/Modified**
+- `database/migrations/2026_03_07_083058_create_pipeline_configs_table.php` (new)
+- `database/migrations/2026_03_07_083110_add_pipeline_fields_to_pull_requests_table.php` (new)
+- `app/Models/PipelineConfig.php` (new)
+- `app/Models/PullRequest.php` (updated: new fields, casts method)
+- `app/Models/DeploymentDecision.php` (updated: stacked PR fields)
+- `app/Http/Controllers/GitHubWebhookController.php` (major rewrite: pipeline orchestration)
+- `app/Http/Controllers/DriftWatchController.php` (updated: settings, resume, environment, template)
+- `resources/views/driftwatch/show.blade.php` (updated: gate banner, controls, stacked PRs, timeline, CSS)
+- `resources/views/driftwatch/settings.blade.php` (complete rewrite: pipeline orchestration UI)
+- `routes/web.php` (updated: 5 new routes)
+
+### Improvement Stage 6: Deployment Weather — COMPLETE (2026-03-07)
+
+**Goal:** Score the environmental risk at deploy time, separate from code risk.
+
+**5 Environmental Checks (max 95 pts combined):**
+1. **Concurrent Deploys (+20 pts)** — Checks for other PRs approved in the last 30 min with overlapping services, plus GitHub Actions workflows currently in progress
+2. **Active Incidents (+30 pts)** — Queries incidents with `resolved_at IS NULL` and checks for service overlap with the blast radius
+3. **Infrastructure Health (+20 pts)** — Tries Azure Application Insights for real error rates; falls back to checking recently-resolved incidents in the last 24h as a stability proxy
+4. **High Traffic Window (+15 pts)** — Checks current time against pipeline config's `high_traffic_windows` (day/hour ranges)
+5. **Recent Related Deploy (+10 pts)** — Finds PRs merged/approved in the last 2 hours touching the same services (stacked deploy correlation)
+
+**Weather Score Interpretation:**
+- 0-10: Clear Skies — good to deploy
+- 11-30: Partly Cloudy — acceptable, proceed with monitoring
+- 31-50: Storm Warning — conditions unfavorable, consider waiting
+- 51+: Severe Storm — strongly recommend delaying
+
+**Decision Escalation:**
+- Weather score >= 40 with approved decision → auto-escalates to `pending_review`
+
+**UI — Deployment Weather Card:**
+- New card between Risk Score section and Time Bomb Detection on PR detail page
+- Weather score circle with color-matched glow (100px ring)
+- 5 individual check cards in a 2-column grid showing fired/clear status, points, and detail text
+- Summary bar showing clear count, flagged count, and check timestamp
+
+**Files Created/Modified:**
+- `database/migrations/2026_03_07_091028_add_weather_checks_to_deployment_decisions_table.php` (new)
+- `app/Models/DeploymentDecision.php` (updated: weather_checks fillable + array cast)
+- `app/Http/Controllers/GitHubWebhookController.php` (updated: computeWeatherScore + 5 check methods, integrated into Negotiator stage)
+- `resources/views/driftwatch/show.blade.php` (updated: Deployment Weather card)
+
+### Pre-Stage 7: Deep Code Analysis Pipeline — COMPLETE (2026-03-08)
+
+**Code Context Fetching**
+- New `fetchPrCodeContext()` method in GitHubWebhookController
+- Fetches full unified PR diff from GitHub API (truncated at 200KB)
+- Fetches changed file list with patches (up to 100 files)
+- Skips binary, vendor, lock, and minified files automatically
+- Fetches full file contents for high-risk files via GitHub Contents API (base64 decoded)
+- High-risk patterns: migrations, middleware, auth, config, routes, controllers, models, services
+- Limits to 30 full file fetches, 50KB per file max
+- Passes `diff_text` and `changed_files` (with `full_file_content`) to Archaeologist agent
+
+**Code-Aware Mock Analysis**
+- When Azure Functions unavailable, mock Archaeologist performs real code classification
+- Classifies files by path pattern: migration (25pts), auth/middleware (30pts), config (20pts), routing (15pts), controller (15pts), model (15pts), service (20pts), view/css (2pts), test (2pts)
+- Detects function signature changes from diff patches
+- Extracts class names, method counts, imports from full file content
+- Builds dependency graph from PHP `use` statements and Python/JS imports
+- Infers service names from file paths
+- Generates `file_summaries` and `code_analysis` fields for UI display
+- Mock Negotiator generates code-aware PR comments with markdown formatting
+
+**Files Modified:**
+- `app/Http/Controllers/GitHubWebhookController.php` (new: fetchPrCodeContext, updated: runArchaeologist passes code context, getMockArchaeologistResult with code classification, getMockNegotiatorResult with PR comment)
+
+### Improvement Stage 7: Teams Notification + Human Decision Loop — COMPLETE (2026-03-08)
+
+**Teams Adaptive Card Notifications**
+- New `sendTeamsNotification()` method in GitHubWebhookController
+- Sends Adaptive Card to Microsoft Teams incoming webhook when risk score exceeds threshold
+- Configurable: `TEAMS_WEBHOOK_URL` and `TEAMS_NOTIFY_ABOVE_SCORE` (default: 60) in `.env`
+- Card displays: PR number/title, risk score (color-coded), decision status, weather score, affected services, files changed, blast radius score, key concerns
+- Three Action.OpenUrl buttons: APPROVE, BLOCK, View in DriftWatch
+- Approve/Block buttons use HMAC-signed tokens for security
+
+**Human Decision Loop**
+- Decision callback endpoints updated to append to MRP audit trail
+- Audit trail records: action (approved/blocked), by (who decided), at (timestamp), details
+- Approve callback auto-resumes paused pipelines (calls resumePipeline)
+- Decision callbacks accept optional `?approver=` query parameter for tracking
+
+**Settings Page Updates**
+- New "Microsoft Teams Notifications" card showing webhook status and notification threshold
+- New "Code Analysis" card showing PR code fetching mode and analysis mode
+
+**Config Updates**
+- `config/services.php`: Added `teams.webhook_url` and `teams.notify_above_score`
+
+**Files Modified:**
+- `app/Http/Controllers/GitHubWebhookController.php` (new: sendTeamsNotification, integrated into Negotiator stage)
+- `routes/api.php` (updated: decision callbacks with MRP audit trail, pipeline resume)
+- `config/services.php` (new: teams config)
+- `resources/views/driftwatch/settings.blade.php` (new: Teams + Code Analysis cards)
+
+### Improvement Stage 8: Interactive PR Detail & Multi-Service Integration — COMPLETE (2026-03-08)
+
+**8A — Full-Screen Code Preview Modal**
+- Catppuccin dark theme code viewer with syntax line numbers
+- Code highlighting: select text and it turns orange (#F97316) for visual emphasis
+- Highlighted code can be attached to chat as a `.chat-code-attachment` block
+- Multi-file panel: `.cpm-file-panel` with file list for switching between files
+- Edit mode toggle: `contentEditable='true'` with orange outline + Save Draft button
+- Dockable/minimizable mode: shifts to `right:0; width:50vw; max-width:700px` for side-by-side chat
+- Collapsible "What to Review" section with Bootstrap collapse + icon rotation
+
+**8B — Chat Sidebar Enhancements**
+- Widened from 380px to 480px with drag-to-resize handle
+- Review tooltip repositioned from off-screen `right: -320px` to below-item `top: 100%`
+- Width slider removed (user feedback)
+- Section-based scroll navigation arrows jump between `.dw-card` elements
+
+**8C — Azure Speech Text-to-Speech Integration**
+- `POST /api/tts` endpoint: Azure Speech TTS proxy with SSML (`en-US-JennyNeural` voice)
+- Auto-adds speaker icons to all `.dw-section-title` elements via `initTtsButtons()`
+- `speakText()` function: calls API, plays audio blob, manages play/pause state
+- `.dw-tts-btn` with pulse animation when playing
+- Truncates text to 3000 chars, strips HTML tags
+- Config: `services.azure_speech` (endpoint, key, region)
+
+**8D — Animated Blast Map Visualization**
+- Replaced vis.js physics-based network graph with SVG concentric radius visualization
+- Dark navy (#0F172A) background with animated expanding pulse rings
+- 4 concentric zones: Changed (red, r=90) → Affected (amber, r=170) → Services (blue, r=250) → Endpoints (cyan, r=310)
+- Radial gradient glow fills with pulsing animations per ring
+- Nodes appear with staggered `blastNodeAppear` animation
+- Expanding pulse rings (`blastRingExpand`) radiate from center every 1.33s
+- Hover: dims other nodes, shows floating dark-themed info card
+- Click: shows persistent detail panel below graph
+- Stats overlay (top-left) and blast radius score (top-right)
+
+**8E — Security Agent Infrastructure (Env + Config)**
+- `.env`: Added `AGENT_SECURITY_URL`, `AZURE_AI_SEARCH_ENDPOINT`, `AZURE_AI_SEARCH_KEY`, `AZURE_AI_SEARCH_INDEX`
+- `config/services.php`: Added `agents.security_url`, `azure_ai_search` (endpoint, key, index), `azure_ai_foundry`, `service_bus`, `content_safety`, `key_vault`, `semantic_kernel`
+- Setup guide: `docs/SECURITY_AGENT_SETUP.md` (Azure AI Search index schema, RAG architecture, deployment steps)
+
+**8F — Architecture Diagram Update**
+- Updated Mermaid diagram on Settings page: 10 → 14 Azure services
+- Added: Security Agent (purple), Azure AI Search + Knowledge Base (RAG), MS Teams (bidirectional), Azure Speech TTS, AI Foundry, Service Bus
+- Teams shows bidirectional flow: Adaptive Card out, Approve/Block callbacks in
+
+**8G — Auto-Analyze Repositories**
+- `auto_analyze` boolean on Repository model (migration + fillable + cast)
+- `toggleAutoAnalyze()` and `analyzeAllPrs()` methods in DriftWatchController
+- Auto-analyze toggle and Analyze button on repository cards
+- Routes: `POST /repositories/{repository}/toggle-auto-analyze`, `POST /repositories/{repository}/analyze-all`
+
+**8H — Chronicler Agent Integration**
+- Added `runChronicler()` method with Azure Function + mock fallback
+- Integrated as Agent 4 in main pipeline and `resumePipeline()` flow
+- Records `agent_chronicler` in `recordAgentRun()` reasoning extraction
+
+**Files Created:**
+- `docs/DRIFTWATCH_ICON_DESIGNS.md` (5 AI image generator prompts with brand hex codes)
+- `docs/SECURITY_AGENT_SETUP.md` (Azure AI Search + Security Agent deployment guide)
+- `database/migrations/2026_03_09_021737_add_auto_analyze_to_repositories_table.php`
+
+**Files Modified:**
+- `resources/views/driftwatch/show.blade.php` (major: full-screen modal, chat, TTS, blast map, edit mode)
+- `resources/views/driftwatch/settings.blade.php` (architecture diagram, Azure Speech + AI Search cards, Security Agent endpoint)
+- `app/Http/Controllers/DriftWatchController.php` (auto-analyze, toggle, sync)
+- `app/Http/Controllers/GitHubWebhookController.php` (Chronicler agent, parse error fix)
+- `app/Models/Repository.php` (auto_analyze field)
+- `routes/api.php` (TTS endpoint)
+- `routes/web.php` (auto-analyze routes)
+- `config/services.php` (azure_speech, azure_ai_search, content_safety, key_vault, semantic_kernel, azure_ai_foundry, service_bus)
+- `.env` (TTS keys, Security Agent placeholders, AI Search placeholders)
+
+### Stage 9: Security Agent Implementation — PENDING
+- Deploy Security Agent Azure Function with RAG pipeline
+- Populate Azure AI Search with OWASP/CVE/CWE knowledge base
+- Integrate into Laravel pipeline (6th agent after Chronicler)
+- Add security findings to PR detail page UI
+
+### Stage 10: Final Polish & Submission — TODO
+- End-to-end testing with live Azure Functions
+- Performance optimization
+- Demo video recording
+- Hackathon submission
