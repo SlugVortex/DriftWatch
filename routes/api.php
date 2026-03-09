@@ -488,6 +488,119 @@ Route::get('/decisions/{id}/block', function (Request $request, int $id) {
     ]);
 });
 
+// POST /api/file-update — Push code edits back to GitHub (PR author only)
+Route::post('/file-update', function (Request $request) {
+    $request->validate([
+        'pr_id' => ['required', 'integer'],
+        'file_path' => ['required', 'string', 'max:500'],
+        'content' => ['required', 'string'],
+        'sha' => ['required', 'string'],
+        'commit_message' => ['nullable', 'string', 'max:300'],
+    ]);
+
+    $pullRequest = PullRequest::find($request->input('pr_id'));
+    if (! $pullRequest) {
+        return response()->json(['error' => 'PR not found'], 404);
+    }
+
+    $ghToken = config('services.github.token');
+    if (! $ghToken) {
+        return response()->json(['error' => 'GitHub token not configured'], 503);
+    }
+
+    $filePath = $request->input('file_path');
+    $content = $request->input('content');
+    $sha = $request->input('sha');
+    $commitMsg = $request->input('commit_message', "Update {$filePath} via DriftWatch");
+    $branch = $pullRequest->head_branch ?: 'main';
+    $repoFullName = $pullRequest->repo_full_name;
+
+    Log::info('[API:file-update] Pushing code edit.', [
+        'repo' => $repoFullName,
+        'file' => $filePath,
+        'branch' => $branch,
+    ]);
+
+    try {
+        $ghResponse = Http::withHeaders([
+            'Authorization' => "Bearer {$ghToken}",
+            'Accept' => 'application/vnd.github.v3+json',
+        ])->timeout(15)->put("https://api.github.com/repos/{$repoFullName}/contents/{$filePath}", [
+            'message' => $commitMsg,
+            'content' => base64_encode($content),
+            'sha' => $sha,
+            'branch' => $branch,
+        ]);
+
+        if ($ghResponse->successful()) {
+            $data = $ghResponse->json();
+            Log::info('[API:file-update] File pushed successfully.', ['sha' => $data['content']['sha'] ?? '']);
+
+            return response()->json([
+                'success' => true,
+                'new_sha' => $data['content']['sha'] ?? '',
+                'commit_sha' => $data['commit']['sha'] ?? '',
+                'message' => "File updated on branch {$branch}",
+            ]);
+        }
+
+        Log::warning('[API:file-update] GitHub API rejected.', ['status' => $ghResponse->status(), 'body' => $ghResponse->body()]);
+
+        return response()->json([
+            'error' => 'GitHub rejected the update: '.$ghResponse->json('message', 'Unknown error'),
+        ], $ghResponse->status());
+
+    } catch (\Exception $e) {
+        Log::error('[API:file-update] Exception.', ['error' => $e->getMessage()]);
+
+        return response()->json(['error' => 'Failed to push to GitHub: '.$e->getMessage()], 500);
+    }
+});
+
+// POST /api/review-all — Trigger sequential AI review of all PR files
+Route::post('/review-all', function (Request $request) {
+    $request->validate([
+        'pr_id' => ['required', 'integer'],
+        'file_path' => ['required', 'string', 'max:500'],
+    ]);
+
+    $pullRequest = PullRequest::with(['blastRadius', 'riskAssessment'])->find($request->input('pr_id'));
+    if (! $pullRequest) {
+        return response()->json(['error' => 'PR not found'], 404);
+    }
+
+    $filePath = $request->input('file_path');
+    $blastRadius = $pullRequest->blastRadius;
+    $classifications = $blastRadius?->change_classifications ?? [];
+    $fileInfo = null;
+
+    foreach ($classifications as $cf) {
+        if (is_array($cf) && ($cf['file'] ?? '') === $filePath) {
+            $fileInfo = $cf;
+            break;
+        }
+    }
+
+    $depGraph = $blastRadius?->dependency_graph ?? [];
+    $fileDeps = $depGraph[$filePath] ?? [];
+    $fileDescs = $blastRadius?->file_descriptions ?? [];
+    $fileDesc = $fileDescs[$filePath] ?? [];
+
+    $query = "Review the file '{$filePath}' in detail. "
+        .'Risk score: '.($fileInfo['risk_score'] ?? 'unknown').'. '
+        .'Change type: '.($fileInfo['change_type'] ?? 'unknown').'. '
+        .'Dependencies: '.(is_array($fileDeps) ? implode(', ', $fileDeps) : 'none').'. '
+        .'Give a brief code review: what looks good, potential issues, and suggestions.';
+
+    // Reuse the impact-chat logic
+    $chatRequest = Request::create('/api/impact-chat', 'POST', [
+        'pr_id' => $pullRequest->id,
+        'query' => $query,
+    ]);
+
+    return app()->handle($chatRequest);
+});
+
 // POST /api/tts — Azure Speech text-to-speech proxy
 Route::post('/tts', function (Request $request) {
     $text = $request->input('text', '');

@@ -304,11 +304,21 @@
     /* Full-screen code preview modal */
     .code-preview-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: none; backdrop-filter: blur(4px); }
     .code-preview-overlay.show { display: flex; align-items: center; justify-content: center; }
-    .code-preview-modal { width: 92vw; max-width: 1200px; height: 85vh; background: #1e1e2e; border-radius: 14px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 48px rgba(0,0,0,0.4); }
-    .code-preview-modal .cpm-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; background: #181825; border-bottom: 1px solid #313244; flex-shrink: 0; }
-    .code-preview-modal .cpm-header .file-info { display: flex; align-items: center; gap: 10px; min-width: 0; }
-    .code-preview-modal .cpm-header .file-name { font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace; font-size: 13px; color: #cba6f7; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .code-preview-modal .cpm-header .file-path { font-family: monospace; font-size: 11px; color: #6c7086; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .code-preview-modal { width: 92vw; max-width: 1200px; height: 85vh; background: #1e1e2e; border-radius: 14px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 48px rgba(0,0,0,0.4); resize: both; min-width: 480px; min-height: 300px; }
+    .code-preview-modal .cpm-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; background: #181825; border-bottom: 1px solid #313244; flex-shrink: 0; gap: 12px; }
+    .code-preview-modal .cpm-header .file-info { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; overflow: hidden; }
+    .code-preview-modal .cpm-header .file-info > div { min-width: 0; flex: 1; }
+    .code-preview-modal .cpm-header .file-name { font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace; font-size: 13px; color: #cba6f7; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .code-preview-modal .cpm-header .file-path { font-family: monospace; font-size: 11px; color: #6c7086; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    /* Resize handle between split panes */
+    .cpm-split-resize { width: 5px; cursor: col-resize; background: #313244; flex-shrink: 0; transition: background 0.15s; position: relative; z-index: 10; }
+    .cpm-split-resize:hover, .cpm-split-resize.dragging { background: #89b4fa; }
+    /* Review progress tracker */
+    .review-progress-bar { height: 4px; background: #313244; border-radius: 2px; overflow: hidden; flex: 1; }
+    .review-progress-bar .fill { height: 100%; background: linear-gradient(90deg, #a6e3a1, #89b4fa); border-radius: 2px; transition: width 0.3s ease; }
+    .file-review-check { width: 16px; height: 16px; accent-color: #a6e3a1; cursor: pointer; flex-shrink: 0; }
+    .dag-node-reviewed { opacity: 0.5; }
+    .dag-node-reviewed rect { stroke: #a6e3a1 !important; stroke-dasharray: 5,3; }
     .code-preview-modal .cpm-toolbar { display: flex; align-items: center; gap: 6px; padding: 8px 20px; background: #11111b; border-bottom: 1px solid #313244; flex-shrink: 0; flex-wrap: wrap; }
     .code-preview-modal .cpm-tab { font-size: 12px; padding: 5px 14px; border-radius: 6px; border: 1px solid transparent; background: none; color: #a6adc8; cursor: pointer; font-family: inherit; transition: all 0.15s; }
     .code-preview-modal .cpm-tab.active { background: #313244; color: #cdd6f4; border-color: #45475a; font-weight: 600; }
@@ -441,6 +451,36 @@
     .dw-tts-btn:hover { color: #605DFF; background: rgba(96,93,255,0.08); }
     .dw-tts-btn.playing { color: #605DFF; animation: tts-pulse 1.5s infinite; }
     @keyframes tts-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    /* Right-click context menu for file notes */
+    .dw-context-menu { position: fixed; z-index: 100000; background: #1e1e2e; border: 1px solid #313244; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); min-width: 180px; padding: 6px 0; font-size: 12px; }
+    .dw-context-menu .ctx-item { display: flex; align-items: center; gap: 8px; padding: 7px 14px; color: #cdd6f4; cursor: pointer; transition: background 0.1s; }
+    .dw-context-menu .ctx-item:hover { background: #313244; }
+    .dw-context-menu .ctx-item .material-symbols-outlined { font-size: 16px; color: #a6adc8; }
+    .dw-context-menu .ctx-divider { height: 1px; background: #313244; margin: 4px 0; }
+
+    /* File note indicator */
+    .file-note-dot { width: 8px; height: 8px; border-radius: 50%; background: #f9e2af; display: inline-block; margin-left: 4px; cursor: pointer; }
+    .file-note-dot:hover { background: #fab387; transform: scale(1.3); }
+
+    /* Note editor popup */
+    .dw-note-editor { position: fixed; z-index: 100001; background: #1e1e2e; border: 1px solid #45475a; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.5); width: 320px; padding: 14px; }
+    .dw-note-editor textarea { width: 100%; min-height: 80px; background: #181825; color: #cdd6f4; border: 1px solid #313244; border-radius: 8px; padding: 8px; font-size: 12px; resize: vertical; }
+    .dw-note-editor textarea:focus { outline: none; border-color: #89b4fa; }
+    .dw-note-editor .note-actions { display: flex; gap: 6px; margin-top: 8px; justify-content: flex-end; }
+    .dw-note-editor .note-actions button { font-size: 11px; padding: 4px 12px; border-radius: 6px; border: 1px solid #313244; cursor: pointer; }
+
+    /* Collaboration indicator */
+    .collab-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; }
+    .collab-badge.live { background: rgba(166,227,161,0.15); color: #a6e3a1; border: 1px solid rgba(166,227,161,0.3); }
+    .collab-avatar { width: 20px; height: 20px; border-radius: 50%; background: #89b4fa; color: #1e1e2e; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+
+    /* Review all progress */
+    .review-all-progress { background: #181825; border: 1px solid #313244; border-radius: 8px; padding: 10px 14px; margin: 8px 0; }
+    .review-all-progress .file-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 12px; color: #a6adc8; }
+    .review-all-progress .file-item.done { color: #a6e3a1; }
+    .review-all-progress .file-item.active { color: #89b4fa; font-weight: 600; }
+    .review-all-progress .file-item .material-symbols-outlined { font-size: 14px; }
 </style>
 @endpush
 
@@ -1299,16 +1339,31 @@
                         <span class="material-symbols-outlined align-middle me-1" style="font-size: 18px;">hub</span>
                         Impact Analysis
                     </h6>
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-sm btn-primary active" id="btnTreeView" onclick="toggleBlastView('tree')">
-                            <span class="material-symbols-outlined align-middle me-1" style="font-size: 14px;">account_tree</span> Dependency Tree
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="btnSummaryView" onclick="toggleBlastView('summary')">
-                            <span class="material-symbols-outlined align-middle me-1" style="font-size: 14px;">view_list</span> Summary
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="btnDynamicView" onclick="toggleBlastView('dynamic')">
-                            <span class="material-symbols-outlined align-middle me-1" style="font-size: 14px;">bubble_chart</span> Blast Map
-                        </button>
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-primary active" id="btnTreeView" onclick="toggleBlastView('tree')">
+                                <span class="material-symbols-outlined align-middle me-1" style="font-size: 14px;">account_tree</span> Dependency Tree
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="btnSummaryView" onclick="toggleBlastView('summary')">
+                                <span class="material-symbols-outlined align-middle me-1" style="font-size: 14px;">view_list</span> Summary
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="btnDynamicView" onclick="toggleBlastView('dynamic')">
+                                <span class="material-symbols-outlined align-middle me-1" style="font-size: 14px;">bubble_chart</span> Blast Map
+                            </button>
+                        </div>
+                        {{-- Review progress tracker --}}
+                        <div class="d-flex align-items-center gap-2" id="reviewProgressTracker" style="min-width: 180px;">
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-1" id="btnToggleReviewChecks" title="Toggle review checkmarks on/off">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">checklist</span>
+                            </button>
+                            <div class="review-progress-bar">
+                                <div class="fill" id="reviewProgressFill" style="width: 0%;"></div>
+                            </div>
+                            <span class="fs-11 text-secondary fw-medium" id="reviewProgressLabel">0/0</span>
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-2 fs-11" id="btnSaveReviewSession" title="Save review session">
+                                <span class="material-symbols-outlined" style="font-size: 14px;">bookmark</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1423,6 +1478,22 @@
                             </div>
 
                             {{-- Chat input — sticky at bottom --}}
+                            {{-- Chat quick actions row --}}
+                            <div class="d-flex gap-1 mb-2 flex-wrap justify-content-center" id="chatQuickRow">
+                                <button class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 py-1 px-2 fs-11" id="btnReviewAllFiles" title="AI reviews each file sequentially">
+                                    <span class="material-symbols-outlined" style="font-size:14px;">rate_review</span> Review All
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 py-1 px-2 fs-11" id="btnExportReview" title="Export review session (JSON)">
+                                    <span class="material-symbols-outlined" style="font-size:14px;">download</span> Export
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 py-1 px-2 fs-11" id="btnImportReview" title="Import review session">
+                                    <span class="material-symbols-outlined" style="font-size:14px;">upload</span> Import
+                                </button>
+                                <input type="file" id="importReviewFile" accept=".json" style="display:none;">
+                                <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 py-1 px-2 fs-11" id="btnShareChat" title="Share review session (real-time)">
+                                    <span class="material-symbols-outlined" style="font-size:14px;">group</span> Collaborate
+                                </button>
+                            </div>
                             <div class="chat-input-area">
                                 <div class="d-flex gap-2 align-items-center">
                                     <input type="text" class="form-control form-control-sm" id="chatInput"
@@ -1462,6 +1533,21 @@
                             <filter id="glowStrong"><feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
                         </defs>
                     </svg>
+                    {{-- Zoom controls --}}
+                    <div id="blastZoomControls" style="position:absolute; top:12px; right:12px; z-index:15; display:flex; flex-direction:column; gap:4px;">
+                        <button class="btn btn-sm" id="blastZoomIn" title="Zoom in"
+                                style="width:34px;height:34px;padding:0;border-radius:8px;background:rgba(15,23,42,0.85);border:1px solid rgba(96,93,255,0.3);color:#cdd6f4;backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;">
+                            <span class="material-symbols-outlined" style="font-size:18px;">add</span>
+                        </button>
+                        <button class="btn btn-sm" id="blastZoomOut" title="Zoom out"
+                                style="width:34px;height:34px;padding:0;border-radius:8px;background:rgba(15,23,42,0.85);border:1px solid rgba(96,93,255,0.3);color:#cdd6f4;backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;">
+                            <span class="material-symbols-outlined" style="font-size:18px;">remove</span>
+                        </button>
+                        <button class="btn btn-sm" id="blastZoomReset" title="Reset zoom"
+                                style="width:34px;height:34px;padding:0;border-radius:8px;background:rgba(15,23,42,0.85);border:1px solid rgba(96,93,255,0.3);color:#cdd6f4;backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;">
+                            <span class="material-symbols-outlined" style="font-size:18px;">fit_screen</span>
+                        </button>
+                    </div>
                     {{-- Floating info card on hover --}}
                     <div id="graphHoverCard" style="display:none; position:absolute; z-index:20; pointer-events:none; min-width:260px; max-width:340px;">
                         <div class="card border-0 shadow-lg rounded-3" style="backdrop-filter:blur(12px); background:rgba(15,23,42,0.95); border: 1px solid rgba(96,93,255,0.3);">
@@ -2038,7 +2124,7 @@
                 <div class="fp-list" id="cpmFileList"></div>
             </div>
             {{-- Main content --}}
-            <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+            <div id="cpmMainContent" style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
                 <div class="cpm-header">
                     <div class="file-info">
                         <span class="material-symbols-outlined" style="font-size: 20px; color: #cba6f7;">code</span>
@@ -2052,7 +2138,7 @@
                             <span class="material-symbols-outlined" style="font-size: 14px;">add</span> Add File
                         </button>
                         <button class="cpm-action" id="cpmSendToChat" title="Send selected code to chat" style="display:none;">
-                            <span class="material-symbols-outlined" style="font-size: 14px; color: #F97316;">chat</span> Send to Chat
+                            <span class="material-symbols-outlined" style="font-size: 14px;">chat</span> Send to Chat
                         </button>
                         <button class="cpm-action" id="cpmCopyBtn" title="Copy file contents">
                             <span class="material-symbols-outlined" style="font-size: 14px;">content_copy</span> Copy
@@ -3512,8 +3598,12 @@ document.addEventListener('DOMContentLoaded', function() {
         _cpmData = data;
         var overlay = document.getElementById('codePreviewOverlay');
         var shortName = data.file_path.split('/').pop();
-        document.getElementById('cpmFileName').textContent = shortName;
-        document.getElementById('cpmFilePath').textContent = data.file_path;
+        var fnEl = document.getElementById('cpmFileName');
+        var fpEl = document.getElementById('cpmFilePath');
+        fnEl.textContent = shortName;
+        fnEl.title = shortName;
+        fpEl.textContent = data.file_path;
+        fpEl.title = data.file_path;
 
         var hasDiff = data.diff && data.diff.length > 0;
         var diffTab = document.getElementById('cpmDiffTab');
@@ -3576,9 +3666,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function closeCodePreviewModal() {
-        document.getElementById('codePreviewOverlay').classList.remove('show');
+        var ov = document.getElementById('codePreviewOverlay');
+        var md = ov ? ov.querySelector('.code-preview-modal') : null;
+        // Reset dock state
+        if (ov) { ov.removeAttribute('style'); ov.classList.remove('show'); }
+        if (md) { md.removeAttribute('style'); md.style.display = 'flex'; md.style.flexDirection = 'row'; }
         document.body.style.overflow = '';
         _cpmData = null;
+        // Reset split pane + resize handle
+        var rightPane = document.getElementById('cpmSplitRight');
+        var resHandle = document.getElementById('cpmSplitResize');
+        if (rightPane) rightPane.remove();
+        if (resHandle) resHandle.remove();
+        var mc = document.getElementById('cpmMainContent');
+        if (mc) { mc.style.maxWidth = ''; mc.style.width = ''; mc.style.flex = '1'; }
+        // Reset dock button label
+        var dockBtn = document.getElementById('cpmMinimizeBtn');
+        if (dockBtn) dockBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">picture_in_picture_alt</span> Dock';
+        // Reset split button label
+        var splitBtn = document.getElementById('cpmSplitBtn');
+        if (splitBtn) splitBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">vertical_split</span> Split';
+        // Reset state flags
+        _cpmDocked = false;
+        _splitMode = false;
     }
 
     // Modal event bindings
@@ -3957,6 +4067,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // === Full-screen Modal: Minimizable/Dockable Mode ===
     var _cpmDocked = false;
+    var _splitMode = false;
     (function() {
         var overlay = document.getElementById('codePreviewOverlay');
         var modal = overlay ? overlay.querySelector('.code-preview-modal') : null;
@@ -3972,19 +4083,41 @@ document.addEventListener('DOMContentLoaded', function() {
             minBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">picture_in_picture_alt</span> Dock';
             actionBar.insertBefore(minBtn, actionBar.querySelector('#cpmCopyBtn'));
 
-            minBtn.addEventListener('click', function() {
+            minBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                // Always get fresh references
+                var ov = document.getElementById('codePreviewOverlay');
+                var md = ov ? ov.querySelector('.code-preview-modal') : null;
+                if (!ov || !md) return;
+
                 if (_cpmDocked) {
                     // Undock — go full screen again
-                    overlay.style.cssText = '';
-                    modal.style.cssText = 'display:flex;flex-direction:row;';
-                    overlay.classList.add('show');
+                    ov.removeAttribute('style');
+                    ov.classList.add('show');
+                    md.removeAttribute('style');
+                    md.style.display = 'flex';
+                    md.style.flexDirection = 'row';
                     document.body.style.overflow = 'hidden';
                     minBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">picture_in_picture_alt</span> Dock';
                     _cpmDocked = false;
                 } else {
+                    // Close split mode first if active
+                    if (_splitMode) {
+                        var sp = document.getElementById('cpmSplitRight');
+                        var rh = document.getElementById('cpmSplitResize');
+                        if (sp) sp.remove();
+                        if (rh) rh.remove();
+                        var mc = document.getElementById('cpmMainContent');
+                        if (mc) { mc.style.maxWidth = ''; mc.style.width = ''; mc.style.flex = '1'; }
+                        var sb = document.getElementById('cpmSplitBtn');
+                        if (sb) sb.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">vertical_split</span> Split';
+                        _splitMode = false;
+                    }
                     // Dock to LEFT side (keeps chat visible on right)
-                    overlay.style.cssText = 'display:flex !important; position:fixed; top:0; left:0; bottom:0; right:auto; width:50vw; max-width:700px; background:none; z-index:999; pointer-events:auto;';
-                    modal.style.cssText = 'display:flex; flex-direction:row; width:100%; height:100%; border-radius:0; box-shadow:4px 0 24px rgba(0,0,0,0.3);';
+                    ov.classList.remove('show');
+                    ov.style.cssText = 'display:flex !important; position:fixed; top:0; left:0; bottom:0; right:auto; width:50vw; max-width:700px; background:transparent; z-index:9999; pointer-events:auto;';
+                    md.style.cssText = 'display:flex; flex-direction:column; width:100%; height:100%; border-radius:0; box-shadow:4px 0 24px rgba(0,0,0,0.4);';
                     document.body.style.overflow = '';
                     minBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">fullscreen</span> Full';
                     _cpmDocked = true;
@@ -4001,28 +4134,36 @@ document.addEventListener('DOMContentLoaded', function() {
             splitBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">vertical_split</span> Split';
             actionBar.insertBefore(splitBtn, actionBar.querySelector('#cpmCopyBtn'));
 
-            var _splitMode = false;
-            splitBtn.addEventListener('click', function() {
-                var codeBody = modal.querySelector('#cpmCodeBody');
-                if (!codeBody) return;
+            splitBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('[DW] Split button clicked, _splitMode=' + _splitMode);
+
+                // The modal is flex-direction:row with [filePanel, mainContent]
+                // We add the split pane as a new sibling after mainContent inside the modal
+                var modal = document.querySelector('#codePreviewOverlay .code-preview-modal');
+                var mainContent = document.getElementById('cpmMainContent');
+                if (!modal || !mainContent) { console.warn('Split: modal or mainContent not found'); return; }
 
                 if (_splitMode) {
-                    // Exit split mode
+                    // Exit split mode — remove resize handle and right pane
                     var rightPane = document.getElementById('cpmSplitRight');
+                    var resHandle = document.getElementById('cpmSplitResize');
                     if (rightPane) rightPane.remove();
-                    codeBody.style.width = '';
-                    codeBody.style.flex = '';
+                    if (resHandle) resHandle.remove();
+                    mainContent.style.flex = '1';
+                    mainContent.style.width = '';
+                    mainContent.style.maxWidth = '';
                     splitBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">vertical_split</span> Split';
                     _splitMode = false;
                 } else {
-                    // Enter split mode — add second pane
-                    codeBody.style.flex = '1';
-                    codeBody.style.width = '50%';
-                    codeBody.style.minWidth = '0';
+                    // Enter split mode — shrink main to 50%, add comparison pane
+                    mainContent.style.flex = '1';
+                    mainContent.style.maxWidth = '50%';
 
                     var rightPane = document.createElement('div');
                     rightPane.id = 'cpmSplitRight';
-                    rightPane.style.cssText = 'flex:1; width:50%; min-width:0; border-left:2px solid #313244; display:flex; flex-direction:column; background:#1e1e2e;';
+                    rightPane.style.cssText = 'flex:1; max-width:50%; min-width:0; border-left:2px solid #313244; display:flex; flex-direction:column; background:#1e1e2e; overflow:hidden;';
 
                     // Header with file selector
                     var rpHeader = document.createElement('div');
@@ -4040,8 +4181,46 @@ document.addEventListener('DOMContentLoaded', function() {
                     rpBody.innerHTML = '<div style="padding:40px;text-align:center;color:#6c7086;"><span class="material-symbols-outlined" style="font-size:32px;">compare_arrows</span><p class="mt-2">Select a file from the dropdown to compare side by side</p></div>';
                     rightPane.appendChild(rpBody);
 
-                    // Insert after codeBody
-                    codeBody.parentNode.insertBefore(rightPane, codeBody.nextSibling);
+                    // Add resize handle between the panes
+                    var resizeHandle = document.createElement('div');
+                    resizeHandle.className = 'cpm-split-resize';
+                    resizeHandle.id = 'cpmSplitResize';
+                    resizeHandle.title = 'Drag to resize';
+
+                    // Append resize handle then right pane to the modal
+                    modal.appendChild(resizeHandle);
+                    modal.appendChild(rightPane);
+
+                    // Drag-to-resize logic
+                    (function() {
+                        var startX, startLeftW;
+                        resizeHandle.addEventListener('mousedown', function(ev) {
+                            ev.preventDefault();
+                            startX = ev.clientX;
+                            startLeftW = mainContent.getBoundingClientRect().width;
+                            resizeHandle.classList.add('dragging');
+                            document.addEventListener('mousemove', onMouseMove);
+                            document.addEventListener('mouseup', onMouseUp);
+                        });
+                        function onMouseMove(ev) {
+                            var modalW = modal.getBoundingClientRect().width;
+                            var filePanelW = document.getElementById('cpmFilePanel') ? document.getElementById('cpmFilePanel').getBoundingClientRect().width : 0;
+                            var available = modalW - filePanelW - 5;
+                            var newLeftW = startLeftW + (ev.clientX - startX);
+                            var minW = 200, maxW = available - 200;
+                            newLeftW = Math.max(minW, Math.min(maxW, newLeftW));
+                            mainContent.style.flex = 'none';
+                            mainContent.style.width = newLeftW + 'px';
+                            mainContent.style.maxWidth = newLeftW + 'px';
+                            var rp = document.getElementById('cpmSplitRight');
+                            if (rp) { rp.style.flex = '1'; rp.style.maxWidth = ''; }
+                        }
+                        function onMouseUp() {
+                            resizeHandle.classList.remove('dragging');
+                            document.removeEventListener('mousemove', onMouseMove);
+                            document.removeEventListener('mouseup', onMouseUp);
+                        }
+                    })();
 
                     // Populate file select with open files + all blast radius files
                     var sel = document.getElementById('cpmSplitFileSelect');
@@ -4190,9 +4369,47 @@ document.addEventListener('DOMContentLoaded', function() {
                     var saveBtn = document.createElement('button');
                     saveBtn.className = 'cpm-action';
                     saveBtn.id = 'cpmSaveBtn';
-                    saveBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;color:#10B981;">save</span> Save Draft';
+                    saveBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;color:#10B981;">cloud_upload</span> Push to GitHub';
                     saveBtn.addEventListener('click', function() {
-                        alert('Draft saved locally. Submit via GitHub to apply changes to the PR.');
+                        if (!_cpmData || !_cpmData.sha) {
+                            alert('Cannot push: file SHA not available. The file must be loaded live from GitHub.');
+                            return;
+                        }
+                        var newContent = body.innerText || body.textContent || '';
+                        var commitMsg = prompt('Commit message:', 'Update ' + (_cpmData.file_path || 'file') + ' via DriftWatch');
+                        if (!commitMsg) return;
+
+                        saveBtn.disabled = true;
+                        saveBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">hourglass_top</span> Pushing...';
+
+                        fetch('/api/file-update', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+                            body: JSON.stringify({
+                                pr_id: @json($pullRequest->id),
+                                file_path: _cpmData.file_path,
+                                content: newContent,
+                                sha: _cpmData.sha,
+                                commit_message: commitMsg
+                            })
+                        })
+                        .then(function(r) { return r.json(); })
+                        .then(function(d) {
+                            if (d.success) {
+                                alert('Pushed to GitHub! Commit: ' + (d.commit_sha || '').substring(0, 7));
+                                _cpmData.sha = d.new_sha;
+                            } else {
+                                alert('Push failed: ' + (d.error || 'Unknown error'));
+                            }
+                            saveBtn.disabled = false;
+                            saveBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;color:#10B981;">cloud_upload</span> Push to GitHub';
+                        })
+                        .catch(function(err) {
+                            alert('Push failed: ' + err.message);
+                            saveBtn.disabled = false;
+                            saveBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;color:#10B981;">cloud_upload</span> Push to GitHub';
+                        });
+                        return; // Don't exit edit mode on push
                         _cpmEditMode = false;
                         body.contentEditable = 'false';
                         body.style.outline = '';
@@ -4228,6 +4445,53 @@ document.addEventListener('DOMContentLoaded', function() {
         var cx = W / 2, cy = H / 2;
         svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
 
+        // Zoom/pan wrapper group
+        var zoomGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        zoomGroup.id = 'blastZoomGroup';
+        svg.appendChild(zoomGroup);
+
+        var _blastZoom = 1;
+        var _blastPanX = 0, _blastPanY = 0;
+        var _blastDragging = false, _blastDragStart = {};
+
+        function applyBlastTransform() {
+            zoomGroup.setAttribute('transform', 'translate(' + _blastPanX + ',' + _blastPanY + ') scale(' + _blastZoom + ')');
+        }
+
+        // Mouse wheel zoom
+        container.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            var delta = e.deltaY > 0 ? -0.1 : 0.1;
+            _blastZoom = Math.max(0.3, Math.min(3, _blastZoom + delta));
+            applyBlastTransform();
+        }, { passive: false });
+
+        // Pan with mouse drag (on the background, not nodes)
+        container.addEventListener('mousedown', function(e) {
+            if (e.target.closest('.blast-node') || e.target.closest('#blastZoomControls')) return;
+            _blastDragging = true;
+            _blastDragStart = { x: e.clientX - _blastPanX, y: e.clientY - _blastPanY };
+            container.style.cursor = 'grabbing';
+        });
+        document.addEventListener('mousemove', function(e) {
+            if (!_blastDragging) return;
+            _blastPanX = e.clientX - _blastDragStart.x;
+            _blastPanY = e.clientY - _blastDragStart.y;
+            applyBlastTransform();
+        });
+        document.addEventListener('mouseup', function() {
+            _blastDragging = false;
+            container.style.cursor = '';
+        });
+
+        // Zoom buttons
+        var zoomInBtn = document.getElementById('blastZoomIn');
+        var zoomOutBtn = document.getElementById('blastZoomOut');
+        var zoomResetBtn = document.getElementById('blastZoomReset');
+        if (zoomInBtn) zoomInBtn.addEventListener('click', function() { _blastZoom = Math.min(3, _blastZoom + 0.2); applyBlastTransform(); });
+        if (zoomOutBtn) zoomOutBtn.addEventListener('click', function() { _blastZoom = Math.max(0.3, _blastZoom - 0.2); applyBlastTransform(); });
+        if (zoomResetBtn) zoomResetBtn.addEventListener('click', function() { _blastZoom = 1; _blastPanX = 0; _blastPanY = 0; applyBlastTransform(); });
+
         var meta = {};
         var nodeElements = [];
 
@@ -4260,7 +4524,7 @@ document.addEventListener('DOMContentLoaded', function() {
             glow.setAttribute('fill', 'url(#pulseGrad' + (i + 1) + ')');
             glow.style.animation = 'blastPulse ' + (3 + i * 0.5) + 's ease-in-out infinite';
             glow.style.animationDelay = (i * 0.3) + 's';
-            svg.appendChild(glow);
+            zoomGroup.appendChild(glow);
 
             // Dashed ring
             var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -4268,7 +4532,7 @@ document.addEventListener('DOMContentLoaded', function() {
             circle.setAttribute('class', 'blast-ring-static');
             circle.setAttribute('stroke', ring.color); circle.setAttribute('stroke-opacity', Math.min(ring.opacity * 2.5, 0.7));
             circle.setAttribute('stroke-width', '1.5');
-            svg.appendChild(circle);
+            zoomGroup.appendChild(circle);
 
             // Ring label (positioned at top of ring)
             var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -4276,7 +4540,7 @@ document.addEventListener('DOMContentLoaded', function() {
             text.setAttribute('class', 'blast-ring-label');
             text.setAttribute('fill', ring.color); text.setAttribute('fill-opacity', '0.8');
             text.textContent = ring.label;
-            svg.appendChild(text);
+            zoomGroup.appendChild(text);
         });
 
         // Animated expanding pulse rings (repeating)
@@ -4286,16 +4550,16 @@ document.addEventListener('DOMContentLoaded', function() {
             pulse.setAttribute('fill', 'none'); pulse.setAttribute('stroke', '#605DFF'); pulse.setAttribute('stroke-opacity', '0.4');
             pulse.style.animation = 'blastRingExpand 4s ease-out infinite';
             pulse.style.animationDelay = (p * 1.33) + 's';
-            svg.appendChild(pulse);
+            zoomGroup.appendChild(pulse);
         }
 
         // Create SVG group for connections (drawn below nodes)
         var connGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        svg.appendChild(connGroup);
+        zoomGroup.appendChild(connGroup);
 
         // Create SVG group for nodes (drawn above connections)
         var nodeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        svg.appendChild(nodeGroup);
+        zoomGroup.appendChild(nodeGroup);
 
         var nodeIdx = 0;
 
@@ -5157,6 +5421,601 @@ document.addEventListener('DOMContentLoaded', function() {
             var pausedStage = @json($pullRequest->paused_at_stage ?? 'negotiator');
             showAgentLoadingOverlay(pausedStage);
         });
+    }
+
+    // === Review Session Tracker ===
+    var _prId = @json($pullRequest->id);
+    var _reviewKey = 'dw_review_' + _prId;
+    var _reviewedFiles = {};
+
+    // Load saved review session
+    function loadReviewSession() {
+        try {
+            var saved = localStorage.getItem(_reviewKey);
+            if (saved) {
+                var data = JSON.parse(saved);
+                _reviewedFiles = data.files || {};
+                return data;
+            }
+        } catch(e) {}
+        return null;
+    }
+
+    // Save review session
+    function saveReviewSession() {
+        var data = {
+            pr_id: _prId,
+            pr_number: @json($pullRequest->pr_number ?? ''),
+            repo: @json($pullRequest->repo_full_name ?? ''),
+            files: _reviewedFiles,
+            updated_at: new Date().toISOString(),
+            total_files: getTotalReviewableFiles(),
+            reviewed_count: Object.keys(_reviewedFiles).filter(function(k) { return _reviewedFiles[k]; }).length
+        };
+        try { localStorage.setItem(_reviewKey, JSON.stringify(data)); } catch(e) {}
+        return data;
+    }
+
+    function getTotalReviewableFiles() {
+        var files = @json($pullRequest->blastRadius?->affected_files ?? []);
+        return files.length;
+    }
+
+    function toggleFileReviewed(filePath) {
+        _reviewedFiles[filePath] = !_reviewedFiles[filePath];
+        saveReviewSession();
+        updateReviewProgressUI();
+        updateDagNodeReviewState(filePath);
+    }
+
+    function updateReviewProgressUI() {
+        var total = getTotalReviewableFiles();
+        var reviewed = Object.keys(_reviewedFiles).filter(function(k) { return _reviewedFiles[k]; }).length;
+        var pct = total > 0 ? Math.round((reviewed / total) * 100) : 0;
+
+        var fill = document.getElementById('reviewProgressFill');
+        var label = document.getElementById('reviewProgressLabel');
+        if (fill) fill.style.width = pct + '%';
+        if (label) label.textContent = reviewed + '/' + total;
+
+        // Update all checkboxes in the tree
+        document.querySelectorAll('.file-review-check').forEach(function(cb) {
+            cb.checked = !!_reviewedFiles[cb.dataset.file];
+        });
+
+        // Update checklist items in "What to Review"
+        document.querySelectorAll('.review-item').forEach(function(item) {
+            var fp = item.dataset.file;
+            if (fp && _reviewedFiles[fp]) {
+                item.style.opacity = '0.5';
+                item.style.textDecoration = 'line-through';
+            } else {
+                item.style.opacity = '';
+                item.style.textDecoration = '';
+            }
+        });
+    }
+
+    function updateDagNodeReviewState(filePath) {
+        // Mark reviewed nodes in the DAG tree with a visual indicator
+        var svg = document.getElementById('dagTreeSvg');
+        if (!svg) return;
+        svg.querySelectorAll('.node').forEach(function(node) {
+            var label = node.querySelector('tspan');
+            if (label) {
+                var nodeFile = label.textContent.trim();
+                var shortFile = filePath.split('/').pop();
+                if (nodeFile === shortFile || nodeFile === filePath) {
+                    if (_reviewedFiles[filePath]) {
+                        node.classList.add('dag-node-reviewed');
+                    } else {
+                        node.classList.remove('dag-node-reviewed');
+                    }
+                }
+            }
+        });
+    }
+
+    // Add checkboxes to DAG tree nodes after rendering
+    function addReviewCheckboxesToTree() {
+        var files = @json($pullRequest->blastRadius?->affected_files ?? []);
+        if (files.length === 0) return;
+
+        // Add checkbox column to the tree side panel if it exists
+        var treeContainer = document.getElementById('dagTreeContainer');
+        if (!treeContainer) return;
+
+        // Add overlay checkboxes on tree nodes
+        var svg = document.getElementById('dagTreeSvg');
+        if (!svg) return;
+
+        svg.querySelectorAll('.node').forEach(function(node) {
+            var label = node.querySelector('tspan');
+            if (!label) return;
+            var nodeText = label.textContent.trim();
+            // Find matching file
+            var matchFile = files.find(function(f) {
+                return f.split('/').pop() === nodeText || f === nodeText;
+            });
+            if (!matchFile) return;
+
+            // Check if already has a checkbox
+            if (node.querySelector('.file-review-check-fo')) return;
+
+            var rect = node.querySelector('rect');
+            if (!rect) return;
+            var rx = parseFloat(rect.getAttribute('x') || 0);
+            var ry = parseFloat(rect.getAttribute('y') || 0);
+
+            var fo = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+            fo.setAttribute('x', rx + 4);
+            fo.setAttribute('y', ry + 4);
+            fo.setAttribute('width', '18');
+            fo.setAttribute('height', '18');
+            fo.setAttribute('class', 'file-review-check-fo');
+
+            var cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.className = 'file-review-check';
+            cb.dataset.file = matchFile;
+            cb.checked = !!_reviewedFiles[matchFile];
+            cb.title = 'Mark as reviewed';
+            cb.addEventListener('change', function(e) {
+                e.stopPropagation();
+                toggleFileReviewed(matchFile);
+            });
+            cb.addEventListener('click', function(e) { e.stopPropagation(); });
+
+            fo.appendChild(cb);
+            node.appendChild(fo);
+
+            // Note indicator dot (yellow dot on top-right of node)
+            addNoteIndicator(node, rect, matchFile);
+        });
+    }
+
+    // Add/update yellow note dot on a DAG node
+    function addNoteIndicator(node, rect, filePath) {
+        // Remove existing
+        var existing = node.querySelector('.file-note-indicator');
+        if (existing) existing.remove();
+
+        if (!_fileNotes[filePath]) return;
+
+        var rx = parseFloat(rect.getAttribute('x') || 0);
+        var ry = parseFloat(rect.getAttribute('y') || 0);
+        var rw = parseFloat(rect.getAttribute('width') || 0);
+
+        var dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('cx', rx + rw - 4);
+        dot.setAttribute('cy', ry + 4);
+        dot.setAttribute('r', '5');
+        dot.setAttribute('fill', '#f9e2af');
+        dot.setAttribute('stroke', '#1e1e2e');
+        dot.setAttribute('stroke-width', '1.5');
+        dot.setAttribute('class', 'file-note-indicator');
+        dot.style.cursor = 'pointer';
+
+        // Tooltip on hover
+        var title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        title.textContent = 'Note: ' + _fileNotes[filePath].substring(0, 80);
+        dot.appendChild(title);
+
+        // Click to open note editor
+        dot.addEventListener('click', function(e) {
+            e.stopPropagation();
+            openNoteEditor(filePath, e.clientX, e.clientY);
+        });
+
+        node.appendChild(dot);
+    }
+
+    // Refresh all note indicators on the DAG tree
+    function refreshNoteIndicators() {
+        var files = @json($pullRequest->blastRadius?->affected_files ?? []);
+        var svg = document.getElementById('dagTreeSvg');
+        if (!svg) return;
+
+        svg.querySelectorAll('.node').forEach(function(node) {
+            var label = node.querySelector('tspan');
+            if (!label) return;
+            var nodeText = label.textContent.trim();
+            var matchFile = files.find(function(f) { return f.split('/').pop() === nodeText || f === nodeText; });
+            if (!matchFile) return;
+            var rect = node.querySelector('rect');
+            if (!rect) return;
+            addNoteIndicator(node, rect, matchFile);
+        });
+    }
+
+    // Save session button
+    var saveBtn = document.getElementById('btnSaveReviewSession');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function() {
+            var data = saveReviewSession();
+            var reviewed = data.reviewed_count;
+            var total = data.total_files;
+            saveBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;color:#a6e3a1;">bookmark_added</span>';
+            setTimeout(function() {
+                saveBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">bookmark</span>';
+            }, 2000);
+
+            // Show toast notification
+            var toast = document.createElement('div');
+            toast.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#1e1e2e;color:#cdd6f4;padding:12px 20px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:99999;font-size:13px;display:flex;align-items:center;gap:8px;border:1px solid #313244;animation:fadeInUp 0.3s ease;';
+            toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;color:#a6e3a1;">check_circle</span> Review session saved (' + reviewed + '/' + total + ' files reviewed)';
+            document.body.appendChild(toast);
+            setTimeout(function() { toast.remove(); }, 3000);
+        });
+    }
+
+    // Initialize: load session and update UI
+    loadReviewSession();
+    updateReviewProgressUI();
+
+    // Hook into DAG tree rendering to add checkboxes
+    var origInitDag = window._initDagTree;
+    if (origInitDag) {
+        window._initDagTree = function() {
+            origInitDag.apply(this, arguments);
+            setTimeout(addReviewCheckboxesToTree, 500);
+        };
+    }
+    // Also try immediately in case tree is already rendered
+    setTimeout(function() { addReviewCheckboxesToTree(); refreshNoteIndicators(); }, 1000);
+
+    // === Toggle Review Checkmarks ===
+    var _reviewChecksVisible = true;
+    var toggleBtn = document.getElementById('btnToggleReviewChecks');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+            _reviewChecksVisible = !_reviewChecksVisible;
+            document.querySelectorAll('.file-review-check-fo, .file-review-check').forEach(function(el) {
+                el.style.display = _reviewChecksVisible ? '' : 'none';
+            });
+            toggleBtn.classList.toggle('btn-outline-secondary', !_reviewChecksVisible);
+            toggleBtn.classList.toggle('btn-primary', _reviewChecksVisible);
+            toggleBtn.title = _reviewChecksVisible ? 'Hide review checkmarks' : 'Show review checkmarks';
+        });
+    }
+
+    // === Review All Files — Sequential AI Review ===
+    var btnReviewAll = document.getElementById('btnReviewAllFiles');
+    if (btnReviewAll) {
+        var _reviewAllRunning = false;
+        btnReviewAll.addEventListener('click', function() {
+            if (_reviewAllRunning) return;
+            var allFiles = @json($pullRequest->blastRadius?->affected_files ?? []);
+            if (allFiles.length === 0) {
+                addBotMessage('No files found to review.', false);
+                return;
+            }
+            _reviewAllRunning = true;
+            btnReviewAll.disabled = true;
+            btnReviewAll.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">hourglass_top</span> Reviewing...';
+
+            // Build progress tracker in chat
+            var progressHtml = '<div class="review-all-progress" id="reviewAllProgress">'
+                + '<div style="font-size:11px;color:#6c7086;margin-bottom:6px;">Reviewing ' + allFiles.length + ' files...</div>';
+            allFiles.forEach(function(f, i) {
+                var short = f.split('/').pop();
+                progressHtml += '<div class="file-item" id="raf_' + i + '">'
+                    + '<span class="material-symbols-outlined">radio_button_unchecked</span> '
+                    + '<span>' + escapeHtml(short) + '</span></div>';
+            });
+            progressHtml += '</div>';
+            addBotMessage(progressHtml, true);
+
+            // Sequential review
+            var idx = 0;
+            function reviewNext() {
+                if (idx >= allFiles.length) {
+                    _reviewAllRunning = false;
+                    btnReviewAll.disabled = false;
+                    btnReviewAll.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">rate_review</span> Review All';
+                    addBotMessage('<strong>All ' + allFiles.length + ' files reviewed.</strong> Check the review progress above.', true);
+                    return;
+                }
+                var file = allFiles[idx];
+                var el = document.getElementById('raf_' + idx);
+                if (el) {
+                    el.classList.add('active');
+                    el.querySelector('.material-symbols-outlined').textContent = 'pending';
+                }
+
+                fetch('/api/review-all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+                    body: JSON.stringify({ pr_id: _prId, file_path: file })
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (el) {
+                        el.classList.remove('active');
+                        el.classList.add('done');
+                        el.querySelector('.material-symbols-outlined').textContent = 'check_circle';
+                    }
+                    var short = file.split('/').pop();
+                    addBotMessage('<strong>' + escapeHtml(short) + '</strong><br>' + (d.response || 'No review available.'), true);
+                    // Auto-mark as reviewed
+                    _reviewedFiles[file] = true;
+                    saveReviewSession();
+                    updateReviewProgressUI();
+                    idx++;
+                    setTimeout(reviewNext, 300);
+                })
+                .catch(function() {
+                    if (el) {
+                        el.classList.remove('active');
+                        el.querySelector('.material-symbols-outlined').textContent = 'error';
+                        el.style.color = '#f38ba8';
+                    }
+                    idx++;
+                    setTimeout(reviewNext, 300);
+                });
+            }
+            reviewNext();
+        });
+    }
+
+    // === Export / Import Review Sessions ===
+    var btnExport = document.getElementById('btnExportReview');
+    if (btnExport) {
+        btnExport.addEventListener('click', function() {
+            var data = saveReviewSession();
+            // Include notes
+            data.notes = _fileNotes;
+            // Include chat messages
+            var msgs = [];
+            document.querySelectorAll('#chatMessages .chat-msg').forEach(function(m) {
+                var isUser = m.classList.contains('chat-user');
+                var bubble = m.querySelector('.chat-bubble');
+                msgs.push({ role: isUser ? 'user' : 'bot', content: bubble ? bubble.innerHTML : '' });
+            });
+            data.chat_messages = msgs;
+            data.exported_at = new Date().toISOString();
+
+            var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'driftwatch-review-pr' + (_prId) + '-' + new Date().toISOString().slice(0,10) + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    }
+
+    var btnImport = document.getElementById('btnImportReview');
+    var importInput = document.getElementById('importReviewFile');
+    if (btnImport && importInput) {
+        btnImport.addEventListener('click', function() { importInput.click(); });
+        importInput.addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    var data = JSON.parse(ev.target.result);
+                    // Restore reviewed files
+                    if (data.files) {
+                        _reviewedFiles = data.files;
+                        saveReviewSession();
+                        updateReviewProgressUI();
+                    }
+                    // Restore notes
+                    if (data.notes) {
+                        _fileNotes = data.notes;
+                        saveFileNotes();
+                    }
+                    // Restore chat messages
+                    if (data.chat_messages && data.chat_messages.length > 0) {
+                        var container = document.getElementById('chatMessages');
+                        data.chat_messages.forEach(function(msg) {
+                            if (msg.role === 'user') {
+                                addUserMessage(msg.content);
+                            } else {
+                                addBotMessage(msg.content, true);
+                            }
+                        });
+                    }
+                    showToast('Review session imported (' + Object.keys(data.files || {}).length + ' files, ' + (data.chat_messages?.length || 0) + ' messages)', '#a6e3a1');
+                } catch(err) {
+                    showToast('Invalid review file: ' + err.message, '#f38ba8');
+                }
+            };
+            reader.readAsText(file);
+            importInput.value = '';
+        });
+    }
+
+    // === Right-Click Context Menu for File Notes ===
+    var _fileNotes = {};
+    var _notesKey = 'dw_notes_' + _prId;
+
+    function loadFileNotes() {
+        try {
+            var saved = localStorage.getItem(_notesKey);
+            if (saved) _fileNotes = JSON.parse(saved);
+        } catch(e) {}
+    }
+
+    function saveFileNotes() {
+        try { localStorage.setItem(_notesKey, JSON.stringify(_fileNotes)); } catch(e) {}
+        refreshNoteIndicators();
+    }
+
+    loadFileNotes();
+
+    // Context menu on DAG tree nodes
+    document.addEventListener('contextmenu', function(e) {
+        var nodeEl = e.target.closest('.node');
+        if (!nodeEl) return;
+        var tspan = nodeEl.querySelector('tspan');
+        if (!tspan) return;
+        e.preventDefault();
+
+        var nodeText = tspan.textContent.trim();
+        var files = @json($pullRequest->blastRadius?->affected_files ?? []);
+        var matchFile = files.find(function(f) { return f.split('/').pop() === nodeText || f === nodeText; });
+        if (!matchFile) return;
+
+        closeContextMenu();
+        var menu = document.createElement('div');
+        menu.className = 'dw-context-menu';
+        menu.id = 'dwContextMenu';
+        menu.style.left = e.clientX + 'px';
+        menu.style.top = e.clientY + 'px';
+
+        var existingNote = _fileNotes[matchFile] || '';
+
+        menu.innerHTML = ''
+            + '<div class="ctx-item" data-action="note"><span class="material-symbols-outlined">edit_note</span> ' + (existingNote ? 'Edit Note' : 'Add Note') + '</div>'
+            + (existingNote ? '<div class="ctx-item" data-action="view-note"><span class="material-symbols-outlined">sticky_note_2</span> View Note</div>' : '')
+            + '<div class="ctx-item" data-action="review"><span class="material-symbols-outlined">check_circle</span> ' + (_reviewedFiles[matchFile] ? 'Unmark Reviewed' : 'Mark Reviewed') + '</div>'
+            + '<div class="ctx-divider"></div>'
+            + '<div class="ctx-item" data-action="explain"><span class="material-symbols-outlined">psychology</span> Ask AI About File</div>'
+            + '<div class="ctx-item" data-action="viewcode"><span class="material-symbols-outlined">code</span> View Code</div>'
+            + '<div class="ctx-item" data-action="github"><span class="material-symbols-outlined">open_in_new</span> Open on GitHub</div>';
+
+        document.body.appendChild(menu);
+
+        // Keep menu in viewport
+        var rect = menu.getBoundingClientRect();
+        if (rect.right > window.innerWidth) menu.style.left = (window.innerWidth - rect.width - 8) + 'px';
+        if (rect.bottom > window.innerHeight) menu.style.top = (window.innerHeight - rect.height - 8) + 'px';
+
+        menu.addEventListener('click', function(ev) {
+            var item = ev.target.closest('.ctx-item');
+            if (!item) return;
+            var action = item.dataset.action;
+            closeContextMenu();
+
+            if (action === 'note') openNoteEditor(matchFile, e.clientX, e.clientY);
+            else if (action === 'view-note') openNoteEditor(matchFile, e.clientX, e.clientY);
+            else if (action === 'review') toggleFileReviewed(matchFile);
+            else if (action === 'explain') {
+                if (typeof sendChatQuery === 'function') sendChatQuery('Explain what ' + matchFile + ' does and why it changed in this PR.');
+            }
+            else if (action === 'viewcode') {
+                if (typeof fetchFilePreview === 'function') fetchFilePreview(matchFile);
+            }
+            else if (action === 'github') {
+                window.open('https://github.com/{{ $pullRequest->repo_full_name }}/blob/{{ $pullRequest->head_branch ?? "main" }}/' + matchFile, '_blank');
+            }
+        });
+    });
+
+    // Close context menu on click elsewhere
+    document.addEventListener('click', closeContextMenu);
+    document.addEventListener('scroll', closeContextMenu, true);
+
+    function closeContextMenu() {
+        var m = document.getElementById('dwContextMenu');
+        if (m) m.remove();
+    }
+
+    function openNoteEditor(filePath, x, y) {
+        closeNoteEditor();
+        var existing = _fileNotes[filePath] || '';
+        var editor = document.createElement('div');
+        editor.className = 'dw-note-editor';
+        editor.id = 'dwNoteEditor';
+        editor.style.left = Math.min(x, window.innerWidth - 340) + 'px';
+        editor.style.top = Math.min(y, window.innerHeight - 200) + 'px';
+
+        editor.innerHTML = '<div style="font-size:11px;color:#6c7086;margin-bottom:6px;display:flex;align-items:center;gap:4px;">'
+            + '<span class="material-symbols-outlined" style="font-size:14px;">edit_note</span> Note for <strong style="color:#cba6f7;margin-left:4px;">' + escapeHtml(filePath.split('/').pop()) + '</strong></div>'
+            + '<textarea id="noteEditorText" placeholder="Add your review note...">' + escapeHtml(existing) + '</textarea>'
+            + '<div class="note-actions">'
+            + '<button style="background:#313244;color:#a6adc8;" onclick="closeNoteEditor()">Cancel</button>'
+            + '<button style="background:#89b4fa;color:#1e1e2e;border-color:#89b4fa;" id="noteSaveBtn">Save</button>'
+            + (existing ? '<button style="background:#f38ba8;color:#1e1e2e;border-color:#f38ba8;" id="noteDeleteBtn">Delete</button>' : '')
+            + '</div>';
+
+        document.body.appendChild(editor);
+
+        document.getElementById('noteSaveBtn').addEventListener('click', function() {
+            var text = document.getElementById('noteEditorText').value.trim();
+            if (text) {
+                _fileNotes[filePath] = text;
+            } else {
+                delete _fileNotes[filePath];
+            }
+            saveFileNotes();
+            closeNoteEditor();
+            showToast(text ? 'Note saved' : 'Note removed', '#a6e3a1');
+        });
+
+        var delBtn = document.getElementById('noteDeleteBtn');
+        if (delBtn) {
+            delBtn.addEventListener('click', function() {
+                delete _fileNotes[filePath];
+                saveFileNotes();
+                closeNoteEditor();
+                showToast('Note deleted', '#f38ba8');
+            });
+        }
+
+        setTimeout(function() { document.getElementById('noteEditorText').focus(); }, 50);
+    }
+
+    function closeNoteEditor() {
+        var e = document.getElementById('dwNoteEditor');
+        if (e) e.remove();
+    }
+
+    // Edit Code & Push to GitHub — handled directly in the edit button IIFE above
+
+    // === Collaborate — Real-Time Chat Sharing (Pusher Foundation) ===
+    var btnShareChat = document.getElementById('btnShareChat');
+    if (btnShareChat) {
+        btnShareChat.addEventListener('click', function() {
+            // Generate a shareable link with the PR ID and a session token
+            var sessionId = 'dw_' + _prId + '_' + Math.random().toString(36).substring(2, 10);
+            var shareUrl = window.location.origin + '/driftwatch/pr/' + _prId + '?collab=' + sessionId;
+
+            // Check if Pusher/Echo is available
+            var hasPusher = typeof window.Echo !== 'undefined';
+
+            var modalHtml = '<div style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100000;display:flex;align-items:center;justify-content:center;" id="collabModal">'
+                + '<div style="background:#1e1e2e;border:1px solid #313244;border-radius:14px;padding:24px;width:420px;max-width:90vw;box-shadow:0 24px 48px rgba(0,0,0,0.5);">'
+                + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">'
+                + '<h6 style="color:#cdd6f4;margin:0;font-size:14px;display:flex;align-items:center;gap:8px;">'
+                + '<span class="material-symbols-outlined" style="font-size:20px;color:#89b4fa;">group</span> Collaborative Review</h6>'
+                + '<button onclick="document.getElementById(\'collabModal\').remove()" style="background:none;border:none;color:#6c7086;cursor:pointer;font-size:18px;">&times;</button></div>'
+                + (hasPusher
+                    ? '<div class="collab-badge live mb-3"><span class="material-symbols-outlined" style="font-size:12px;">circle</span> Pusher Connected</div>'
+                    : '<div style="background:#313244;border-radius:8px;padding:10px;margin-bottom:12px;font-size:11px;color:#fab387;">'
+                    + '<span class="material-symbols-outlined" style="font-size:14px;vertical-align:-3px;">info</span> '
+                    + 'Real-time sync requires Pusher. Share the link below for async review sharing via export/import.</div>')
+                + '<div style="margin-bottom:12px;">'
+                + '<label style="font-size:11px;color:#6c7086;display:block;margin-bottom:4px;">Share this link with your team:</label>'
+                + '<div style="display:flex;gap:6px;">'
+                + '<input type="text" value="' + shareUrl + '" readonly style="flex:1;background:#181825;color:#cdd6f4;border:1px solid #45475a;border-radius:8px;padding:8px 12px;font-size:12px;font-family:monospace;" id="collabLink">'
+                + '<button onclick="navigator.clipboard.writeText(document.getElementById(\'collabLink\').value);this.textContent=\'Copied!\';setTimeout(function(){this.textContent=\'Copy\';}.bind(this),2000)" '
+                + 'style="background:#89b4fa;color:#1e1e2e;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;">Copy</button></div></div>'
+                + '<div style="font-size:11px;color:#6c7086;line-height:1.6;">'
+                + '<strong style="color:#cdd6f4;">How it works:</strong><br>'
+                + '1. Share the link with team members<br>'
+                + '2. Everyone opens the same PR page<br>'
+                + '3. ' + (hasPusher ? 'Chat messages and review progress sync in real-time via WebSockets' : 'Use Export/Import to share review sessions, notes, and chat history') + '<br>'
+                + '4. Review checkmarks and file notes are shared</div>'
+                + (hasPusher ? '' : '<div style="margin-top:12px;padding-top:12px;border-top:1px solid #313244;font-size:11px;color:#6c7086;">'
+                + '<strong style="color:#cba6f7;">To enable real-time:</strong> Configure <code style="color:#fab387;">PUSHER_APP_KEY</code> in your .env and run <code style="color:#fab387;">npm run build</code>. '
+                + 'Laravel Broadcasting with Pusher enables live sync of chat, notes, and review state.</div>')
+                + '</div></div>';
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        });
+    }
+
+    // === Toast Helper ===
+    function showToast(message, color) {
+        var toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#1e1e2e;color:#cdd6f4;padding:12px 20px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:99999;font-size:13px;display:flex;align-items:center;gap:8px;border:1px solid #313244;transition:opacity 0.3s;';
+        toast.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;color:' + (color || '#a6e3a1') + ';">check_circle</span> ' + message;
+        document.body.appendChild(toast);
+        setTimeout(function() { toast.style.opacity = '0'; setTimeout(function() { toast.remove(); }, 300); }, 3000);
     }
 });
 </script>
