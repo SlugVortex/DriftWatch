@@ -111,6 +111,11 @@
     #dagTreeSvg .node:hover rect, #dagTreeSvg .node:hover polygon {
         filter: brightness(1.15) drop-shadow(0 0 6px rgba(96,93,255,0.3));
     }
+    /* DAG tree dark mode: fix label text visibility */
+    [data-theme=dark] #dagTreeSvg .node text { fill: #e2e8f0 !important; }
+    [data-theme=dark] #dagTreeSvg .edgeLabel text { fill: #cbd5e1 !important; }
+    [data-theme=dark] #dagTreeSvg .node rect { opacity: 0.85; }
+    [data-theme=dark] #dagTreeSvg .edgePath path { opacity: 0.7; }
 
     #blastRadiusDynamic {
         border: 1px solid #e2e8f0 !important;
@@ -5683,16 +5688,28 @@ document.addEventListener('DOMContentLoaded', function() {
     var btnReviewAll = document.getElementById('btnReviewAllFiles');
     if (btnReviewAll) {
         var _reviewAllRunning = false;
+        var _reviewAllStopped = false;
         btnReviewAll.addEventListener('click', function() {
-            if (_reviewAllRunning) return;
+            // If running, stop it
+            if (_reviewAllRunning) {
+                _reviewAllStopped = true;
+                _reviewAllRunning = false;
+                btnReviewAll.disabled = false;
+                btnReviewAll.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">rate_review</span> Review All';
+                addBotMessage('<span style="color:#fab387;">Review stopped by user.</span>', true);
+                return;
+            }
             var allFiles = @json($pullRequest->blastRadius?->affected_files ?? []);
             if (allFiles.length === 0) {
                 addBotMessage('No files found to review.', false);
                 return;
             }
             _reviewAllRunning = true;
-            btnReviewAll.disabled = true;
-            btnReviewAll.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">hourglass_top</span> Reviewing...';
+            _reviewAllStopped = false;
+            btnReviewAll.disabled = false;
+            btnReviewAll.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">stop_circle</span> Stop';
+            btnReviewAll.classList.remove('btn-outline-primary');
+            btnReviewAll.classList.add('btn-outline-danger');
 
             // Build progress tracker in chat
             var progressHtml = '<div class="review-all-progress" id="reviewAllProgress">'
@@ -5709,11 +5726,15 @@ document.addEventListener('DOMContentLoaded', function() {
             // Sequential review
             var idx = 0;
             function reviewNext() {
-                if (idx >= allFiles.length) {
+                if (_reviewAllStopped || idx >= allFiles.length) {
                     _reviewAllRunning = false;
                     btnReviewAll.disabled = false;
                     btnReviewAll.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">rate_review</span> Review All';
-                    addBotMessage('<strong>All ' + allFiles.length + ' files reviewed.</strong> Check the review progress above.', true);
+                    btnReviewAll.classList.remove('btn-outline-danger');
+                    btnReviewAll.classList.add('btn-outline-primary');
+                    if (!_reviewAllStopped) {
+                        addBotMessage('<strong>All ' + allFiles.length + ' files reviewed.</strong> Check the review progress above.', true);
+                    }
                     return;
                 }
                 var file = allFiles[idx];

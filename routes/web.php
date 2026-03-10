@@ -5,6 +5,8 @@
 
 use App\Http\Controllers\DriftWatchController;
 use App\Http\Controllers\GitHubWebhookController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -20,8 +22,8 @@ Route::get('/', function () {
     return redirect()->route('driftwatch.index');
 });
 
-// DriftWatch Dashboard Routes
-Route::prefix('driftwatch')->name('driftwatch.')->group(function () {
+// DriftWatch Dashboard Routes (auth required)
+Route::prefix('driftwatch')->name('driftwatch.')->middleware('auth')->group(function () {
     Route::get('/', [DriftWatchController::class, 'index'])->name('index');
     Route::get('/pull-requests', [DriftWatchController::class, 'pullRequests'])->name('pull-requests');
     Route::get('/pr/{pullRequest}', [DriftWatchController::class, 'show'])->name('show');
@@ -66,11 +68,34 @@ Route::prefix('driftwatch')->name('driftwatch.')->group(function () {
 // GitHub Webhook (no auth - verified by signature)
 Route::post('/webhooks/github', [GitHubWebhookController::class, 'handle'])->name('webhooks.github');
 
-// Legacy template routes (kept for reference)
+// Authentication
 Route::get('/login', function () {
+    if (Auth::check()) {
+        return redirect()->route('driftwatch.index');
+    }
+
     return view('login');
 })->name('login');
 
-Route::get('/register', function () {
-    return view('register');
-})->name('register');
+Route::post('/login', function (Request $request) {
+    $credentials = $request->validate([
+        'email' => ['required', 'email'],
+        'password' => ['required'],
+    ]);
+
+    if (Auth::attempt($credentials, true)) {
+        $request->session()->regenerate();
+
+        return redirect()->intended(route('driftwatch.index'));
+    }
+
+    return back()->withErrors(['email' => 'Invalid email or password.'])->onlyInput('email');
+})->name('login.submit');
+
+Route::post('/logout', function (Request $request) {
+    Auth::logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+
+    return redirect()->route('login');
+})->name('logout');

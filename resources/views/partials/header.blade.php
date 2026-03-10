@@ -24,13 +24,13 @@
 
         <div class="col-lg-8 col-sm-6">
             <div class="right-header-content">
-                <ul class="d-flex align-items-center justify-content-center justify-content-sm-end ps-0 mb-0 list-unstyled gap-2">
+                <ul class="d-flex align-items-center justify-content-center justify-content-sm-end ps-0 mb-0 list-unstyled gap-1">
 
                     {{-- Quick Navigation --}}
                     <li>
                         <div class="dropdown notifications apps">
-                            <button class="btn btn-secondary border-0 p-0 position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <span class="material-symbols-outlined">apps</span>
+                            <button class="btn btn-secondary border-0 p-0 position-relative wh-40 rounded-circle d-flex align-items-center justify-content-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Quick Navigation">
+                                <span class="material-symbols-outlined fs-22">apps</span>
                             </button>
                             <div class="dropdown-menu dropdown-lg p-0 border-0 py-4 px-3">
                                 <div class="notification-menu d-flex flex-wrap justify-content-between gap-4">
@@ -66,8 +66,8 @@
                     {{-- Notifications (recent PR activity) --}}
                     <li>
                         <div class="dropdown notifications">
-                            <button class="btn btn-secondary border-0 p-0 position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <span class="material-symbols-outlined">notifications</span>
+                            <button class="btn btn-secondary border-0 p-0 position-relative wh-40 rounded-circle d-flex align-items-center justify-content-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+                                <span class="material-symbols-outlined fs-22">notifications</span>
                                 @php
                                     $pendingCount = \App\Models\DeploymentDecision::where('decision', 'pending_review')->count();
                                 @endphp
@@ -119,29 +119,45 @@
 
                     {{-- Theme Settings Toggle --}}
                     <li>
-                        <button class="btn btn-secondary border-0 p-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasScrolling" aria-controls="offcanvasScrolling">
-                            <span class="material-symbols-outlined">settings</span>
+                        <button class="btn btn-secondary border-0 p-0 wh-40 rounded-circle d-flex align-items-center justify-content-center" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasScrolling" aria-controls="offcanvasScrolling" title="Customization">
+                            <span class="material-symbols-outlined fs-22">palette</span>
                         </button>
                     </li>
 
                     {{-- User Profile --}}
                     <li>
                         <div class="dropdown admin-profile">
-                            <button class="btn btn-secondary border-0 p-0 d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <div class="wh-30 rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center">
-                                    <span class="material-symbols-outlined text-primary" style="font-size: 18px;">person</span>
-                                </div>
+                            <button class="btn btn-secondary border-0 p-0 d-flex align-items-center gap-2 rounded-pill px-2 py-1" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Account">
+                                @auth
+                                    <div class="wh-30 rounded-circle d-flex align-items-center justify-content-center" style="background: {{ auth()->user()->avatar_color ?? '#605DFF' }}; color: #fff; font-size: 11px; font-weight: 700;">
+                                        {{ auth()->user()->initials() }}
+                                    </div>
+                                @else
+                                    <div class="wh-30 rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center">
+                                        <span class="material-symbols-outlined text-primary" style="font-size: 18px;">person</span>
+                                    </div>
+                                @endauth
                             </button>
-                            <ul class="dropdown-menu border-0 py-3 px-3" style="min-width: 200px;">
+                            <ul class="dropdown-menu border-0 py-3 px-3" style="min-width: 220px;">
                                 <li class="mb-2">
                                     <div class="d-flex align-items-center gap-2 mb-2 pb-2 border-bottom">
-                                        <div class="wh-35 rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center">
-                                            <span class="material-symbols-outlined text-primary" style="font-size: 20px;">person</span>
-                                        </div>
-                                        <div>
-                                            <span class="fw-bold d-block fs-14">DriftWatch</span>
-                                            <small class="text-secondary">Admin</small>
-                                        </div>
+                                        @auth
+                                            <div class="wh-35 rounded-circle d-flex align-items-center justify-content-center" style="background: {{ auth()->user()->avatar_color ?? '#605DFF' }}; color: #fff; font-size: 12px; font-weight: 700;">
+                                                {{ auth()->user()->initials() }}
+                                            </div>
+                                            <div>
+                                                <span class="fw-bold d-block fs-14">{{ auth()->user()->name }}</span>
+                                                <small class="text-secondary text-capitalize">{{ auth()->user()->role }}</small>
+                                            </div>
+                                        @else
+                                            <div class="wh-35 rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center">
+                                                <span class="material-symbols-outlined text-primary" style="font-size: 20px;">person</span>
+                                            </div>
+                                            <div>
+                                                <span class="fw-bold d-block fs-14">Guest</span>
+                                                <small class="text-secondary">Not signed in</small>
+                                            </div>
+                                        @endauth
                                     </div>
                                 </li>
                                 <li>
@@ -151,10 +167,13 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-2 rounded text-danger" href="#">
-                                        <span class="material-symbols-outlined fs-18">logout</span>
-                                        Logout
-                                    </a>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit" class="dropdown-item d-flex align-items-center gap-2 py-2 px-2 rounded text-danger w-100 border-0 bg-transparent">
+                                            <span class="material-symbols-outlined fs-18">logout</span>
+                                            Logout
+                                        </button>
+                                    </form>
                                 </li>
                             </ul>
                         </div>

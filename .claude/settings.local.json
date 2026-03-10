@@ -13,7 +13,20 @@
       "Bash(php artisan make:migration add_mrp_payload_to_deployment_decisions_table --no-interaction)",
       "Bash(php -l app/Http/Controllers/GitHubWebhookController.php)",
       "Bash(php -l app/Models/DeploymentDecision.php)",
-      "Bash(php -l routes/api.php)"
+      "Bash(php -l routes/api.php)",
+      "Bash(git status -u)",
+      "Bash(git add agents/function_app.py app/Http/Controllers/DriftWatchController.php app/Http/Controllers/GitHubWebhookController.php app/Models/DeploymentDecision.php app/Models/PullRequest.php app/Models/Repository.php app/Models/PipelineConfig.php config/services.php docs/STAGE_PROGRESS.md docs/DRIFTWATCH_ICON_DESIGNS.md docs/SECURITY_AGENT_SETUP.md resources/views/driftwatch/repositories/index.blade.php resources/views/driftwatch/settings.blade.php resources/views/driftwatch/show.blade.php resources/views/driftwatch/explainability.blade.php resources/views/partials/sidebar.blade.php routes/api.php routes/web.php database/migrations/2026_03_07_083058_create_pipeline_configs_table.php database/migrations/2026_03_07_083110_add_pipeline_fields_to_pull_requests_table.php database/migrations/2026_03_07_091028_add_weather_checks_to_deployment_decisions_table.php database/migrations/2026_03_08_210025_update_status_enum_on_pull_requests_table.php database/migrations/2026_03_09_021737_add_auto_analyze_to_repositories_table.php DRIFTWATCH_IMPROVEMENT_ROADMAP.md)",
+      "Bash(git add docs/DEMO_SCRIPTS.md)",
+      "Bash(php artisan route:list --path=api)",
+      "Bash(git add resources/views/driftwatch/show.blade.php routes/api.php)",
+      "Bash(grep -n \"toggleTheme\\\\|data-theme\" /c/xampp/htdocs/DriftWatch/resources/views/partials/*.blade.php)",
+      "Bash(php artisan make:migration add_role_to_users_table --table=users --no-interaction)",
+      "Bash(php artisan make:seeder UserSeeder --no-interaction)",
+      "Bash(php artisan db:seed --class=UserSeeder)",
+      "Bash(php artisan migrate:status)",
+      "Bash(php artisan session:table)",
+      "Bash(php artisan tinker --execute=\"echo \\\\Schema::hasTable\\(''sessions''\\) ? ''EXISTS'' : ''MISSING'';\")",
+      "Bash(php artisan cache:clear)"
     ]
   }
 }

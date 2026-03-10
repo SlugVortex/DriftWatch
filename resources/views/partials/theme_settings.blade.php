@@ -1,3 +1,6 @@
+{{-- resources/views/partials/theme_settings.blade.php --}}
+{{-- DriftWatch customization panel — dark mode + sidebar style --}}
+
 <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
     <div class="offcanvas-header border-bottom p-4">
         <h5 class="offcanvas-title fs-18 mb-0" id="offcanvasRightLabel">Create Task</h5>
@@ -29,13 +32,13 @@
                     <option value="2">Medium</option>
                 </select>
             </div>
-            
+
             <div class="form-group mb-4">
                 <label class="label">Status</label>
                 <select class="form-select form-control text-dark" aria-label="Default select example">
                     <option selected>Finished</option>
                     <option value="1">Pending</option>
-                    <option value="2">In Progress</option>	 
+                    <option value="2">In Progress</option>
                     <option value="3">Cancelled</option>
                 </select>
             </div>
@@ -47,7 +50,7 @@
                     <option value="1">No</option>
                 </select>
             </div>
-            
+
             <div class="form-group d-flex gap-3">
                 <button class="btn btn-primary text-white fw-semibold py-2 px-2 px-sm-3">
                     <span class="py-sm-1 d-block">
@@ -63,53 +66,47 @@
 
 <div class="offcanvas offcanvas-end bg-white" data-bs-scroll="true" data-bs-backdrop="true" tabindex="-1" id="offcanvasScrolling" aria-labelledby="offcanvasScrollingLabel" style="box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;">
     <div class="offcanvas-header bg-body-bg py-3 px-4">
-        <h5 class="offcanvas-title fs-18" id="offcanvasScrollingLabel">Theme Settings</h5>
+        <h5 class="offcanvas-title fs-18 d-flex align-items-center gap-2" id="offcanvasScrollingLabel">
+            <span class="material-symbols-outlined" style="font-size: 20px;">palette</span>
+            Customization
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body p-4">
-        <div class="mb-4 pb-2">
-            <h4 class="fs-15 fw-semibold border-bottom pb-2 mb-3">Light / Dark Mode</h4>
-            <div class="settings-btn rtl-btn">
+        <p class="text-secondary fs-13 mb-4">Personalize the look and feel of your DriftWatch dashboard.</p>
+
+        {{-- Dark / Light Mode --}}
+        <div class="mb-4 pb-3 border-bottom">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="material-symbols-outlined text-warning" style="font-size: 20px;">dark_mode</span>
+                    <div>
+                        <h6 class="fs-14 fw-semibold mb-0">Dark Mode</h6>
+                        <small class="text-secondary fs-12">Switch between light and dark themes</small>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-btn rtl-btn mt-2">
                 <label id="switch" class="switch">
                     <input type="checkbox" onchange="toggleTheme()" id="slider">
                     <span class="slider round">Click To Toggle</span>
                 </label>
             </div>
         </div>
-        <div class="mb-4 pb-2">
-            <h4 class="fs-15 fw-semibold border-bottom pb-2 mb-3">Container Style Fluid / Boxed</h4>
-            <button class="boxed-style settings-btn fluid-boxed-btn" id="boxed-style">
-                Click To <span class="fluid">Fluid</span> <span class="boxed">Boxed</span>
-            </button>
-        </div>
-        <div class="mb-4 pb-2">
-            <h4 class="fs-15 fw-semibold border-bottom pb-2 mb-3">Only Sidebar Light / Dark</h4>
-            <button class="sidebar-light-dark settings-btn sidebar-dark-btn" id="sidebar-light-dark">
+
+        {{-- Sidebar Style --}}
+        <div class="mb-4 pb-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="material-symbols-outlined text-info" style="font-size: 20px;">side_navigation</span>
+                    <div>
+                        <h6 class="fs-14 fw-semibold mb-0">Sidebar Style</h6>
+                        <small class="text-secondary fs-12">Toggle sidebar between light and dark</small>
+                    </div>
+                </div>
+            </div>
+            <button class="sidebar-light-dark settings-btn sidebar-dark-btn mt-2" id="sidebar-light-dark">
                 Click To <span class="dark1">Dark</span> <span class="light1">Light</span>
-            </button>
-        </div>
-        <div class="mb-4 pb-2">
-            <h4 class="fs-15 fw-semibold border-bottom pb-2 mb-3">Only Header Light / Dark</h4>
-            <button class="header-light-dark settings-btn header-dark-btn" id="header-light-dark">
-                Click To <span class="dark2">Dark</span> <span class="light2">Light</span>
-            </button>
-        </div>
-        <div class="mb-4 pb-2">
-            <h4 class="fs-15 fw-semibold border-bottom pb-2 mb-3">Only Footer Light / Dark</h4>
-            <button class="footer-light-dark settings-btn footer-dark-btn" id="footer-light-dark">
-                Click To <span class="dark3">Dark</span> <span class="light3">Light</span>
-            </button>
-        </div>
-        <div class="mb-4 pb-2">
-            <h4 class="fs-15 fw-semibold border-bottom pb-2 mb-3">Card Style Radius / Square</h4>
-            <button class="card-radius-square settings-btn card-style-btn" id="card-radius-square">
-                Click To <span class="square">Square</span> <span class="radius">Radius</span>
-            </button>
-        </div>
-        <div class="mb-4 pb-2">
-            <h4 class="fs-15 fw-semibold border-bottom pb-2 mb-3">Card Style BG White / Gray</h4>
-            <button class="card-bg settings-btn card-bg-style-btn" id="card-bg">
-                Click To <span class="white">White</span> <span class="gray">Gray</span>
             </button>
         </div>
     </div>

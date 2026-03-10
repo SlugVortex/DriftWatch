@@ -1,82 +1,81 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-
-        <title>Trezo - Laravel Admin Dashboard Template</title>
-        <!-- Styles -->
-        @include('partials.styles')
-    </head>
-    <body class="boxed-size bg-white">
-        @include('partials.preloader')
-
-        <div class="container">
-            <div class="main-content d-flex flex-column p-0">
-                <div class="m-auto m-1230">
-                    <div class="row align-items-center">
-                        <div class="col-lg-6 d-none d-lg-block">
-                            <img src="assets/images/login.jpg" class="rounded-3" alt="login">
-                        </div>
-                        <div class="col-lg-6">
-                            <div class="mw-480 ms-lg-auto">
-                                <a href="index" class="d-inline-block mb-4">
-                                    <img src="assets/images/logo.svg" class="rounded-3 for-light-logo" alt="login">
-                                    <img src="assets/images/white-logo.svg" class="rounded-3 for-dark-logo" alt="login">
-                                </a>
-                                <h3 class="fs-28 mb-2">Welcome back to Trezo!</h3>
-                                <p class="fw-medium fs-16 mb-4">Sign In with social account or enter your details</p>
-                                <div class="row justify-content-center">
-                                    <div class="col-lg-4 col-sm-4">
-                                        <a href="https://www.google.com/" target="_blank" class="btn btn-outline-secondary bg-transparent w-100 py-2 hover-bg mb-4" style="border-color: #D6DAE1;">
-                                            <img src="assets/images/google.svg" alt="google">
-                                        </a>
-                                    </div>
-                                    <div class="col-lg-4 col-sm-4">
-                                        <a href="https://www.facebook.com/" target="_blank" class="btn btn-outline-secondary bg-transparent w-100 py-2 hover-bg mb-4" style="border-color: #D6DAE1;">
-                                            <img src="assets/images/facebook2.svg" alt="facebook2">
-                                        </a>
-                                    </div>
-                                    <div class="col-lg-4 col-sm-4">
-                                        <a href="https://www.apple.com/" target="_blank" class="btn btn-outline-secondary bg-transparent w-100 py-2 hover-bg mb-4" style="border-color: #D6DAE1;">
-                                            <img src="assets/images/apple.svg" alt="apple">
-                                        </a>
-                                    </div>
-                                </div>
-                                <form>
-                                    <div class="form-group mb-4">
-                                        <label class="label text-secondary">Email Address</label>
-                                        <input type="email" class="form-control h-55" placeholder="example@trezo.com">
-                                    </div>
-                                    <div class="form-group mb-4">
-                                        <label class="label text-secondary">Password</label>
-                                        <input type="password" class="form-control h-55" placeholder="Type password">
-                                    </div>
-                                    <div class="form-group mb-4">
-                                        <button type="submit" class="btn btn-primary fw-medium py-2 px-3 w-100">
-                                            <div class="d-flex align-items-center justify-content-center py-1">
-                                                <i class="material-symbols-outlined text-white fs-20 me-2">login</i>
-                                                <span>Login</span>
-                                            </div>
-                                        </button>
-                                    </div>
-                                    <div class="form-group">
-                                        <p>Don’t have an account. <a href="register" class="fw-medium text-primary text-decoration-none">Register</a></p>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DriftWatch — Sign In</title>
+    @include('partials.styles')
+    <style>
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #0f172a 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
+        .login-card { background: #1e1e2e; border: 1px solid #313244; border-radius: 16px; padding: 40px; width: 420px; max-width: 95vw; box-shadow: 0 24px 48px rgba(0,0,0,0.4); }
+        .login-card h2 { color: #cdd6f4; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+        .login-card .subtitle { color: #6c7086; font-size: 13px; margin-bottom: 28px; }
+        .login-card label { color: #a6adc8; font-size: 12px; font-weight: 600; margin-bottom: 6px; display: block; }
+        .login-card input { background: #181825; color: #cdd6f4; border: 1px solid #313244; border-radius: 10px; padding: 10px 14px; width: 100%; font-size: 13px; box-sizing: border-box; }
+        .login-card input:focus { outline: none; border-color: #605DFF; box-shadow: 0 0 0 3px rgba(96,93,255,0.15); }
+        .login-card .btn-login { background: #605DFF; color: #fff; border: none; border-radius: 10px; padding: 11px; width: 100%; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .login-card .btn-login:hover { background: #4f4cd9; }
+        .login-card .error { color: #f38ba8; font-size: 12px; margin-bottom: 12px; background: rgba(243,139,168,0.1); padding: 8px 12px; border-radius: 8px; }
+        .demo-accounts { margin-top: 24px; padding-top: 20px; border-top: 1px solid #313244; }
+        .demo-accounts h6 { color: #6c7086; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .demo-btn { background: #181825; border: 1px solid #313244; border-radius: 8px; padding: 8px 12px; width: 100%; text-align: left; cursor: pointer; color: #cdd6f4; font-size: 12px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; transition: all 0.15s; }
+        .demo-btn:hover { border-color: #605DFF; background: #1e1e2e; }
+        .demo-btn .avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
+        .demo-btn .role { color: #6c7086; font-size: 10px; }
+        .logo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+        .logo-row .icon { width: 36px; height: 36px; border-radius: 10px; background: #605DFF; display: flex; align-items: center; justify-content: center; }
+        .logo-row .icon span { color: #fff; font-size: 20px; }
+        .logo-row .name { color: #cdd6f4; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="logo-row">
+            <div class="icon"><span class="material-symbols-outlined">target</span></div>
+            <span class="name">DriftWatch</span>
         </div>
+        <h2>Sign in</h2>
+        <p class="subtitle">Pre-deployment risk intelligence platform</p>
 
-        <button class="theme-settings-btn p-0 border-0 bg-transparent position-absolute" style="right: 30px; bottom: 30px;" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasScrolling" aria-controls="offcanvasScrolling">
-            <i class="material-symbols-outlined bg-primary wh-35 lh-35 text-white rounded-1" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="Click On Theme Settings">settings</i>
-        </button>
+        @if($errors->any())
+            <div class="error">{{ $errors->first() }}</div>
+        @endif
 
-        
-        @include('partials.theme_settings')
-        @include('partials.scripts')
-    </body>
+        <form method="POST" action="{{ route('login.submit') }}">
+            @csrf
+            <div style="margin-bottom: 16px;">
+                <label>Email</label>
+                <input type="email" name="email" value="{{ old('email') }}" placeholder="you@driftwatch.dev" required autofocus>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="Enter password" required>
+            </div>
+            <button type="submit" class="btn-login">Sign In</button>
+        </form>
+
+        <div class="demo-accounts">
+            <h6>Quick Demo Access</h6>
+            <button class="demo-btn" onclick="fillLogin('admin@driftwatch.dev','password')">
+                <div class="avatar" style="background:#605DFF;">AU</div>
+                <div><strong>Admin User</strong> <span class="role">— Full access (admin)</span></div>
+            </button>
+            <button class="demo-btn" onclick="fillLogin('sarah@driftwatch.dev','password')">
+                <div class="avatar" style="background:#E91E63;">SC</div>
+                <div><strong>Sarah Chen</strong> <span class="role">— Reviewer (approve/edit)</span></div>
+            </button>
+            <button class="demo-btn" onclick="fillLogin('viewer@driftwatch.dev','password')">
+                <div class="avatar" style="background:#4CAF50;">DV</div>
+                <div><strong>Demo Viewer</strong> <span class="role">— Read only</span></div>
+            </button>
+        </div>
+    </div>
+    <script>
+        function fillLogin(email, pass) {
+            document.querySelector('input[name="email"]').value = email;
+            document.querySelector('input[name="password"]').value = pass;
+            document.querySelector('form').submit();
+        }
+    </script>
+</body>
 </html>
