@@ -269,9 +269,30 @@
                     </div>
                     <div class="mb-0">
                         <label class="form-label fw-medium">GitHub Token</label>
-                        <input type="text" class="form-control bg-light" readonly
-                               value="{{ config('services.github.token') ? '********' : 'Not configured' }}">
-                        <small class="text-secondary">Set <code>GITHUB_TOKEN</code> in your <code>.env</code> file.</small>
+                        <div class="input-group" id="githubTokenGroup">
+                            <input type="password"
+                                   class="form-control"
+                                   id="githubTokenInput"
+                                   placeholder="{{ config('services.github.token') ? 'Token configured — enter new token to replace' : 'ghp_xxxxxxxxxxxx' }}"
+                                   autocomplete="new-password">
+                            <button class="btn btn-outline-secondary" type="button" id="toggleTokenVisibility"
+                                    onclick="document.getElementById('githubTokenInput').type =
+                                             document.getElementById('githubTokenInput').type === 'password' ? 'text' : 'password'">
+                                <span class="material-symbols-outlined fs-16">visibility</span>
+                            </button>
+                            <button class="btn btn-primary" type="button" id="saveTokenBtn" onclick="saveGithubToken()">
+                                <span class="material-symbols-outlined fs-16 align-middle">save</span> Save
+                            </button>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mt-1">
+                            <span class="badge bg-{{ config('services.github.token') ? 'success' : 'warning' }} bg-opacity-10 text-{{ config('services.github.token') ? 'success' : 'warning' }} fs-10" id="tokenStatusBadge">
+                                {{ config('services.github.token') ? '✓ Configured' : '✗ Not configured' }}
+                            </span>
+                            <small class="text-secondary">Needs <code>repo</code> and <code>read:org</code> scopes. Generate at
+                                <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">github.com/settings/tokens</a>.
+                            </small>
+                        </div>
+                        <div id="tokenSaveResult" class="mt-2" style="display:none;"></div>
                     </div>
                 </div>
             </div>
@@ -736,5 +757,61 @@ flowchart LR
         });
         document.querySelector('[data-config-id="' + configId + '"]').classList.add('active-template');
     }
+
+    function saveGithubToken() {
+    var token = document.getElementById('githubTokenInput').value.trim();
+    var btn = document.getElementById('saveTokenBtn');
+    var resultDiv = document.getElementById('tokenSaveResult');
+
+    if (!token) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '<div class="alert alert-warning py-2 fs-12 mb-0">Please enter a token before saving.</div>';
+        return;
+    }
+
+    // Basic client-side format check
+    if (!/^(ghp_|github_pat_|ghs_|gho_)[A-Za-z0-9_]+$/.test(token)) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '<div class="alert alert-warning py-2 fs-12 mb-0">Token format looks invalid. GitHub tokens start with <code>ghp_</code>, <code>github_pat_</code>, <code>ghs_</code>, or <code>gho_</code>.</div>';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving…';
+    resultDiv.style.display = 'none';
+
+    fetch('/settings/github-token', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+        },
+        body: JSON.stringify({ github_token: token }),
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined fs-16 align-middle">save</span> Save';
+
+        if (data.success) {
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="alert alert-success py-2 fs-12 mb-0"><span class="material-symbols-outlined align-middle me-1" style="font-size:14px;">check_circle</span>' + data.message + '</div>';
+            document.getElementById('githubTokenInput').value = '';
+            document.getElementById('githubTokenInput').placeholder = 'Token configured — enter new token to replace';
+            document.getElementById('tokenStatusBadge').className = 'badge bg-success bg-opacity-10 text-success fs-10';
+            document.getElementById('tokenStatusBadge').textContent = '✓ Configured';
+        } else {
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="alert alert-danger py-2 fs-12 mb-0">' + (data.error || 'Failed to save token.') + '</div>';
+        }
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined fs-16 align-middle">save</span> Save';
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '<div class="alert alert-danger py-2 fs-12 mb-0">Network error — could not save token.</div>';
+    });
+}
 </script>
 @endpush
