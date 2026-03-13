@@ -11,62 +11,33 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup PHP 8.3
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: mbstring, pdo, pdo_mysql, openssl, bcmath, ctype, json, tokenizer, xml
-
-      - name: Check composer.json exists
-        id: check_files
-        uses: andstor/file-existence-action@v1
-        with:
-          files: 'composer.json'
-
-      - name: Install Composer dependencies
-        if: steps.check_files.outputs.files_exists == 'true'
-        run: composer validate --no-check-publish && composer install --prefer-dist --no-progress --no-dev --optimize-autoloader
-
-      - name: Setup Node.js (for Vite build)
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install NPM dependencies and build assets
-        run: |
-          npm ci
-          npm run build
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: laravel-app
-          path: |
-            .
-            !node_modules/
-            !.git/
-            !tests/
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
     permissions:
       id-token: write
       contents: read
 
     steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP 8.2
+        uses: shivammathur/setup-php@v2
         with:
-          name: laravel-app
+          php-version: '8.2'
+          extensions: mbstring, pdo, pdo_mysql, openssl, bcmath, ctype, json, tokenizer, xml
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-dev --optimize-autoloader
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build frontend assets
+        run: |
+          npm ci
+          npm run build
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -79,36 +50,36 @@ jobs:
           app-name: driftwatch-app
           app-settings-json: |
             [
-              { "name": "APP_NAME",                              "value": "Drift Watch",                                                                    "slotSetting": false },
-              { "name": "APP_ENV",                               "value": "production",                                                                     "slotSetting": false },
-              { "name": "APP_KEY",                               "value": "${{ secrets.APP_KEY }}",                                                         "slotSetting": false },
-              { "name": "APP_DEBUG",                             "value": "false",                                                                          "slotSetting": false },
-              { "name": "APP_URL",                               "value": "https://driftwatch-app.azurewebsites.net",                                       "slotSetting": false },
-              { "name": "DB_CONNECTION",                         "value": "mysql",                                                                          "slotSetting": false },
-              { "name": "DB_HOST",                               "value": "startup-flexserver-db.mysql.database.azure.com",                                 "slotSetting": false },
-              { "name": "DB_PORT",                               "value": "3306",                                                                           "slotSetting": false },
-              { "name": "DB_DATABASE",                           "value": "driftwatch",                                                                     "slotSetting": false },
-              { "name": "DB_USERNAME",                           "value": "${{ secrets.DB_USERNAME }}",                                                     "slotSetting": false },
-              { "name": "DB_PASSWORD",                           "value": "${{ secrets.DB_PASSWORD }}",                                                     "slotSetting": false },
-              { "name": "MYSQL_ATTR_SSL_CA",                     "value": "/home/site/wwwroot/DigiCertGlobalRootCA.crt.pem",                                "slotSetting": false },
-              { "name": "SESSION_DRIVER",                        "value": "database",                                                                       "slotSetting": false },
-              { "name": "QUEUE_CONNECTION",                      "value": "database",                                                                       "slotSetting": false },
-              { "name": "CACHE_STORE",                           "value": "database",                                                                       "slotSetting": false },
-              { "name": "AZURE_OPENAI_ENDPOINT",                 "value": "${{ secrets.AZURE_OPENAI_ENDPOINT }}",                                           "slotSetting": false },
-              { "name": "AZURE_OPENAI_API_KEY",                  "value": "${{ secrets.AZURE_OPENAI_API_KEY }}",                                            "slotSetting": false },
-              { "name": "AZURE_OPENAI_DEPLOYMENT",               "value": "gpt-4.1-mini",                                                                   "slotSetting": false },
-              { "name": "GITHUB_TOKEN",                          "value": "${{ secrets.GH_TOKEN }}",                                                        "slotSetting": false },
-              { "name": "AGENT_ARCHAEOLOGIST_URL",               "value": "https://driftwatch-agents.azurewebsites.net/api/archaeologist",                  "slotSetting": false },
-              { "name": "AGENT_HISTORIAN_URL",                   "value": "https://driftwatch-agents.azurewebsites.net/api/historian",                      "slotSetting": false },
-              { "name": "AGENT_NEGOTIATOR_URL",                  "value": "https://driftwatch-agents.azurewebsites.net/api/negotiator",                     "slotSetting": false },
-              { "name": "AGENT_CHRONICLER_URL",                  "value": "https://driftwatch-agents.azurewebsites.net/api/chronicler",                     "slotSetting": false },
-              { "name": "AZURE_FUNCTION_KEY",                    "value": "${{ secrets.AZURE_FUNCTION_KEY }}",                                              "slotSetting": false },
-              { "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",  "value": "${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}",                           "slotSetting": false },
-              { "name": "AZURE_SPEECH_ENDPOINT",                 "value": "${{ secrets.AZURE_SPEECH_ENDPOINT }}",                                           "slotSetting": false },
-              { "name": "AZURE_SPEECH_KEY",                      "value": "${{ secrets.AZURE_SPEECH_KEY }}",                                                "slotSetting": false },
-              { "name": "AZURE_SPEECH_REGION",                   "value": "eastus",                                                                         "slotSetting": false },
-              { "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",        "value": "false",                                                                          "slotSetting": false },
-              { "name": "WEBSITE_RUN_FROM_PACKAGE",              "value": "0",                                                                              "slotSetting": false }
+              { "name": "APP_NAME",                              "value": "Drift Watch",                                                    "slotSetting": false },
+              { "name": "APP_ENV",                               "value": "production",                                                     "slotSetting": false },
+              { "name": "APP_KEY",                               "value": "${{ secrets.APP_KEY }}",                                         "slotSetting": false },
+              { "name": "APP_DEBUG",                             "value": "false",                                                          "slotSetting": false },
+              { "name": "APP_URL",                               "value": "https://driftwatch-app.azurewebsites.net",                       "slotSetting": false },
+              { "name": "DB_CONNECTION",                         "value": "mysql",                                                          "slotSetting": false },
+              { "name": "DB_HOST",                               "value": "startup-flexserver-db.mysql.database.azure.com",                 "slotSetting": false },
+              { "name": "DB_PORT",                               "value": "3306",                                                           "slotSetting": false },
+              { "name": "DB_DATABASE",                           "value": "driftwatch",                                                     "slotSetting": false },
+              { "name": "DB_USERNAME",                           "value": "${{ secrets.DB_USERNAME }}",                                     "slotSetting": false },
+              { "name": "DB_PASSWORD",                           "value": "${{ secrets.DB_PASSWORD }}",                                     "slotSetting": false },
+              { "name": "MYSQL_ATTR_SSL_CA",                     "value": "/home/site/wwwroot/DigiCertGlobalRootCA.crt.pem",                "slotSetting": false },
+              { "name": "SESSION_DRIVER",                        "value": "database",                                                       "slotSetting": false },
+              { "name": "QUEUE_CONNECTION",                      "value": "database",                                                       "slotSetting": false },
+              { "name": "CACHE_STORE",                           "value": "database",                                                       "slotSetting": false },
+              { "name": "AZURE_OPENAI_ENDPOINT",                 "value": "${{ secrets.AZURE_OPENAI_ENDPOINT }}",                           "slotSetting": false },
+              { "name": "AZURE_OPENAI_API_KEY",                  "value": "${{ secrets.AZURE_OPENAI_API_KEY }}",                            "slotSetting": false },
+              { "name": "AZURE_OPENAI_DEPLOYMENT",               "value": "gpt-4.1-mini",                                                   "slotSetting": false },
+              { "name": "GITHUB_TOKEN",                          "value": "${{ secrets.GH_TOKEN }}",                                        "slotSetting": false },
+              { "name": "AGENT_ARCHAEOLOGIST_URL",               "value": "https://driftwatch-agents.azurewebsites.net/api/archaeologist",  "slotSetting": false },
+              { "name": "AGENT_HISTORIAN_URL",                   "value": "https://driftwatch-agents.azurewebsites.net/api/historian",      "slotSetting": false },
+              { "name": "AGENT_NEGOTIATOR_URL",                  "value": "https://driftwatch-agents.azurewebsites.net/api/negotiator",     "slotSetting": false },
+              { "name": "AGENT_CHRONICLER_URL",                  "value": "https://driftwatch-agents.azurewebsites.net/api/chronicler",     "slotSetting": false },
+              { "name": "AZURE_FUNCTION_KEY",                    "value": "${{ secrets.AZURE_FUNCTION_KEY }}",                              "slotSetting": false },
+              { "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",  "value": "${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}",           "slotSetting": false },
+              { "name": "AZURE_SPEECH_ENDPOINT",                 "value": "${{ secrets.AZURE_SPEECH_ENDPOINT }}",                           "slotSetting": false },
+              { "name": "AZURE_SPEECH_KEY",                      "value": "${{ secrets.AZURE_SPEECH_KEY }}",                                "slotSetting": false },
+              { "name": "AZURE_SPEECH_REGION",                   "value": "eastus",                                                         "slotSetting": false },
+              { "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",        "value": "false",                                                          "slotSetting": false },
+              { "name": "WEBSITE_RUN_FROM_PACKAGE",              "value": "0",                                                              "slotSetting": false }
             ]
 
       - name: Deploy to Azure Web App
@@ -138,7 +109,6 @@ jobs:
 
           echo "Running migrations..."
           run_cmd "php artisan migrate --force"
-
           echo "Caching..."
           run_cmd "php artisan optimize:clear"
           run_cmd "php artisan config:cache"
