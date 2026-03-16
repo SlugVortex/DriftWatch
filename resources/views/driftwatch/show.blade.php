@@ -3763,7 +3763,10 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
             body: JSON.stringify({ pr_id: _prId, query: query })
         })
-        .then(function(res) { return res.json(); })
+        .then(function(res) {
+            if (!res.ok) { console.error('[DW Chat] API returned ' + res.status); throw new Error('API ' + res.status); }
+            return res.json();
+        })
         .then(function(data) {
             // Remove typing indicator
             var typing = document.getElementById(typingId);
@@ -3806,6 +3809,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(function(err) {
+            console.error('[DW Chat] API error:', err);
             // Remove typing indicator
             var typing = document.getElementById(typingId);
             if (typing) typing.closest('.chat-msg').remove();
@@ -3970,15 +3974,20 @@ document.addEventListener('DOMContentLoaded', function() {
             responseHtml += '<div class="fs-12">' + files.length + ' files changed across ' + services.length + ' service(s).</div>';
             if (blastSummary) responseHtml += '<div class="fs-12 mt-1">' + blastSummary + '</div>';
         }
-        else if (q.match(/analyze this code|code snippet|potential issues|```/)) {
+        else if (q.match(/analyze this code|code snippet|```/) || (q.match(/potential issues|what are the/) && query.length > 100)) {
             // Code snippet analysis — extract file name and analyze patterns
             var snippetFile = '';
             var fnMatch = query.match(/from\s+(\S+\.?\w+)/i);
             if (fnMatch) snippetFile = fnMatch[1].replace(/:$/, '');
 
             var codeBlock = '';
-            var cbMatch = query.match(/```[\s\S]*?([\s\S]*?)[\s\S]*?```/);
+            var cbMatch = query.match(/```\s*([\s\S]*?)\s*```/);
             if (cbMatch) codeBlock = cbMatch[1].trim();
+            // Fallback: grab everything between filename and "What are"
+            if (!codeBlock && query.length > 100) {
+                var inlineMatch = query.match(/:\s*(?:```\s*)?([\s\S]{20,}?)(?:\s*```\s*)?(?:\s*What\b)/i);
+                if (inlineMatch) codeBlock = inlineMatch[1].trim();
+            }
 
             var issues = [];
             if (codeBlock) {

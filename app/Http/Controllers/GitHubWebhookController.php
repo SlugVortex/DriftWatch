@@ -2764,13 +2764,23 @@ PROMPT;
         $sortedFiles = collect($files)->filter(fn ($f) => is_array($f))->sortByDesc('risk_score')->values();
 
         // --- Query matching ---
-        if (preg_match('/high.*risk|riski|danger|critical|most.*risk/i', $q)) {
+        if (preg_match('/high.*risk|riski|risks?|danger|critical|most.*risk|potential.*issue|issue|problem|concern|what.*risk|what.*wrong|what.*break|safe/i', $q)) {
             $topFiles = $sortedFiles->take(5);
-            $fileList = $topFiles->map(fn ($f) => "**{$f['file']}** — {$f['risk_score']} pts ({$f['change_type']})")->implode("\n");
+            $fileList = $topFiles->map(function ($f) {
+                $score = $f['risk_score'] ?? 0;
+                $verdict = $score >= 20 ? 'VERDICT: FLAGGED' : 'VERDICT: OK';
+
+                return "- **{$f['file']}** — {$score} pts ({$f['change_type']}) [{$verdict}]";
+            })->implode("\n");
             $highlights = $topFiles->pluck('file')->toArray();
 
+            $overallVerdict = $riskScore >= 50 ? 'VERDICT: FLAGGED — Elevated risk detected.'
+                : ($riskScore >= 25 ? 'VERDICT: OK — Review recommended but likely safe.' : 'VERDICT: OK — Low risk, safe to deploy.');
+            $rec = $prContext['recommendation'] ?? '';
+
             return [
-                'response' => "Here are the highest risk files in this PR:\n\n{$fileList}\n\nThe overall risk score is **{$riskScore}/100** ({$riskLevel}).",
+                'response' => "### Potential Issues & Risks\n\n{$fileList}\n\nOverall risk score: **{$riskScore}/100** ({$riskLevel}). {$overallVerdict}"
+                    .($rec ? "\n\n**Recommendation:** {$rec}" : ''),
                 'highlight_nodes' => $highlights,
                 'suggested_followups' => ['Why is the top file risky?', 'What depends on these files?', 'Show affected services'],
             ];
@@ -2852,18 +2862,44 @@ PROMPT;
         }
 
         // Code snippet analysis — when user sends code via "Send to Chat"
-        if (preg_match('/analyze this code|code snippet|potential issues|what are the|```/i', $q)) {
+        // Only match when there's actual code content (fenced block, or "code snippet from" with inline code)
+        $hasCodeContent = str_contains($query, '```')
+            || (preg_match('/code snippet from|analyze this code/i', $q) && mb_strlen($query) > 100);
+
+        Log::debug('[API:impact-chat] Code detection check.', [
+            'has_backticks' => str_contains($query, '```'),
+            'query_length' => mb_strlen($query),
+            'hasCodeContent' => $hasCodeContent,
+        ]);
+
+        if ($hasCodeContent) {
             // Extract file name from query
             $snippetFile = '';
             if (preg_match('/from\s+(\S+\.?\w+)/i', $query, $snipMatch)) {
                 $snippetFile = rtrim($snipMatch[1], ':');
             }
 
-            // Extract the code block
+            // Extract the code block — try multiple patterns
             $codeBlock = '';
-            if (preg_match('/```\s*([\s\S]*?)\s*```/s', $query, $codeMatch)) {
+            if (preg_match('/```(?:\w*)\s*(.*?)\s*```/s', $query, $codeMatch)) {
                 $codeBlock = trim($codeMatch[1]);
             }
+            // Fallback: extract everything between "filename:" and "What are"
+            if (empty($codeBlock) && preg_match('/snippet from \S+[:\s]+(.{20,})(?:\s*What\b)/si', $query, $inlineMatch)) {
+                $codeBlock = trim($inlineMatch[1]);
+            }
+            // Last fallback: just grab everything after the filename up to the question
+            if (empty($codeBlock) && mb_strlen($query) > 100) {
+                if (preg_match('/:\s*(.{30,}?)\s*(?:What are|$)/si', $query, $fallbackMatch)) {
+                    $codeBlock = trim($fallbackMatch[1]);
+                }
+            }
+
+            Log::debug('[API:impact-chat] Code extraction result.', [
+                'snippetFile' => $snippetFile,
+                'codeBlockLength' => mb_strlen($codeBlock),
+                'codeBlockPreview' => mb_substr($codeBlock, 0, 100),
+            ]);
 
             // Find matching file in the PR's changed files
             $matchedFile = $sortedFiles->first(function ($f) use ($snippetFile) {
