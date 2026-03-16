@@ -1,17 +1,9 @@
-<div align="center">
-<table style="border: none; border-collapse: collapse;">
-  <tr>
-    <td style="border: none; padding: 0; vertical-align: middle;">
-      <img src="https://i.ibb.co/8DcBjft0/driftwatch-logo.png" alt="DriftWatch Banner" width="100">
-    </td>
-    <td style="border: none; padding-left: 20px; vertical-align: middle;">
-      <span style="font-size: 48px; font-weight: bold; border: none;">DriftWatch</span>
-    </td>
-  </tr>
-</table>
-</div>
+<p align="center">
+  <img src="https://i.ibb.co/8DcBjft0/driftwatch-logo.png" height="80" valign="middle"/>
+  &nbsp;&nbsp;
+</p>
 
-
+<h1 align="center">DriftWatch</h1>
 
 <div align="center">
 
