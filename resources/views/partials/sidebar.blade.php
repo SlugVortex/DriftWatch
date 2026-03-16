@@ -1,7 +1,7 @@
 <div class="sidebar-area" id="sidebar-area">
     <div class="logo position-relative">
-        <a href="/" class="d-block text-decoration-none position-relative">
-            <span class="material-symbols-outlined me-1" style="font-size: 28px; color: #605DFF;">target</span>
+        <a href="/" class="d-block text-decoration-none position-relative d-flex align-items-center">
+            <img src="{{ asset('assets/driftwatch logo.png') }}" alt="DriftWatch" style="height: 32px; width: auto; margin-right: 8px;">
             <span class="logo-text fw-bold text-dark">DriftWatch</span>
         </a>
         <button class="sidebar-burger-menu bg-transparent p-0 border-0 opacity-0 z-n1 position-absolute top-50 end-0 translate-middle-y" id="sidebar-burger-menu">

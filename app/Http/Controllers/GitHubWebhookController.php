@@ -369,6 +369,9 @@ class GitHubWebhookController extends Controller
             'total_duration_ms' => $totalDuration,
             'template' => $config->name,
         ]);
+
+        // Post summary comment to the GitHub PR
+        $this->postGitHubPrComment($pullRequest, $riskScore, $totalDuration);
     }
 
     /**
@@ -460,6 +463,134 @@ class GitHubWebhookController extends Controller
 
         // === Teams Notification (Human Decision Loop) ===
         $this->sendTeamsNotification($pullRequest, $decisionResult, $riskResult, $blastResult, $weatherScore);
+    }
+
+    /**
+     * Post a summary comment on the GitHub PR with risk score, verdict, and key findings.
+     */
+    private function postGitHubPrComment(PullRequest $pullRequest, int $riskScore, int $totalDurationMs): void
+    {
+        $ghToken = config('services.github.token');
+
+        if (! $ghToken) {
+            Log::info("[GitHub] No token configured — skipping PR comment for PR #{$pullRequest->pr_number}.");
+
+            return;
+        }
+
+        try {
+            $pullRequest->load(['blastRadius', 'riskAssessment', 'deploymentDecision']);
+
+            $decision = $pullRequest->deploymentDecision;
+            $risk = $pullRequest->riskAssessment;
+            $blast = $pullRequest->blastRadius;
+
+            // Determine verdict emoji and label
+            $verdict = $decision->decision ?? 'pending_review';
+            if ($verdict === 'approved') {
+                $verdictEmoji = ':white_check_mark:';
+                $verdictLabel = 'APPROVED';
+            } elseif ($verdict === 'blocked') {
+                $verdictEmoji = ':no_entry:';
+                $verdictLabel = 'BLOCKED';
+            } else {
+                $verdictEmoji = ':warning:';
+                $verdictLabel = 'NEEDS REVIEW';
+            }
+
+            // Risk level badge
+            $riskLevel = ucfirst($risk->risk_level ?? 'medium');
+
+            // Actionable summary
+            if ($riskScore < 25) {
+                $actionSummary = 'Low risk — likely safe to deploy.';
+            } elseif ($riskScore < 50) {
+                $actionSummary = 'Moderate risk — review recommended before deploying.';
+            } elseif ($riskScore < 75) {
+                $actionSummary = 'Elevated risk — could break production. Careful review required.';
+            } else {
+                $actionSummary = 'High risk — high probability of breaking production. Do NOT deploy without thorough review.';
+            }
+
+            // Contributing factors
+            $factors = $risk->contributing_factors ?? [];
+            $factorLines = '';
+            foreach (array_slice($factors, 0, 5) as $factor) {
+                $factorName = $factor['factor'] ?? $factor['name'] ?? 'Unknown';
+                $factorImpact = $factor['impact'] ?? $factor['score'] ?? '';
+                $factorLines .= "- **{$factorName}**" . ($factorImpact ? " (impact: {$factorImpact})" : '') . "\n";
+            }
+
+            // Blast radius summary
+            $filesAffected = $blast->total_affected_files ?? 0;
+            $servicesAffected = $blast->total_affected_services ?? 0;
+            $blastScore = $blast->total_blast_radius_score ?? 0;
+
+            // Weather score
+            $weatherScore = $decision->weather_score ?? 0;
+            $weatherEmoji = $weatherScore < 20 ? ':sunny:' : ($weatherScore < 40 ? ':partly_sunny:' : ':thunder_cloud_and_rain:');
+
+            // Negotiator's PR comment if available
+            $negotiatorComment = '';
+            $negotiatorRun = AgentRun::where('pull_request_id', $pullRequest->id)
+                ->where('agent_name', 'negotiator')
+                ->first();
+            if ($negotiatorRun && $negotiatorRun->reasoning) {
+                $negotiatorComment = "\n### :speech_balloon: Negotiator Says\n> " . str_replace("\n", "\n> ", mb_substr($negotiatorRun->reasoning, 0, 500)) . "\n";
+            }
+
+            $durationSec = round($totalDurationMs / 1000, 1);
+
+            $body = <<<MD
+            ## {$verdictEmoji} DriftWatch Risk Analysis — {$verdictLabel}
+
+            | Metric | Value |
+            |--------|-------|
+            | **Risk Score** | **{$riskScore}/100** ({$riskLevel}) |
+            | **Blast Radius** | {$filesAffected} files, {$servicesAffected} services (score: {$blastScore}) |
+            | **Deployment Weather** | {$weatherEmoji} {$weatherScore}/100 |
+            | **Pipeline Duration** | {$durationSec}s |
+
+            ### :dart: Bottom Line
+            {$actionSummary}
+            {$negotiatorComment}
+            MD;
+
+            if ($factorLines) {
+                $body .= "\n### :mag: Key Risk Factors\n{$factorLines}";
+            }
+
+            $body .= "\n---\n:robot: *Analyzed by [DriftWatch](https://github.com) — Multi-Agent Pre-Deployment Risk Intelligence*";
+
+            // Remove leading whitespace from heredoc indentation
+            $body = implode("\n", array_map('ltrim', explode("\n", $body)));
+
+            $url = "https://api.github.com/repos/{$pullRequest->repo_full_name}/issues/{$pullRequest->pr_number}/comments";
+
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$ghToken}",
+                'Accept' => 'application/vnd.github.v3+json',
+            ])->timeout(15)->post($url, [
+                'body' => $body,
+            ]);
+
+            if ($response->successful()) {
+                Log::info("[GitHub] Posted risk summary comment on PR #{$pullRequest->pr_number}.", [
+                    'comment_id' => $response->json('id'),
+                    'html_url' => $response->json('html_url'),
+                ]);
+            } else {
+                Log::warning("[GitHub] Failed to post comment on PR #{$pullRequest->pr_number}.", [
+                    'status' => $response->status(),
+                    'body' => mb_substr($response->body(), 0, 500),
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error("[GitHub] Exception posting PR comment: {$e->getMessage()}", [
+                'pr' => $pullRequest->pr_number,
+                'repo' => $pullRequest->repo_full_name,
+            ]);
+        }
     }
 
     /**
@@ -807,6 +938,11 @@ class GitHubWebhookController extends Controller
         }
 
         $tokensUsed = $result['tokens_used'] ?? 0;
+        // Estimate tokens from response size if not reported by the agent
+        if ($tokensUsed === 0 && !empty($result)) {
+            $responseText = json_encode($result);
+            $tokensUsed = (int) ceil(mb_strlen($responseText) / 3.5); // ~3.5 chars per token estimate
+        }
 
         $inputPayload = $briefingPack ?? [
             'repo' => $pullRequest->repo_full_name,
@@ -822,7 +958,7 @@ class GitHubWebhookController extends Controller
             'score_contribution' => $scoreContribution,
             'reasoning' => mb_substr($reasoning, 0, 5000),
             'tokens_used' => $tokensUsed,
-            'cost_usd' => $tokensUsed * 0.000001,
+            'cost_usd' => $tokensUsed * 0.000003, // ~$3/1M tokens blended rate for GPT-4.1-mini
             'duration_ms' => $result['duration_ms'] ?? $durationMs,
             'model_used' => config('services.azure_openai.deployment', 'gpt-4.1-mini'),
             'input_hash' => md5($pullRequest->repo_full_name.':'.$pullRequest->pr_number.':'.$agentName),

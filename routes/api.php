@@ -607,11 +607,16 @@ Route::post('/review-all', function (Request $request) {
     $fileDescs = $blastRadius?->file_descriptions ?? [];
     $fileDesc = $fileDescs[$filePath] ?? [];
 
-    $query = "Review the file '{$filePath}' in detail. "
+    $verdict = $fileInfo['verdict'] ?? (($fileInfo['risk_score'] ?? 0) >= 25 ? 'critical' : (($fileInfo['risk_score'] ?? 0) >= 10 ? 'warning' : 'safe'));
+    $query = "Review the file '{$filePath}' decisively. "
         .'Risk score: '.($fileInfo['risk_score'] ?? 'unknown').'. '
         .'Change type: '.($fileInfo['change_type'] ?? 'unknown').'. '
+        .'Current verdict: '.$verdict.'. '
         .'Dependencies: '.(is_array($fileDeps) ? implode(', ', $fileDeps) : 'none').'. '
-        .'Give a brief code review: what looks good, potential issues, and suggestions.';
+        .'Give a DECISIVE verdict: start with "VERDICT: OK" or "VERDICT: FLAGGED". '
+        .'Then list concrete findings as bullet points starting with [OK] or [ISSUE]. '
+        .'Be specific — say what IS wrong or what IS safe, not what COULD be. '
+        .'If there are security issues, say "SECURITY:" followed by the exact issue.';
 
     // Reuse the impact-chat logic
     $chatRequest = Request::create('/api/impact-chat', 'POST', [

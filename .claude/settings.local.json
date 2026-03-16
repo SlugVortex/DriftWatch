@@ -26,7 +26,11 @@
       "Bash(php artisan migrate:status)",
       "Bash(php artisan session:table)",
       "Bash(php artisan tinker --execute=\"echo \\\\Schema::hasTable\\(''sessions''\\) ? ''EXISTS'' : ''MISSING'';\")",
-      "Bash(php artisan cache:clear)"
+      "Bash(php artisan cache:clear)",
+      "Bash(php artisan:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(php -r \"require ''vendor/autoload.php''; $app = require ''bootstrap/app.php''; $app->make\\(''Illuminate\\\\Contracts\\\\Console\\\\Kernel''\\)->bootstrap\\(\\); try { \\\\DB::table\\(''sessions''\\)->count\\(\\); echo ''sessions table OK''; } catch\\(Exception $e\\) { echo ''ERROR: ''.$e->getMessage\\(\\); }\")"
     ]
   }
 }

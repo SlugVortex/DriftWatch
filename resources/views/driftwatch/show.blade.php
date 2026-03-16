@@ -351,9 +351,9 @@
     .code-preview-modal .cpm-body .diff-add { background: rgba(166,227,161,0.1); display: block; }
     .code-preview-modal .cpm-body .diff-del { background: rgba(243,139,168,0.1); display: block; }
     .code-preview-modal .cpm-body .diff-hdr { color: #89b4fa; font-weight: bold; }
-    .code-preview-modal .cpm-close { background: none; border: none; color: #6c7086; cursor: pointer; padding: 6px; border-radius: 8px; line-height: 1; transition: all 0.15s; }
+    .code-preview-modal .cpm-close { background: none; border: none; color: #6c7086; cursor: pointer; padding: 6px; border-radius: 8px; line-height: 1; transition: all 0.15s; z-index: 10; flex-shrink: 0; }
     .code-preview-modal .cpm-close:hover { background: #313244; color: #f38ba8; }
-    .code-preview-modal .cpm-action-bar { display: flex; align-items: center; gap: 6px; }
+    .code-preview-modal .cpm-action-bar { display: flex; align-items: center; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
     .code-preview-modal .cpm-action { font-size: 11px; padding: 4px 10px; border-radius: 5px; border: 1px solid #313244; background: #181825; color: #a6adc8; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.15s; }
     .code-preview-modal .cpm-action:hover { background: #313244; color: #cdd6f4; border-color: #45475a; }
 
@@ -669,7 +669,7 @@
                         </div>
                     </div>
 
-                    {{-- Right: Why it's risky --}}
+                    {{-- Right: Will this break? --}}
                     <div class="col-md-6">
                         <div class="bg-white bg-opacity-10 rounded-3 p-3" style="backdrop-filter: blur(4px);">
                             <div class="fw-bold text-white fs-13 mb-2">
@@ -692,6 +692,34 @@
                                     </span>
                                 </div>
                             @endif
+                            {{-- Bottom-line verdict: will this break production? --}}
+                            <div class="mt-2 pt-2" style="border-top: 1px solid rgba(255,255,255,0.15);">
+                                @if($vScore < 25)
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="material-symbols-outlined" style="font-size:16px; color:#4ade80;">verified</span>
+                                        <span class="text-white fw-bold fs-13">Likely safe to deploy.</span>
+                                    </div>
+                                    <span class="text-white text-opacity-60 fs-12">Low risk — standard review recommended.</span>
+                                @elseif($vScore < 50)
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="material-symbols-outlined" style="font-size:16px; color:#facc15;">rate_review</span>
+                                        <span class="text-white fw-bold fs-13">Review recommended before deploying.</span>
+                                    </div>
+                                    <span class="text-white text-opacity-60 fs-12">Code changes look OK but warrant a closer look at the flagged areas above.</span>
+                                @elseif($vScore < 75)
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="material-symbols-outlined" style="font-size:16px; color:#fb923c;">warning</span>
+                                        <span class="text-white fw-bold fs-13">Elevated risk — could break production.</span>
+                                    </div>
+                                    <span class="text-white text-opacity-60 fs-12">This is a major change touching critical paths. Deploy with caution and monitoring.</span>
+                                @else
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="material-symbols-outlined" style="font-size:16px; color:#f87171;">dangerous</span>
+                                        <span class="text-white fw-bold fs-13">High probability of breaking production.</span>
+                                    </div>
+                                    <span class="text-white text-opacity-60 fs-12">Multiple risk signals — deploy block recommended until issues are addressed.</span>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -784,6 +812,24 @@
                     </form>
                     <a href="{{ $pullRequest->pr_url }}" target="_blank" class="btn btn-sm btn-outline-primary shadow-sm">
                         <span class="material-symbols-outlined align-middle me-1 fs-16">open_in_new</span> GitHub
+                    </a>
+                    @php
+                        // Build Copilot issue body from risk factors
+                        $copilotFactors = $pullRequest->riskAssessment?->contributing_factors ?? [];
+                        $copilotBody = "DriftWatch flagged PR #{$pullRequest->pr_number} with risk score " . ($pullRequest->riskAssessment?->risk_score ?? '?') . "/100.\n\n";
+                        $copilotBody .= "## Risk Factors\n";
+                        foreach (array_slice($copilotFactors, 0, 6) as $f) {
+                            $copilotBody .= "- {$f}\n";
+                        }
+                        $copilotBody .= "\n## Request\nPlease review the flagged files and suggest fixes for the issues identified above. Focus on:\n1. Breaking changes that could affect downstream services\n2. Security vulnerabilities\n3. Missing error handling\n4. Configuration issues\n\n@copilot please analyze and suggest fixes.";
+                        $copilotUrl = "https://github.com/{$pullRequest->repo_full_name}/issues/new?" . http_build_query([
+                            'title' => "[DriftWatch] Fix flagged issues in PR #{$pullRequest->pr_number}",
+                            'body' => $copilotBody,
+                            'labels' => 'copilot',
+                        ]);
+                    @endphp
+                    <a href="{{ $copilotUrl }}" target="_blank" class="btn btn-sm shadow-sm" style="background: linear-gradient(135deg, #6366F1, #8B5CF6); color: #fff; border: none;" title="Create a GitHub issue for Copilot to suggest fixes">
+                        <span class="material-symbols-outlined align-middle me-1 fs-16">smart_toy</span> Ask Copilot
                     </a>
                 </div>
             </div>
@@ -2323,7 +2369,7 @@
                                 </div>
                                 <div class="d-flex gap-3 mt-2 fs-11 text-secondary">
                                     <span>Attempt: {{ $run->output_payload['attempt'] ?? 1 }}</span>
-                                    <span>Cost: ${{ number_format($run->cost_usd, 6) }}</span>
+                                    <span>Cost: ${{ number_format($run->cost_usd, 4) }}</span>
                                     <span>Hash: <code>{{ substr($run->input_hash, 0, 8) }}</code></span>
                                 </div>
                             </div>
@@ -2368,7 +2414,7 @@
                                     </td>
                                     <td>{{ number_format($run->duration_ms) }}ms</td>
                                     <td>{!! $run->tokens_used > 0 ? number_format($run->tokens_used) : '~' . number_format(max(150, strlen(json_encode($run->output_payload ?? [])) / 4)) !!}</td>
-                                    <td>${{ number_format($run->cost_usd, 6) }}</td>
+                                    <td>${{ number_format($run->cost_usd, 4) }}</td>
                                     <td>
                                         <span class="fw-bold">{{ $run->score_contribution }}</span>
                                     </td>
@@ -2405,7 +2451,7 @@
                         $estTokens = $totalTokens > 0 ? $totalTokens : (int) $pullRequest->agentRuns->sum(fn($r) => max(150, strlen(json_encode($r->output_payload ?? [])) / 4));
                     @endphp
                     <span>Total Tokens: <strong>{{ $totalTokens > 0 ? number_format($totalTokens) : '~' . number_format($estTokens) . ' est.' }}</strong></span>
-                    <span>Total Cost: <strong>${{ number_format($pullRequest->agentRuns->sum('cost_usd'), 6) }}</strong></span>
+                    <span>Total Cost: <strong>${{ number_format($pullRequest->agentRuns->sum('cost_usd'), 4) }}</strong></span>
                 </div>
             </div>
         </div>
@@ -2588,17 +2634,40 @@ document.addEventListener('DOMContentLoaded', function() {
     @endif
 
     @if($pullRequest->blastRadius)
+    @php
+        // Fallback: if affected_files is empty, try to extract files from archaeologist output
+        $archOutput = collect($pullRequest->agentRuns ?? [])
+            ->where('agent_name', 'archaeologist')
+            ->pluck('output_payload')
+            ->first();
+        $blastFiles = $pullRequest->blastRadius->affected_files ?? [];
+        if (empty($blastFiles) && !empty($archOutput)) {
+            // Try change_classifications file list
+            if (!empty($archOutput['change_classifications'])) {
+                $blastFiles = collect($archOutput['change_classifications'])->pluck('file')->filter()->values()->toArray();
+            }
+            // Try affected_files from archaeologist output
+            if (empty($blastFiles) && !empty($archOutput['affected_files'])) {
+                $blastFiles = $archOutput['affected_files'];
+            }
+        }
+        $blastDepGraph = $pullRequest->blastRadius->dependency_graph ?? [];
+        // If dep graph is also empty, build a basic one from the file list
+        if (empty($blastDepGraph) && !empty($blastFiles)) {
+            $blastDepGraph = [];
+            foreach ($blastFiles as $f) {
+                $blastDepGraph[$f] = [];
+            }
+        }
+    @endphp
     var services = @json($pullRequest->blastRadius->affected_services ??[]);
-    var files = @json($pullRequest->blastRadius->affected_files ??[]);
+    var files = @json($blastFiles);
     var endpoints = @json($pullRequest->blastRadius->affected_endpoints ??[]);
-    var depGraph = @json($pullRequest->blastRadius->dependency_graph ??[]);
+    var depGraph = @json($blastDepGraph);
     var blastSummary = @json($pullRequest->blastRadius->summary ?? '');
     var fileDescriptions = @json($pullRequest->blastRadius->file_descriptions ??[]);
     var changeClassifications = @json(
-        collect($pullRequest->agentRuns ??[])
-            ->where('agent_name', 'archaeologist')
-            ->pluck('output_payload')
-            ->first()['change_classifications'] ?? ($pullRequest->blastRadius->dependency_graph ? [] :[])
+        $archOutput['change_classifications'] ?? ($pullRequest->blastRadius->dependency_graph ? [] :[])
     );
     var prUrl = @json($pullRequest->pr_url ?? '');
     var repoFullName = @json($pullRequest->repo_full_name ?? '');
@@ -2903,6 +2972,19 @@ document.addEventListener('DOMContentLoaded', function() {
     window._initDagTree = function(showAll) {
         if (typeof showAll !== 'undefined') _treeShowAll = showAll;
 
+        // Show empty state if no files to render
+        if (files.length === 0 && Object.keys(depGraph).length === 0) {
+            var container = document.getElementById('dagTreeContainer');
+            if (container) {
+                container.innerHTML = '<div style="padding:60px 20px; text-align:center; color:#6c7086;">'
+                    + '<span class="material-symbols-outlined" style="font-size:48px; color:#334155;">account_tree</span>'
+                    + '<p class="mt-3 fs-14 fw-medium" style="color:#94a3b8;">No dependency data available for this PR.</p>'
+                    + '<p class="fs-12" style="color:#64748b;">The Archaeologist agent may not have returned file-level analysis. Try re-analyzing this PR.</p>'
+                    + '</div>';
+            }
+            return;
+        }
+
         var g = new dagreD3.graphlib.Graph().setGraph({
             rankdir: 'LR',
             marginx: 30,
@@ -2964,11 +3046,20 @@ document.addEventListener('DOMContentLoaded', function() {
             var fname = (typeof f === 'string') ? f : (f.filename || f);
             var short = fname.split('/').pop();
             var depCount = (depGraph[fname] && Array.isArray(depGraph[fname])) ? depGraph[fname].length : 0;
-            var nodeLabel = short + (depCount > 0 ? '\n' + depCount + ' deps' : '');
 
-            // Determine score from change_classifications if available
-            var fileScore = 0;
-            var classifications = @json($pullRequest->blastRadius->dependency_graph ??[]);
+            // Add verdict icon (✓ or ✗) based on change_classifications
+            var ci = changeClassMap[fname] || null;
+            var verdict = ci ? (ci.verdict || '').toLowerCase() : '';
+            var verdictIcon = '';
+            if (verdict === 'safe' || verdict === 'ok') {
+                verdictIcon = '✓ ';
+            } else if (verdict === 'critical' || verdict === 'flagged' || verdict === 'warning') {
+                verdictIcon = '✗ ';
+            } else if (ci && ci.risk_score !== undefined) {
+                verdictIcon = ci.risk_score >= 20 ? '✗ ' : '✓ ';
+            }
+            var nodeLabel = verdictIcon + short + (depCount > 0 ? '\n' + depCount + ' deps' : '');
+
             var fillColor = '#FEE2E2';
             var strokeColor = '#EF4444';
 
@@ -2978,7 +3069,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 labelStyle: 'fill: #1a1a2e; font-size: 12px;',
                 shape: 'rect',
                 rx: 4, ry: 4,
-                width: Math.max(160, short.length * 8),
+                width: Math.max(160, (verdictIcon + short).length * 8),
                 height: depCount > 0 ? 44 : 36
             });
             addedNodes['file_' + fname] = true;
@@ -3164,6 +3255,79 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
+
+        // Make verdict icons (✓/✗) interactive — click to toggle
+        // Store verdict state per node
+        window._nodeVerdicts = window._nodeVerdicts || {};
+        inner.selectAll('g.node').each(function(nodeId) {
+            var nodeEl = d3.select(this);
+            var labelEls = nodeEl.selectAll('tspan, text');
+            labelEls.each(function() {
+                var el = d3.select(this);
+                var text = el.text();
+                if (text.startsWith('✓ ') || text.startsWith('✗ ')) {
+                    window._nodeVerdicts[nodeId] = text.startsWith('✓') ? 'ok' : 'flagged';
+                }
+            });
+        });
+
+        // Add a small clickable checkbox area on each file node
+        inner.selectAll('g.node').each(function(nodeId) {
+            if (!nodeId.startsWith('file_') && !nodeId.startsWith('dep_')) return;
+            var nodeEl = d3.select(this);
+            var bbox = nodeEl.node().getBBox();
+
+            // Add checkbox overlay (top-left corner of node)
+            var cb = nodeEl.append('g')
+                .attr('class', 'verdict-toggle')
+                .attr('transform', 'translate(' + (bbox.x + 4) + ',' + (bbox.y + 4) + ')')
+                .style('cursor', 'pointer');
+
+            var currentVerdict = window._nodeVerdicts[nodeId] || 'none';
+            var icon = currentVerdict === 'ok' ? '✓' : currentVerdict === 'flagged' ? '✗' : '☐';
+            var color = currentVerdict === 'ok' ? '#10B981' : currentVerdict === 'flagged' ? '#EF4444' : '#6c7086';
+
+            cb.append('rect')
+                .attr('width', 18).attr('height', 18)
+                .attr('rx', 3).attr('ry', 3)
+                .attr('fill', 'white').attr('stroke', color)
+                .attr('stroke-width', 1.5).attr('opacity', 0.95);
+
+            cb.append('text')
+                .attr('x', 9).attr('y', 14)
+                .attr('text-anchor', 'middle')
+                .attr('fill', color)
+                .attr('font-size', '13px')
+                .attr('font-weight', 'bold')
+                .attr('class', 'verdict-icon-text')
+                .text(icon);
+
+            cb.on('click', function(event) {
+                event.stopPropagation();
+                var cur = window._nodeVerdicts[nodeId] || 'none';
+                // Cycle: none → ✓ → ✗ → none → ✓ ...
+                var next = cur === 'none' ? 'ok' : cur === 'ok' ? 'flagged' : 'none';
+                window._nodeVerdicts[nodeId] = next;
+
+                var newIcon = next === 'ok' ? '✓' : next === 'flagged' ? '✗' : '☐';
+                var newColor = next === 'ok' ? '#10B981' : next === 'flagged' ? '#EF4444' : '#6c7086';
+
+                d3.select(this).select('text.verdict-icon-text')
+                    .text(newIcon).attr('fill', newColor);
+                d3.select(this).select('rect')
+                    .attr('stroke', newColor);
+
+                // Also update the node label text
+                var labelEls = nodeEl.selectAll('tspan, text').filter(function() {
+                    var t = d3.select(this).text();
+                    return t.startsWith('✓ ') || t.startsWith('✗ ') || t.startsWith('☐ ');
+                });
+                labelEls.each(function() {
+                    var t = d3.select(this).text();
+                    d3.select(this).text(t.replace(/^[✓✗☐]\s/, newIcon + ' '));
+                });
+            });
+        });
 
         // Node click — open side panel with file details
         inner.selectAll('g.node').on('click', function(event, nodeId) {
@@ -3736,6 +3900,23 @@ document.addEventListener('DOMContentLoaded', function() {
         if (inCodeBlock && codeBlockContent) {
             html += '<pre style="background:#1e1e2e;color:#cdd6f4;padding:10px;border-radius:8px;font-size:11px;overflow-x:auto;margin:6px 0;">' + escapeHtml(codeBlockContent.trim()) + '</pre>';
         }
+
+        // Auto-highlight verdict banners for quick scanning
+        // Detect OK/SAFE verdicts
+        html = html.replace(/(VERDICT:\s*OK|VERDICT:\s*SAFE|✅\s*(?:Safe|OK|No issues)|No (?:direct )?security (?:issues|concerns|vulnerabilities)\s*(?:found|detected|identified))/gi,
+            '<span style="background:#065F46;color:#6EE7B7;padding:2px 8px;border-radius:4px;font-weight:700;">$1</span>');
+        // Detect FLAGGED/ISSUE verdicts
+        html = html.replace(/(VERDICT:\s*FLAGGED|SECURITY:\s*[^<]+|❌\s*(?:Flagged|Issue|Critical)|⚠️\s*[^<]{5,60})/gi,
+            '<span style="background:#7C2D12;color:#FED7AA;padding:2px 8px;border-radius:4px;font-weight:700;">$1</span>');
+        // Highlight [OK] and [ISSUE] tags
+        html = html.replace(/\[OK\]/g, '<span style="background:#065F46;color:#6EE7B7;padding:1px 6px;border-radius:3px;font-weight:700;font-size:11px;">OK</span>');
+        html = html.replace(/\[ISSUE\]/g, '<span style="background:#7C2D12;color:#FED7AA;padding:1px 6px;border-radius:3px;font-weight:700;font-size:11px;">ISSUE</span>');
+        // Highlight common safety phrases
+        html = html.replace(/((?:appears?\s+)?safe\s+to\s+deploy|no\s+breaking\s+changes|code\s+(?:looks?\s+)?(?:clean|good|safe))/gi,
+            '<span style="background:#065F46;color:#6EE7B7;padding:1px 6px;border-radius:3px;font-weight:600;">$1</span>');
+        // Highlight concern phrases
+        html = html.replace(/(potential\s+(?:security\s+)?(?:issue|risk|vulnerability|concern)|breaking\s+change|could\s+break|will\s+break)/gi,
+            '<span style="background:#7C2D12;color:#FED7AA;padding:1px 6px;border-radius:3px;font-weight:600;">$1</span>');
 
         return html;
     }
@@ -4672,7 +4853,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Dock to LEFT side (keeps chat visible on right)
                     ov.classList.remove('show');
                     ov.style.cssText = 'display:flex !important; position:fixed; top:0; left:0; bottom:0; right:auto; width:50vw; max-width:700px; background:transparent; z-index:9999; pointer-events:auto;';
-                    md.style.cssText = 'display:flex; flex-direction:column; width:100%; height:100%; border-radius:0; box-shadow:4px 0 24px rgba(0,0,0,0.4);';
+                    md.style.cssText = 'display:flex; flex-direction:row; width:100%; height:100%; border-radius:0; box-shadow:4px 0 24px rgba(0,0,0,0.4); background:#1e1e2e; overflow:hidden;';
+                    // Ensure the main content area scrolls properly in dock mode
+                    var mc = document.getElementById('cpmMainContent');
+                    if (mc) mc.style.cssText = 'flex:1; overflow:auto; min-height:0;';
+                    // Fix split right pane if active — ensure it's visible with proper background
+                    var sp = document.getElementById('cpmSplitRight');
+                    if (sp) sp.style.background = '#1e1e2e';
                     document.body.style.overflow = '';
                     minBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">fullscreen</span> Full';
                     _cpmDocked = true;
@@ -4732,7 +4919,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     var rpBody = document.createElement('div');
                     rpBody.id = 'cpmSplitBody';
-                    rpBody.style.cssText = 'flex:1; overflow:auto; padding:0; font-family:monospace; font-size:13px;';
+                    rpBody.style.cssText = 'flex:1; overflow:auto; padding:0; font-family:monospace; font-size:13px; background:#1e1e2e; color:#cdd6f4; min-height:0;';
                     rpBody.innerHTML = '<div style="padding:40px;text-align:center;color:#6c7086;"><span class="material-symbols-outlined" style="font-size:32px;">compare_arrows</span><p class="mt-2">Select a file from the dropdown to compare side by side</p></div>';
                     rightPane.appendChild(rpBody);
 
@@ -5453,13 +5640,37 @@ document.addEventListener('DOMContentLoaded', function() {
         var reviewItems =[];
         var prDiffUrl = prUrl ? prUrl + '/files' : '';
 
+        // Compute a meaningful score from file characteristics when classInfo is missing
+        function computeFallbackScore(fname, deps) {
+            var score = 3;
+            var fl = fname.toLowerCase();
+            // Config / env files are high risk
+            if (fl.match(/\.(json|yaml|yml|toml|ini|xml)$/i) || fl.includes('.env') || fl.includes('config')) score += 12;
+            // Migrations and DB schemas
+            else if (fl.includes('migration') || fl.includes('schema') || fl.includes('.sql')) score += 15;
+            // Controllers, routes, API endpoints
+            else if (fl.includes('controller') || fl.includes('route') || fl.includes('api')) score += 10;
+            // Auth / security files
+            else if (fl.includes('auth') || fl.includes('middleware') || fl.includes('security') || fl.includes('guard')) score += 18;
+            // Models
+            else if (fl.includes('model') || fl.includes('entity')) score += 8;
+            // Tests are low risk
+            else if (fl.includes('test') || fl.includes('spec')) score = 2;
+            // Docs are lowest
+            else if (fl.match(/\.(md|txt|rst)$/i)) score = 1;
+            // More downstream deps = higher risk
+            if (deps.length > 3) score += 5;
+            else if (deps.length > 0) score += 2;
+            return Math.min(score, 40);
+        }
+
         // Changed files — primary review targets
         files.forEach(function(f) {
             var fname = (typeof f === 'string') ? f : (f.filename || f);
             var desc = fileDescMap[fname] || null;
             var classInfo = changeClassMap[fname] || null;
-            var score = classInfo ? classInfo.risk_score : 5;
             var deps = (depGraph[fname] && Array.isArray(depGraph[fname])) ? depGraph[fname] :[];
+            var score = classInfo ? classInfo.risk_score : computeFallbackScore(fname, deps);
 
             reviewItems.push({
                 file: fname,
@@ -5481,7 +5692,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!reviewItems.some(function(r) { return r.file === f; })) {
                 var desc = fileDescMap[f] || null;
                 var classInfo = changeClassMap[f] || null;
-                var score = classInfo ? classInfo.risk_score : 5;
+                var depsForFile = (depGraph[f] && Array.isArray(depGraph[f])) ? depGraph[f] :[];
+                var score = classInfo ? classInfo.risk_score : computeFallbackScore(f, depsForFile);
                 var deps = (depGraph[f] && Array.isArray(depGraph[f])) ? depGraph[f] :[];
 
                 reviewItems.push({
@@ -5613,10 +5825,25 @@ document.addEventListener('DOMContentLoaded', function() {
         var emptyMsg = document.getElementById('reviewEmpty');
         var currentFilter = 'all';
 
+        // Count items per priority and update button badges
+        var priorityCounts = { all: reviewItems.length, critical: 0, high: 0, medium: 0, low: 0 };
+        reviewItems.forEach(function(item) {
+            var fk = item.score >= 20 ? 'critical' : item.score >= 15 ? 'high' : item.score >= 5 ? 'medium' : 'low';
+            priorityCounts[fk]++;
+        });
+        filterBtns.forEach(function(btn) {
+            var key = btn.dataset.filter;
+            var count = priorityCounts[key] !== undefined ? priorityCounts[key] : 0;
+            if (key !== 'all') {
+                btn.textContent = btn.textContent.replace(/\s*\(\d+\)/, '') + ' (' + count + ')';
+            }
+        });
+
         function applyReviewFilter() {
             var searchTerm = (searchInput ? searchInput.value : '').toLowerCase().trim();
             var items = el.querySelectorAll('.review-item');
             var visible = 0;
+            console.log('[DW] Applying filter: "' + currentFilter + '", items found: ' + items.length);
             items.forEach(function(item) {
                 var matchPriority = currentFilter === 'all' || item.dataset.priority === currentFilter;
                 var matchSearch = !searchTerm || item.dataset.file.includes(searchTerm) || item.dataset.name.includes(searchTerm);
@@ -5627,17 +5854,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     item.style.display = 'none';
                 }
             });
+            console.log('[DW] Visible after filter: ' + visible);
             if (emptyMsg) emptyMsg.style.display = visible === 0 ? '' : 'none';
         }
 
-        filterBtns.forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                filterBtns.forEach(function(b) { b.classList.remove('active'); });
+        // Use event delegation on the container for reliable click handling
+        var filterContainer = document.getElementById('reviewFilterBtns');
+        if (filterContainer) {
+            filterContainer.addEventListener('click', function(e) {
+                var btn = e.target.closest('button[data-filter]');
+                if (!btn) return;
+                e.preventDefault();
+                e.stopPropagation();
+                filterContainer.querySelectorAll('button').forEach(function(b) { b.classList.remove('active'); });
                 btn.classList.add('active');
                 currentFilter = btn.dataset.filter;
                 applyReviewFilter();
             });
-        });
+        }
 
         if (searchInput) {
             searchInput.addEventListener('input', applyReviewFilter);
@@ -6234,19 +6468,46 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // === Review All Files — Sequential AI Review ===
+    // === Review All Files — Sequential AI Review with Pause/Resume ===
     var btnReviewAll = document.getElementById('btnReviewAllFiles');
     if (btnReviewAll) {
         var _reviewAllRunning = false;
         var _reviewAllStopped = false;
-        btnReviewAll.addEventListener('click', function() {
-            // If running, stop it
-            if (_reviewAllRunning) {
-                _reviewAllStopped = true;
-                _reviewAllRunning = false;
-                btnReviewAll.disabled = false;
+        var _reviewAllPaused = false;
+        var _reviewAllResume = null; // stores the resume callback
+
+        function setReviewBtn(mode) {
+            btnReviewAll.disabled = false;
+            btnReviewAll.classList.remove('btn-outline-primary', 'btn-outline-danger', 'btn-outline-warning');
+            if (mode === 'running') {
+                btnReviewAll.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">pause_circle</span> Pause';
+                btnReviewAll.classList.add('btn-outline-warning');
+            } else if (mode === 'paused') {
+                btnReviewAll.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">play_circle</span> Resume';
+                btnReviewAll.classList.add('btn-outline-primary');
+            } else {
                 btnReviewAll.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">rate_review</span> Review All';
-                addBotMessage('<span style="color:#fab387;">Review stopped by user.</span>', true);
+                btnReviewAll.classList.add('btn-outline-primary');
+            }
+        }
+
+        btnReviewAll.addEventListener('click', function() {
+            // If paused, resume
+            if (_reviewAllPaused && _reviewAllResume) {
+                _reviewAllPaused = false;
+                _reviewAllRunning = true;
+                setReviewBtn('running');
+                addBotMessage('<span style="color:#a6e3a1;">Review resumed.</span>', true);
+                _reviewAllResume();
+                _reviewAllResume = null;
+                return;
+            }
+            // If running, pause it
+            if (_reviewAllRunning) {
+                _reviewAllPaused = true;
+                _reviewAllRunning = false;
+                setReviewBtn('paused');
+                addBotMessage('<span style="color:#fab387;">Review paused. Click Resume to continue, or start a new Review All.</span>', true);
                 return;
             }
             var allFiles = @json($pullRequest->blastRadius?->affected_files ?? []);
@@ -6256,10 +6517,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             _reviewAllRunning = true;
             _reviewAllStopped = false;
-            btnReviewAll.disabled = false;
-            btnReviewAll.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">stop_circle</span> Stop';
-            btnReviewAll.classList.remove('btn-outline-primary');
-            btnReviewAll.classList.add('btn-outline-danger');
+            _reviewAllPaused = false;
+            _reviewAllResume = null;
+            setReviewBtn('running');
 
             // Build progress tracker in chat
             var progressHtml = '<div class="review-all-progress" id="reviewAllProgress">'
@@ -6276,12 +6536,16 @@ document.addEventListener('DOMContentLoaded', function() {
             // Sequential review
             var idx = 0;
             function reviewNext() {
+                // Check if paused
+                if (_reviewAllPaused) {
+                    _reviewAllResume = reviewNext;
+                    return;
+                }
                 if (_reviewAllStopped || idx >= allFiles.length) {
                     _reviewAllRunning = false;
-                    btnReviewAll.disabled = false;
-                    btnReviewAll.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">rate_review</span> Review All';
-                    btnReviewAll.classList.remove('btn-outline-danger');
-                    btnReviewAll.classList.add('btn-outline-primary');
+                    _reviewAllPaused = false;
+                    _reviewAllResume = null;
+                    setReviewBtn('idle');
                     if (!_reviewAllStopped) {
                         addBotMessage('<strong>All ' + allFiles.length + ' files reviewed.</strong> Check the review progress above.', true);
                     }
@@ -6304,14 +6568,39 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (el) {
                         el.classList.remove('active');
                         el.classList.add('done');
-                        el.querySelector('.material-symbols-outlined').textContent = 'check_circle';
+                        // Color the progress icon based on verdict
+                        var resp = d.response || '';
+                        var isFlagged = resp.includes('VERDICT: FLAGGED') || resp.includes('[ISSUE]') || resp.includes('SECURITY:');
+                        el.querySelector('.material-symbols-outlined').textContent = isFlagged ? 'cancel' : 'check_circle';
+                        if (isFlagged) el.style.color = '#f38ba8';
                     }
                     var short = file.split('/').pop();
-                    addBotMessage('<strong>' + escapeHtml(short) + '</strong><br>' + formatChatResponse(d.response || 'No review available.'), true);
+                    var resp = d.response || 'No review available.';
+
+                    // Highlight flagged items in yellow in the chat
+                    var formatted = formatChatResponse(resp);
+                    if (resp.includes('VERDICT: FLAGGED') || resp.includes('[ISSUE]') || resp.includes('SECURITY:')) {
+                        formatted = '<div style="border-left:3px solid #EF4444; padding-left:10px; margin:4px 0;">' + formatted + '</div>';
+                    }
+
+                    addBotMessage('<strong>' + escapeHtml(short) + '</strong><br>' + formatted, true);
                     // Auto-mark as reviewed
                     _reviewedFiles[file] = true;
                     saveReviewSession();
                     updateReviewProgressUI();
+
+                    // Update tree node verdict icon
+                    if (window._nodeVerdicts && window._dagInner) {
+                        var nodeId = 'file_' + file;
+                        var isFlagged2 = (d.response || '').includes('VERDICT: FLAGGED') || (d.response || '').includes('[ISSUE]') || (d.response || '').includes('SECURITY:');
+                        window._nodeVerdicts[nodeId] = isFlagged2 ? 'flagged' : 'ok';
+                        var cb = window._dagInner.select('g.node[id="' + nodeId + '"] .verdict-toggle');
+                        if (!cb.empty()) {
+                            cb.select('text.verdict-icon-text').text(isFlagged2 ? '✗' : '✓').attr('fill', isFlagged2 ? '#EF4444' : '#10B981');
+                            cb.select('rect').attr('stroke', isFlagged2 ? '#EF4444' : '#10B981');
+                        }
+                    }
+
                     idx++;
                     setTimeout(reviewNext, 300);
                 })

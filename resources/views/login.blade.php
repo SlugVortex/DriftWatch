@@ -31,7 +31,7 @@
 <body>
     <div class="login-card">
         <div class="logo-row">
-            <div class="icon"><span class="material-symbols-outlined">target</span></div>
+            <img src="{{ asset('assets/driftwatch logo.png') }}" alt="DriftWatch" style="height: 36px; width: auto; border-radius: 10px;">
             <span class="name">DriftWatch</span>
         </div>
         <h2>Sign in</h2>
