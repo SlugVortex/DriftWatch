@@ -1,0 +1,117 @@
+name: Build and deploy Laravel app to Azure Web App - DriftWatch
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**'
+      - '!agents/**'
+      - '!.github/workflows/deploy-agents.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, pdo, pdo_mysql, openssl, bcmath, ctype, json, tokenizer, xml
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-dev --optimize-autoloader
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build frontend assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set App Service environment variables
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: driftwatch-app
+          app-settings-json: |
+            [
+              { "name": "APP_NAME",                              "value": "Drift Watch",                                                    "slotSetting": false },
+              { "name": "APP_ENV",                               "value": "production",                                                     "slotSetting": false },
+              { "name": "APP_KEY",                               "value": "${{ secrets.APP_KEY }}",                                         "slotSetting": false },
+              { "name": "APP_DEBUG",                             "value": "false",                                                          "slotSetting": false },
+              { "name": "APP_URL",                               "value": "https://driftwatch-app.azurewebsites.net",                       "slotSetting": false },
+              { "name": "DB_CONNECTION",                         "value": "mysql",                                                          "slotSetting": false },
+              { "name": "DB_HOST",                               "value": "startup-flexserver-db.mysql.database.azure.com",                 "slotSetting": false },
+              { "name": "DB_PORT",                               "value": "3306",                                                           "slotSetting": false },
+              { "name": "DB_DATABASE",                           "value": "driftwatch",                                                     "slotSetting": false },
+              { "name": "DB_USERNAME",                           "value": "${{ secrets.DB_USERNAME }}",                                     "slotSetting": false },
+              { "name": "DB_PASSWORD",                           "value": "${{ secrets.DB_PASSWORD }}",                                     "slotSetting": false },
+              { "name": "MYSQL_ATTR_SSL_CA",                     "value": "/home/site/wwwroot/DigiCertGlobalRootCA.crt.pem",                "slotSetting": false },
+              { "name": "SESSION_DRIVER",                        "value": "database",                                                       "slotSetting": false },
+              { "name": "QUEUE_CONNECTION",                      "value": "database",                                                       "slotSetting": false },
+              { "name": "CACHE_STORE",                           "value": "database",                                                       "slotSetting": false },
+              { "name": "AZURE_OPENAI_ENDPOINT",                 "value": "${{ secrets.AZURE_OPENAI_ENDPOINT }}",                           "slotSetting": false },
+              { "name": "AZURE_OPENAI_API_KEY",                  "value": "${{ secrets.AZURE_OPENAI_API_KEY }}",                            "slotSetting": false },
+              { "name": "AZURE_OPENAI_DEPLOYMENT",               "value": "gpt-4.1-mini",                                                   "slotSetting": false },
+              { "name": "GITHUB_TOKEN",                          "value": "${{ secrets.GH_TOKEN }}",                                        "slotSetting": false },
+              { "name": "AGENT_ARCHAEOLOGIST_URL",               "value": "https://driftwatch-agents.azurewebsites.net/api/archaeologist",  "slotSetting": false },
+              { "name": "AGENT_HISTORIAN_URL",                   "value": "https://driftwatch-agents.azurewebsites.net/api/historian",      "slotSetting": false },
+              { "name": "AGENT_NEGOTIATOR_URL",                  "value": "https://driftwatch-agents.azurewebsites.net/api/negotiator",     "slotSetting": false },
+              { "name": "AGENT_CHRONICLER_URL",                  "value": "https://driftwatch-agents.azurewebsites.net/api/chronicler",     "slotSetting": false },
+              { "name": "AZURE_FUNCTION_KEY",                    "value": "${{ secrets.AZURE_FUNCTION_KEY }}",                              "slotSetting": false },
+              { "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",  "value": "${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}",           "slotSetting": false },
+              { "name": "AZURE_SPEECH_ENDPOINT",                 "value": "${{ secrets.AZURE_SPEECH_ENDPOINT }}",                           "slotSetting": false },
+              { "name": "AZURE_SPEECH_KEY",                      "value": "${{ secrets.AZURE_SPEECH_KEY }}",                                "slotSetting": false },
+              { "name": "AZURE_SPEECH_REGION",                   "value": "eastus",                                                         "slotSetting": false },
+              { "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",        "value": "false",                                                          "slotSetting": false },
+              { "name": "WEBSITE_RUN_FROM_PACKAGE",              "value": "0",                                                              "slotSetting": false }
+            ]
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: driftwatch-app
+          slot-name: Production
+          package: .
+
+      - name: Run Laravel setup via Kudu API
+        run: |
+          CREDS=$(az webapp deployment list-publishing-credentials \
+            --resource-group rg-driftwatch \
+            --name driftwatch-app \
+            --query "{user:publishingUserName,pass:publishingPassword}" \
+            -o json)
+          PUB_USER=$(echo $CREDS | python3 -c "import sys,json; print(json.load(sys.stdin)['user'])")
+          PUB_PASS=$(echo $CREDS | python3 -c "import sys,json; print(json.load(sys.stdin)['pass'])")
+
+          run_cmd() {
+            curl -s -X POST \
+              "https://driftwatch-app.scm.azurewebsites.net/api/command" \
+              -u "$PUB_USER:$PUB_PASS" \
+              -H "Content-Type: application/json" \
+              -d "{\"command\":\"$1\",\"dir\":\"/home/site/wwwroot\"}"
+          }
+
+          echo "Running migrations..."
+          run_cmd "php artisan migrate --force"
+          echo "Caching..."
+          run_cmd "php artisan optimize:clear"
+          run_cmd "php artisan config:cache"
+          run_cmd "php artisan route:cache"
+          run_cmd "php artisan view:cache"
+          run_cmd "php artisan storage:link --force"

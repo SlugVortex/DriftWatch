@@ -8,6 +8,7 @@ use App\Http\Controllers\GitHubWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Log;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,10 +38,41 @@ Route::prefix('driftwatch')->name('driftwatch.')->middleware('auth')->group(func
     Route::post('/pr/{pullRequest}/toggle-gate', [DriftWatchController::class, 'toggleGate'])->name('toggle-gate');
     Route::get('/incidents', [DriftWatchController::class, 'incidents'])->name('incidents');
     Route::get('/analytics', [DriftWatchController::class, 'analytics'])->name('analytics');
+
+    // Settings Routes
     Route::get('/settings', [DriftWatchController::class, 'settings'])->name('settings');
     Route::post('/settings/pipeline', [DriftWatchController::class, 'savePipelineConfig'])->name('settings.pipeline');
     Route::post('/settings/save-token', [DriftWatchController::class, 'saveGithubToken'])->name('settings.save-token');
     Route::post('/settings/pipeline/reset', [DriftWatchController::class, 'resetPipelineConfig'])->name('settings.pipeline.reset');
+
+    // Update GitHub token from the UI
+    Route::post('/settings/github-token', function (Request $request) {
+    $request->validate([
+        'github_token' => ['required', 'string', 'min:10', 'max:255'],
+    ]);
+
+    $newToken = $request->input('github_token');
+    $envPath = base_path('.env');
+
+    if (!file_exists($envPath)) {
+        return response()->json(['error' => '.env file not found'], 500);
+    }
+
+    $envContents = file_get_contents($envPath);
+
+    if (str_contains($envContents, 'GITHUB_TOKEN=')) {
+        $envContents = preg_replace('/^GITHUB_TOKEN=.*/m', 'GITHUB_TOKEN=' . $newToken, $envContents);
+    } else {
+        $envContents .= "\nGITHUB_TOKEN={$newToken}";
+    }
+
+    file_put_contents($envPath, $envContents);
+    config(['services.github.token' => $newToken]);
+
+    Log::info('[Settings] GitHub token updated via UI.');
+
+    return response()->json(['success' => true, 'message' => 'GitHub token updated successfully.']);
+})->middleware('auth')->name('settings.github-token');
 
     // Agent status pages
     Route::get('/agents/archaeologist', [DriftWatchController::class, 'agentStatus'])->name('agents.archaeologist')->defaults('agent', 'archaeologist');
@@ -54,7 +86,7 @@ Route::prefix('driftwatch')->name('driftwatch.')->middleware('auth')->group(func
     // Governance & Responsible AI
     Route::get('/governance', [DriftWatchController::class, 'governance'])->name('governance');
 
-    // Explainability — how scoring works
+    // Explainability
     Route::get('/explainability', [DriftWatchController::class, 'explainability'])->name('explainability');
 
     // Repositories
@@ -67,7 +99,7 @@ Route::prefix('driftwatch')->name('driftwatch.')->middleware('auth')->group(func
     Route::delete('/repositories/{repository}', [DriftWatchController::class, 'disconnectRepository'])->name('repositories.disconnect');
 });
 
-// GitHub Webhook (no auth - verified by signature)
+// GitHub Webhook
 Route::post('/webhooks/github', [GitHubWebhookController::class, 'handle'])->name('webhooks.github');
 
 // Authentication
@@ -75,7 +107,6 @@ Route::get('/login', function () {
     if (Auth::check()) {
         return redirect()->route('driftwatch.index');
     }
-
     return view('login');
 })->name('login');
 
@@ -87,7 +118,6 @@ Route::post('/login', function (Request $request) {
 
     if (Auth::attempt($credentials, true)) {
         $request->session()->regenerate();
-
         return redirect()->intended(route('driftwatch.index'));
     }
 
@@ -98,6 +128,5 @@ Route::post('/logout', function (Request $request) {
     Auth::logout();
     $request->session()->invalidate();
     $request->session()->regenerateToken();
-
     return redirect()->route('login');
 })->name('logout');
