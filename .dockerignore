@@ -1,0 +1,50 @@
+# .dockerignore
+# Exclude files not needed in the Docker image
+
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Dependencies (rebuilt inside container)
+node_modules
+vendor
+
+# Environment (provided via docker-compose or --env-file)
+.env
+.env.backup
+.env.local
+
+# IDE / Editor
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation (not needed at runtime)
+docs/
+*.md
+!README.md
+
+# Tests (not needed in production image)
+tests/
+phpunit.xml
+
+# Build artifacts
+public/build
+public/hot
+
+# Storage (mounted as volume)
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+
+# CI/CD
+.github/
+action/

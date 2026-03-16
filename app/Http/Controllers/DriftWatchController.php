@@ -532,6 +532,26 @@ class DriftWatchController extends Controller
             $synced = 0;
 
             foreach ($prs as $prData) {
+                // Fetch individual PR details for file counts (list endpoint doesn't include them)
+                $filesChanged = 0;
+                $additions = 0;
+                $deletions = 0;
+                try {
+                    $detailResponse = Http::withHeaders([
+                        'Authorization' => "Bearer {$ghToken}",
+                        'Accept' => 'application/vnd.github.v3+json',
+                    ])->timeout(10)->get("https://api.github.com/repos/{$repository->full_name}/pulls/{$prData['number']}");
+
+                    if ($detailResponse->successful()) {
+                        $detail = $detailResponse->json();
+                        $filesChanged = $detail['changed_files'] ?? 0;
+                        $additions = $detail['additions'] ?? 0;
+                        $deletions = $detail['deletions'] ?? 0;
+                    }
+                } catch (\Exception $e) {
+                    Log::debug("[DriftWatch] Could not fetch PR detail for #{$prData['number']}: {$e->getMessage()}");
+                }
+
                 PullRequest::updateOrCreate(
                     ['github_pr_id' => (string) $prData['id']],
                     [
@@ -542,9 +562,9 @@ class DriftWatchController extends Controller
                         'pr_url' => $prData['html_url'],
                         'base_branch' => $prData['base']['ref'] ?? 'main',
                         'head_branch' => $prData['head']['ref'] ?? 'unknown',
-                        'files_changed' => 0,
-                        'additions' => 0,
-                        'deletions' => 0,
+                        'files_changed' => $filesChanged,
+                        'additions' => $additions,
+                        'deletions' => $deletions,
                         'status' => 'pending',
                     ]
                 );
@@ -568,10 +588,12 @@ class DriftWatchController extends Controller
                     $analyzed = 0;
                     foreach ($unanalyzed as $pr) {
                         try {
+                            $pr->update(['status' => 'analyzing']);
                             $webhookController->runAgentPipelinePublic($pr);
                             $analyzed++;
                         } catch (\Exception $e) {
                             Log::error("[DriftWatch] Auto-analyze failed for PR #{$pr->pr_number}", ['error' => $e->getMessage()]);
+                            $pr->update(['status' => 'pending']);
                         }
                     }
                     $autoMsg = " Auto-analyzed {$analyzed} PR(s).";
@@ -633,10 +655,12 @@ class DriftWatchController extends Controller
 
         foreach ($unanalyzed as $pr) {
             try {
+                $pr->update(['status' => 'analyzing']);
                 $webhookController->runAgentPipelinePublic($pr);
                 $analyzed++;
             } catch (\Exception $e) {
                 Log::error("[DriftWatch] Auto-analyze failed for PR #{$pr->pr_number}", ['error' => $e->getMessage()]);
+                $pr->update(['status' => 'pending']);
             }
         }
 
@@ -712,6 +736,42 @@ class DriftWatchController extends Controller
     }
 
     /**
+     * Save GitHub token to the .env file.
+     */
+    public function saveGithubToken(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $token = trim($request->input('github_token', ''));
+
+        if (empty($token)) {
+            return back()->with('error', 'Token cannot be empty.');
+        }
+
+        // Validate token format — GitHub tokens start with ghp_, gho_, ghu_, ghs_, ghr_, or github_pat_
+        if (! preg_match('/^(ghp_|gho_|ghu_|ghs_|ghr_|github_pat_)[a-zA-Z0-9_]+$/', $token)) {
+            return back()->with('error', 'Invalid token format. GitHub tokens start with ghp_ or github_pat_ followed by alphanumeric characters.');
+        }
+
+        // Update .env file
+        $envPath = base_path('.env');
+        $envContent = file_get_contents($envPath);
+
+        if (preg_match('/^GITHUB_TOKEN=.*/m', $envContent)) {
+            $envContent = preg_replace('/^GITHUB_TOKEN=.*/m', "GITHUB_TOKEN=\"{$token}\"", $envContent);
+        } else {
+            $envContent .= "\nGITHUB_TOKEN=\"{$token}\"\n";
+        }
+
+        file_put_contents($envPath, $envContent);
+
+        // Clear config cache so the new token takes effect
+        \Artisan::call('config:clear');
+
+        Log::info('[DriftWatch] GitHub token updated via settings page.');
+
+        return back()->with('success', 'GitHub token saved successfully. Agents can now read PR code.');
+    }
+
+    /**
      * Reset pipeline configs to built-in defaults.
      */
     public function resetPipelineConfig()
@@ -777,6 +837,26 @@ class DriftWatchController extends Controller
         Log::info("[DriftWatch] PR #{$pullRequest->pr_number} pipeline template changed to {$request->input('pipeline_template')}.");
 
         return back()->with('success', "Pipeline template updated to {$request->input('pipeline_template')}.");
+    }
+
+    public function toggleGate(PullRequest $pullRequest, Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $env = $pullRequest->target_environment ?? 'production';
+        $template = $pullRequest->pipeline_template ?? 'full';
+
+        $config = PipelineConfig::where('name', $template)->first() ?? PipelineConfig::first();
+
+        if ($config) {
+            $thresholds = $config->environment_thresholds ?? [];
+            $gateEnabled = $request->has('gate_enabled');
+            $thresholds[$env]['require_approval'] = $gateEnabled;
+            $config->environment_thresholds = $thresholds;
+            $config->save();
+
+            Log::info("[DriftWatch] Approval gate for {$env} toggled to " . ($gateEnabled ? 'ON' : 'OFF') . '.');
+        }
+
+        return back()->with('success', "Approval gate for {$env} " . ($request->has('gate_enabled') ? 'enabled' : 'disabled') . '.');
     }
 
     // --- Private helpers ---

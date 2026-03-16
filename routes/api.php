@@ -104,24 +104,45 @@ Route::post('/analyze', function (Request $request) {
     ]);
 });
 
-// GET /api/jobs/{id}/status — Poll job status (used by GitHub Action polling loop)
+// GET /api/jobs/{id}/status — Poll job status (used by GitHub Action + live UI polling)
 Route::get('/jobs/{id}/status', function (int $id) {
-    $pullRequest = PullRequest::with(['riskAssessment', 'deploymentDecision', 'blastRadius'])->find($id);
+    $pullRequest = PullRequest::with(['riskAssessment', 'deploymentDecision', 'blastRadius', 'deploymentOutcome'])->find($id);
 
     if (! $pullRequest) {
         return response()->json(['status' => 'not_found', 'error' => 'Job not found'], 404);
     }
 
-    $isComplete = $pullRequest->status !== 'analyzing';
+    $isPaused = (bool) $pullRequest->pipeline_paused;
+    $isComplete = $pullRequest->status !== 'analyzing' || $isPaused;
+
+    // Determine pipeline status label
+    $statusLabel = match (true) {
+        $isPaused => 'paused',
+        $pullRequest->status === 'analyzing' => 'processing',
+        default => 'completed',
+    };
 
     return response()->json([
-        'status' => $isComplete ? 'completed' : 'processing',
+        'status' => $statusLabel,
         'pr_id' => $pullRequest->id,
+        'pr_status' => $pullRequest->status,
+        'pipeline_paused' => $isPaused,
+        'paused_at_stage' => $pullRequest->paused_at_stage,
+        'paused_reason' => $pullRequest->paused_reason,
+        'pipeline_stage' => $pullRequest->pipeline_stage,
+        'stage_started_at' => $pullRequest->stage_started_at?->toIso8601String(),
+        'agents' => [
+            'archaeologist' => (bool) $pullRequest->blastRadius,
+            'historian' => (bool) $pullRequest->riskAssessment,
+            'negotiator' => (bool) $pullRequest->deploymentDecision,
+            'chronicler' => (bool) $pullRequest->deploymentOutcome,
+        ],
         'risk_score' => $pullRequest->riskAssessment?->risk_score ?? 0,
         'risk_level' => $pullRequest->riskAssessment?->risk_level ?? 'unknown',
         'decision' => $pullRequest->deploymentDecision?->decision ?? 'pending_review',
         'affected_services' => $pullRequest->blastRadius?->affected_services ?? [],
         'summary' => $pullRequest->blastRadius?->summary ?? '',
+        'redirect_url' => $isComplete ? route('driftwatch.show', $pullRequest) : null,
     ]);
 });
 

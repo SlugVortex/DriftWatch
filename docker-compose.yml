@@ -1,0 +1,107 @@
+# docker-compose.yml
+# DriftWatch — Full stack with Laravel, MySQL, and Python agents
+#
+# Usage:
+#   docker-compose up -d            # Start all services
+#   docker-compose logs -f app      # Follow Laravel logs
+#   docker-compose exec app php artisan migrate --seed   # Run migrations
+#   docker-compose down             # Stop all services
+
+services:
+  # ---------------------------------------------------------------
+  # Laravel Web Application
+  # ---------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: driftwatch-app
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=DriftWatch
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_URL=http://localhost:8000
+      - DB_CONNECTION=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=driftwatch
+      - DB_USERNAME=driftwatch
+      - DB_PASSWORD=driftwatch_secret
+      - SESSION_DRIVER=database
+      - CACHE_STORE=file
+      - LOG_CHANNEL=stack
+    env_file:
+      - .env
+    volumes:
+      - app-storage:/var/www/html/storage
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------
+  # MySQL Database
+  # ---------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: driftwatch-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secret
+      MYSQL_DATABASE: driftwatch
+      MYSQL_USER: driftwatch
+      MYSQL_PASSWORD: driftwatch_secret
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------
+  # Python AI Agents (Azure Functions)
+  # ---------------------------------------------------------------
+  agents:
+    build:
+      context: ./agents
+      dockerfile: Dockerfile
+    container_name: driftwatch-agents
+    ports:
+      - "7071:7071"
+    environment:
+      - AzureWebJobsStorage=UseDevelopmentStorage=true
+      - FUNCTIONS_WORKER_RUNTIME=python
+      - LARAVEL_APP_URL=http://app:8000
+    env_file:
+      - .env
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------
+  # MCP Server (Model Context Protocol — tool integration)
+  # ---------------------------------------------------------------
+  mcp:
+    build:
+      context: ./agents
+      dockerfile: Dockerfile.mcp
+    container_name: driftwatch-mcp
+    ports:
+      - "8100:8100"
+    environment:
+      - MCP_PORT=8100
+      - LARAVEL_APP_URL=http://app:8000
+    env_file:
+      - .env
+    depends_on:
+      - app
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+  app-storage:
