@@ -21,6 +21,7 @@ class BlastRadiusResult extends Model
         'file_descriptions',
         'total_affected_files',
         'total_affected_services',
+        'total_blast_radius_score',
         'summary',
     ];
 
@@ -32,6 +33,7 @@ class BlastRadiusResult extends Model
         'file_descriptions' => 'array',
         'total_affected_files' => 'integer',
         'total_affected_services' => 'integer',
+        'total_blast_radius_score' => 'integer',
     ];
 
     public function pullRequest(): BelongsTo

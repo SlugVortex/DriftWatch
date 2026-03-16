@@ -11,6 +11,7 @@ namespace App\Http\Controllers;
 use App\Models\AgentRun;
 use App\Models\BlastRadiusResult;
 use App\Models\DeploymentDecision;
+use App\Models\DeploymentOutcome;
 use App\Models\Incident;
 use App\Models\PipelineConfig;
 use App\Models\PullRequest;
@@ -149,9 +150,24 @@ class GitHubWebhookController extends Controller
         // Run Chronicler if active
         $activeAgents = $config->getActiveAgents();
         if (in_array('chronicler', $activeAgents)) {
+            $riskResult = $riskResult ?? [];
+            $blastResult = $blastResult ?? [];
             $chroniclerResult = $this->runWithRetry('chronicler', $config, function () use ($pullRequest, $riskResult, $blastResult) {
                 return $this->runChronicler($pullRequest, $riskResult, $blastResult);
             });
+
+            DeploymentOutcome::updateOrCreate(
+                ['pull_request_id' => $pullRequest->id],
+                [
+                    'predicted_risk_score' => $chroniclerResult['predicted_risk_score'] ?? $riskResult['risk_score'] ?? 0,
+                    'incident_occurred' => $chroniclerResult['incident_occurred'] ?? false,
+                    'actual_severity' => $chroniclerResult['actual_severity'] ?? null,
+                    'actual_affected_services' => $chroniclerResult['actual_affected_services'] ?? [],
+                    'prediction_accurate' => $chroniclerResult['prediction_accurate'] ?? true,
+                    'post_mortem_notes' => $chroniclerResult['post_mortem_notes'] ?? '',
+                ]
+            );
+
             $this->recordAgentRun($pullRequest, 'chronicler', $chroniclerResult, $chroniclerResult['duration_ms'] ?? 0, $briefingPack);
         }
 
@@ -216,6 +232,8 @@ class GitHubWebhookController extends Controller
         // === Agent 1: Archaeologist (Blast Radius) ===
         $blastResult = [];
         if (in_array('archaeologist', $activeAgents)) {
+            $pullRequest->update(['pipeline_stage' => 'archaeologist', 'stage_started_at' => now()]);
+
             $blastResult = $this->runWithRetry('archaeologist', $config, function () use ($pullRequest) {
                 return $this->runArchaeologist($pullRequest);
             });
@@ -227,8 +245,10 @@ class GitHubWebhookController extends Controller
                     'affected_services' => $blastResult['affected_services'] ?? [],
                     'affected_endpoints' => $blastResult['affected_endpoints'] ?? [],
                     'dependency_graph' => $blastResult['dependency_graph'] ?? [],
+                    'file_descriptions' => $blastResult['file_descriptions'] ?? $blastResult['file_summaries'] ?? [],
                     'total_affected_files' => $blastResult['total_affected_files'] ?? count($blastResult['affected_files'] ?? []),
                     'total_affected_services' => $blastResult['total_affected_services'] ?? count($blastResult['affected_services'] ?? []),
+                    'total_blast_radius_score' => $blastResult['total_blast_radius_score'] ?? 0,
                     'summary' => $blastResult['summary'] ?? 'Analysis complete.',
                 ]
             );
@@ -250,6 +270,8 @@ class GitHubWebhookController extends Controller
         // === Agent 2: Historian (Risk Assessment) ===
         $riskResult = [];
         if (in_array('historian', $activeAgents)) {
+            $pullRequest->update(['pipeline_stage' => 'historian', 'stage_started_at' => now()]);
+
             $riskResult = $this->runWithRetry('historian', $config, function () use ($pullRequest, $blastResult) {
                 return $this->runHistorian($pullRequest, $blastResult);
             });
@@ -279,10 +301,10 @@ class GitHubWebhookController extends Controller
 
         // === Approval Gate Check ===
         $riskScore = $riskResult['risk_score'] ?? 50;
-        $shouldPause = $this->shouldPausePipeline($config, $riskScore, $pullRequest->target_environment, $ruleResult['force_gate']);
+        $shouldPause = $this->shouldPausePipeline($config, $riskScore, $pullRequest->target_environment ?? 'production', $ruleResult['force_gate']);
 
         if ($shouldPause) {
-            $reason = $this->getPauseReason($config, $riskScore, $pullRequest->target_environment, $ruleResult);
+            $reason = $this->getPauseReason($config, $riskScore, $pullRequest->target_environment ?? 'production', $ruleResult);
             $pullRequest->update([
                 'pipeline_paused' => true,
                 'paused_at_stage' => 'negotiator',
@@ -301,14 +323,30 @@ class GitHubWebhookController extends Controller
 
         // === Agent 3: Negotiator (Deployment Decision) ===
         if (in_array('negotiator', $activeAgents)) {
+            $pullRequest->update(['pipeline_stage' => 'negotiator', 'stage_started_at' => now()]);
+
             $this->runNegotiatorStage($pullRequest, $config, $riskResult, $blastResult, $briefingPack, $stackedPrData);
         }
 
         // === Agent 4: Chronicler (Feedback Loop) ===
         if (in_array('chronicler', $activeAgents)) {
+            $pullRequest->update(['pipeline_stage' => 'chronicler', 'stage_started_at' => now()]);
+
             $chroniclerResult = $this->runWithRetry('chronicler', $config, function () use ($pullRequest, $riskResult, $blastResult) {
                 return $this->runChronicler($pullRequest, $riskResult, $blastResult);
             });
+
+            DeploymentOutcome::updateOrCreate(
+                ['pull_request_id' => $pullRequest->id],
+                [
+                    'predicted_risk_score' => $chroniclerResult['predicted_risk_score'] ?? $riskResult['risk_score'] ?? 0,
+                    'incident_occurred' => $chroniclerResult['incident_occurred'] ?? false,
+                    'actual_severity' => $chroniclerResult['actual_severity'] ?? null,
+                    'actual_affected_services' => $chroniclerResult['actual_affected_services'] ?? [],
+                    'prediction_accurate' => $chroniclerResult['prediction_accurate'] ?? true,
+                    'post_mortem_notes' => $chroniclerResult['post_mortem_notes'] ?? '',
+                ]
+            );
 
             $briefingPack['chronicler'] = [
                 'status' => $chroniclerResult['status'] ?? 'scored',
@@ -320,8 +358,8 @@ class GitHubWebhookController extends Controller
             $this->recordAgentRun($pullRequest, 'chronicler', $chroniclerResult, $chroniclerResult['duration_ms'] ?? 0, $briefingPack);
         }
 
-        // Update PR status
-        $pullRequest->update(['status' => 'scored']);
+        // Update PR status — pipeline complete
+        $pullRequest->update(['status' => 'scored', 'pipeline_stage' => 'complete', 'stage_started_at' => now()]);
 
         $totalDuration = collect(AgentRun::where('pull_request_id', $pullRequest->id)->pluck('duration_ms'))->sum();
 
@@ -350,7 +388,7 @@ class GitHubWebhookController extends Controller
 
         // Apply environment-aware thresholds
         $riskScore = $riskResult['risk_score'] ?? 50;
-        $envThreshold = $config->getThresholdForEnvironment($pullRequest->target_environment);
+        $envThreshold = $config->getThresholdForEnvironment($pullRequest->target_environment ?? 'production');
         if ($riskScore >= $envThreshold && ($decisionResult['decision'] ?? '') === 'approved') {
             $decisionResult['decision'] = 'pending_review';
             $decisionResult['notification_message'] = "Risk score {$riskScore} exceeds {$pullRequest->target_environment} threshold of {$envThreshold}. Manual review required.";
@@ -813,6 +851,228 @@ class GitHubWebhookController extends Controller
     }
 
     /**
+     * Call Azure OpenAI directly to analyze code when Azure Function agents are unavailable.
+     * This gives us real AI-powered analysis instead of dumb pattern matching.
+     */
+    private function analyzeWithAzureOpenAI(string $agentType, array $context, PullRequest $pullRequest): ?array
+    {
+        $endpoint = config('services.azure_openai.endpoint');
+        $apiKey = config('services.azure_openai.api_key');
+        $deployment = config('services.azure_openai.deployment');
+
+        if (! $endpoint || ! $apiKey || ! $deployment) {
+            Log::debug("[DirectAI:{$agentType}] No Azure OpenAI credentials — skipping direct analysis.");
+
+            return null;
+        }
+
+        try {
+            if ($agentType === 'archaeologist') {
+                return $this->directAIArchaeologist($context, $pullRequest, $endpoint, $apiKey, $deployment);
+            } elseif ($agentType === 'historian') {
+                return $this->directAIHistorian($context, $pullRequest, $endpoint, $apiKey, $deployment);
+            }
+        } catch (\Exception $e) {
+            Log::warning("[DirectAI:{$agentType}] Failed: {$e->getMessage()}");
+        }
+
+        return null;
+    }
+
+    private function directAIArchaeologist(array $codeContext, PullRequest $pullRequest, string $endpoint, string $apiKey, string $deployment): ?array
+    {
+        $changedFiles = $codeContext['changed_files'] ?? [];
+        $diffText = $codeContext['diff_text'] ?? '';
+
+        if (empty($changedFiles) && empty($diffText)) {
+            return null;
+        }
+
+        // Build a compact file summary for the prompt
+        $fileSummary = '';
+        foreach ($changedFiles as $file) {
+            $status = strtoupper($file['status'] ?? 'modified');
+            $fileSummary .= "\n- [{$status}] {$file['filename']} (+{$file['additions']}/-{$file['deletions']})";
+        }
+
+        // Truncate diff for token limits (~15k chars ≈ ~4k tokens)
+        $truncatedDiff = substr($diffText, 0, 15000);
+
+        $systemPrompt = <<<'PROMPT'
+You are the Archaeologist Agent — a blast radius analyzer for code changes. You must be STACK-AWARE.
+
+CRITICAL RULES:
+1. If a core framework file is DELETED (status: removed), this is almost always CRITICAL risk (score 50+)
+2. Core files include: routes/web.php, routes/api.php, config/app.php, bootstrap/app.php, composer.json, package.json, .env, manage.py, urls.py, settings.py, requirements.txt
+3. Look at the DIFF — if lines are only removed with nothing added, functionality is being destroyed
+4. Understand framework conventions: in Laravel, routes/web.php defines ALL web routes. Deleting it = zero routes = app is broken
+5. Check for semantic issues: removed error handling, exposed secrets, broken imports, missing dependencies
+6. Check what other files DEPEND on the changed files — these are downstream blast radius
+
+Scoring rubric:
+- 0-10: Cosmetic (CSS, docs, tests only)
+- 11-25: Low risk (views, minor logic, non-critical files)
+- 26-50: Medium risk (controllers, models, services, config)
+- 51-75: High risk (auth, middleware, migrations, multiple services affected)
+- 76-100: Critical (core files deleted, breaking API changes, security vulnerabilities)
+
+You MUST respond with valid JSON only. No markdown, no explanation outside JSON.
+PROMPT;
+
+        $userPrompt = "Analyze this PR for {$pullRequest->repo_full_name} PR #{$pullRequest->pr_number}.\n\nChanged files:{$fileSummary}\n\nDiff (first 15KB):\n```\n{$truncatedDiff}\n```\n\nRespond with this exact JSON structure:\n{\"status\":\"scored\",\"affected_files\":[\"file1.php\"],\"affected_services\":[\"service-name\"],\"affected_endpoints\":[\"/path\"],\"dependency_graph\":{\"file.php\":[\"dep1.php\"]},\"change_classifications\":[{\"file\":\"file.php\",\"change_type\":\"type\",\"risk_score\":0,\"reasoning\":\"why\"}],\"total_blast_radius_score\":0,\"risk_indicators\":[\"indicator\"],\"summary\":\"what this PR does and why it's risky or safe\",\"code_analysis\":\"detailed analysis\"}";
+
+        $url = rtrim($endpoint, '/') . "/openai/deployments/{$deployment}/chat/completions?api-version=2024-10-21";
+
+        $response = Http::timeout(30)->withHeaders([
+            'api-key' => $apiKey,
+            'Content-Type' => 'application/json',
+        ])->post($url, [
+            'messages' => [
+                ['role' => 'system', 'content' => $systemPrompt],
+                ['role' => 'user', 'content' => $userPrompt],
+            ],
+            'temperature' => 0.1,
+            'max_tokens' => 2000,
+            'response_format' => ['type' => 'json_object'],
+        ]);
+
+        if (! $response->successful()) {
+            Log::warning('[DirectAI:Archaeologist] Azure OpenAI call failed.', ['status' => $response->status(), 'body' => substr($response->body(), 0, 500)]);
+
+            return null;
+        }
+
+        $content = $response->json('choices.0.message.content');
+        $data = json_decode($content, true);
+
+        if (! $data || ! isset($data['total_blast_radius_score'])) {
+            Log::warning('[DirectAI:Archaeologist] Invalid JSON response.', ['content' => substr($content, 0, 500)]);
+
+            return null;
+        }
+
+        Log::info('[DirectAI:Archaeologist] AI-powered analysis complete.', [
+            'score' => $data['total_blast_radius_score'],
+            'files' => count($data['affected_files'] ?? []),
+        ]);
+
+        return [
+            'status' => $data['status'] ?? 'scored',
+            'affected_files' => $data['affected_files'] ?? [],
+            'affected_services' => $data['affected_services'] ?? [],
+            'affected_endpoints' => $data['affected_endpoints'] ?? [],
+            'dependency_graph' => $data['dependency_graph'] ?? [],
+            'change_classifications' => $data['change_classifications'] ?? [],
+            'total_blast_radius_score' => (int) ($data['total_blast_radius_score'] ?? 0),
+            'total_affected_files' => count($data['affected_files'] ?? []),
+            'total_affected_services' => count($data['affected_services'] ?? []),
+            'risk_indicators' => $data['risk_indicators'] ?? [],
+            'ci_status' => $data['ci_status'] ?? 'unknown',
+            'failing_checks' => $data['failing_checks'] ?? [],
+            'ci_risk_addition' => $data['ci_risk_addition'] ?? 0,
+            'bot_findings' => $data['bot_findings'] ?? [],
+            'bot_risk_addition' => $data['bot_risk_addition'] ?? 0,
+            'file_summaries' => $data['file_summaries'] ?? [],
+            'code_analysis' => $data['code_analysis'] ?? '',
+            'summary' => $data['summary'] ?? '',
+        ];
+    }
+
+    private function directAIHistorian(array $blastResult, PullRequest $pullRequest, string $endpoint, string $apiKey, string $deployment): ?array
+    {
+        // Fetch real incidents from DB
+        $incidents = [];
+        try {
+            $dbIncidents = \App\Models\Incident::where('occurred_at', '>=', now()->subDays(90))
+                ->orderByDesc('severity')->limit(20)->get();
+            foreach ($dbIncidents as $inc) {
+                $incidents[] = [
+                    'id' => $inc->id,
+                    'title' => $inc->title,
+                    'severity' => $inc->severity,
+                    'affected_services' => $inc->affected_services,
+                    'root_cause_file' => $inc->root_cause_file,
+                    'days_ago' => $inc->occurred_at ? (int) now()->diffInDays($inc->occurred_at) : 0,
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::debug('[DirectAI:Historian] DB query failed: ' . $e->getMessage());
+        }
+
+        $blastJson = json_encode([
+            'score' => $blastResult['total_blast_radius_score'] ?? 0,
+            'files' => $blastResult['affected_files'] ?? [],
+            'services' => $blastResult['affected_services'] ?? [],
+            'classifications' => array_slice($blastResult['change_classifications'] ?? [], 0, 10),
+            'risk_indicators' => $blastResult['risk_indicators'] ?? [],
+            'summary' => $blastResult['summary'] ?? '',
+        ], JSON_PRETTY_PRINT);
+
+        $incidentsJson = json_encode($incidents, JSON_PRETTY_PRINT);
+
+        $systemPrompt = <<<'PROMPT'
+You are the Historian Agent — a risk calculator that correlates code changes with historical incident data.
+
+RULES:
+1. The blast_radius_score from the Archaeologist is your baseline
+2. Add points for matching historical incidents (file matches +25, service matches +10, change type matches +15)
+3. Cap history score at 40 additional points
+4. Final risk_score = blast_radius_score + history_score + ci_risk + bot_risk (max 100)
+5. If a critical file was deleted and it would break the application, score should be 75+
+6. Be specific about WHY something is risky — "this file controls all routes" not "routing change detected"
+
+Risk levels: low (0-24), medium (25-49), high (50-74), critical (75-100)
+
+Respond with valid JSON only.
+PROMPT;
+
+        $userPrompt = "Blast radius analysis:\n{$blastJson}\n\nHistorical incidents (last 90 days):\n{$incidentsJson}\n\nRespond with:\n{\"status\":\"scored\",\"risk_score\":0,\"risk_level\":\"low\",\"historical_incidents\":[{\"id\":\"INC-001\",\"title\":\"x\",\"severity\":1,\"days_ago\":0,\"relevance\":\"why\",\"match_type\":\"file|service\",\"match_score\":0}],\"match_summary\":{\"file_matches\":0,\"service_matches\":0,\"history_score\":0,\"blast_radius_score\":0},\"contributing_factors\":[\"factor1\"],\"recommendation\":\"what to do\"}";
+
+        $url = rtrim($endpoint, '/') . "/openai/deployments/{$deployment}/chat/completions?api-version=2024-10-21";
+
+        $response = Http::timeout(30)->withHeaders([
+            'api-key' => $apiKey,
+            'Content-Type' => 'application/json',
+        ])->post($url, [
+            'messages' => [
+                ['role' => 'system', 'content' => $systemPrompt],
+                ['role' => 'user', 'content' => $userPrompt],
+            ],
+            'temperature' => 0.1,
+            'max_tokens' => 1500,
+            'response_format' => ['type' => 'json_object'],
+        ]);
+
+        if (! $response->successful()) {
+            Log::warning('[DirectAI:Historian] Azure OpenAI call failed.', ['status' => $response->status()]);
+
+            return null;
+        }
+
+        $content = $response->json('choices.0.message.content');
+        $data = json_decode($content, true);
+
+        if (! $data || ! isset($data['risk_score'])) {
+            return null;
+        }
+
+        Log::info('[DirectAI:Historian] AI-powered risk scoring complete.', [
+            'risk_score' => $data['risk_score'],
+            'risk_level' => $data['risk_level'] ?? 'unknown',
+        ]);
+
+        return [
+            'status' => $data['status'] ?? 'scored',
+            'risk_score' => (int) ($data['risk_score'] ?? 0),
+            'risk_level' => $data['risk_level'] ?? 'medium',
+            'historical_incidents' => $data['historical_incidents'] ?? [],
+            'match_summary' => $data['match_summary'] ?? [],
+            'contributing_factors' => $data['contributing_factors'] ?? [],
+            'recommendation' => $data['recommendation'] ?? '',
+        ];
+    }
+
+    /**
      * Fetch PR diff and changed file contents from the GitHub API.
      * This gives agents actual code to analyze, not just file names.
      *
@@ -1020,6 +1280,12 @@ class GitHubWebhookController extends Controller
             Log::warning('[Agent:Archaeologist] Agent call failed, using mock.', ['error' => $e->getMessage()]);
         }
 
+        // Try direct Azure OpenAI analysis before falling back to pattern matching
+        $aiResult = $this->analyzeWithAzureOpenAI('archaeologist', $codeContext, $pullRequest);
+        if ($aiResult) {
+            return $aiResult;
+        }
+
         return $this->getMockArchaeologistResult($codeContext);
     }
 
@@ -1058,7 +1324,13 @@ class GitHubWebhookController extends Controller
             Log::warning('[Agent:Historian] Agent call failed, using mock.', ['error' => $e->getMessage()]);
         }
 
-        return $this->getMockHistorianResult();
+        // Try direct Azure OpenAI analysis before falling back to pattern matching
+        $aiResult = $this->analyzeWithAzureOpenAI('historian', $blastResult, $pullRequest);
+        if ($aiResult) {
+            return $aiResult;
+        }
+
+        return $this->getMockHistorianResult($blastResult);
     }
 
     private function runNegotiator(PullRequest $pullRequest, array $riskResult): array
@@ -1710,13 +1982,55 @@ class GitHubWebhookController extends Controller
                 $fullContent = $file['full_file_content'] ?? null;
                 $additions = $file['additions'] ?? 0;
                 $deletions = $file['deletions'] ?? 0;
+                $fileStatus = $file['status'] ?? 'modified'; // GitHub sends: added, removed, modified, renamed
 
-                // Classify the change based on file path and content
+                // === STEP 1: Detect file deletion — this is critical ===
+                $isDeleted = $fileStatus === 'removed';
+                $isPureDelete = $additions === 0 && $deletions > 0;
+                $isRenamed = $fileStatus === 'renamed';
+                $isAdded = $fileStatus === 'added';
+
+                // === STEP 2: Check if this is a core framework file ===
+                // Deleting or heavily modifying these files WILL break the application
+                $isCoreFile = (bool) preg_match('/^(routes\/(web|api|console|channels)\.php|bootstrap\/(app|providers)\.php|config\/(app|database|services|auth)\.php|composer\.json|package\.json|artisan|\.env|public\/index\.php|app\/Http\/Kernel\.php|app\/Console\/Kernel\.php|app\/Providers\/(AppServiceProvider|RouteServiceProvider)\.php|manage\.py|settings\.py|urls\.py|wsgi\.py|asgi\.py|requirements\.txt|Gemfile|go\.mod|Cargo\.toml)$/i', $filename);
+
+                // === STEP 3: Classify the change ===
                 $changeType = 'general_change';
                 $riskScore = 5;
                 $reasoning = "Modified file with {$additions} additions and {$deletions} deletions.";
 
-                if (preg_match('/migration/i', $filename)) {
+                // --- Core file deletion = CRITICAL (application will break) ---
+                if ($isCoreFile && $isDeleted) {
+                    $changeType = 'critical_file_deleted';
+                    $riskScore = 50;
+                    $reasoning = "CRITICAL: Core framework file DELETED. This WILL break the application. {$filename} is essential for the application to function.";
+                    $riskIndicators[] = "CRITICAL: Core file deleted: {$filename} — application will not start";
+                }
+                // --- Any file deletion is more serious than a modification ---
+                elseif ($isDeleted) {
+                    $changeType = 'file_deleted';
+                    $baseScore = $this->classifyFileRisk($filename);
+                    $riskScore = min(50, (int) ($baseScore * 1.8)); // Deletions are ~2x riskier
+                    $reasoning = "File DELETED ({$deletions} lines removed). Any code depending on this file will break. Downstream imports, routes, or references will throw errors.";
+                    $riskIndicators[] = "File deleted: {$filename} ({$deletions} lines removed)";
+                }
+                // --- Pure deletion within a file (gutted the file) ---
+                elseif ($isPureDelete && $deletions > 20) {
+                    $changeType = 'code_gutted';
+                    $baseScore = $this->classifyFileRisk($filename);
+                    $riskScore = min(45, (int) ($baseScore * 1.5));
+                    $reasoning = "File gutted — {$deletions} lines removed with 0 additions. This may remove critical functionality without replacement.";
+                    $riskIndicators[] = "File gutted: {$filename} ({$deletions} lines removed, 0 added)";
+                }
+                // --- Core file modified (not deleted, but still high risk) ---
+                elseif ($isCoreFile) {
+                    $changeType = 'core_file_modified';
+                    $riskScore = 30;
+                    $reasoning = "Core framework file modified. Changes to {$filename} affect the entire application. Verify all functionality still works.";
+                    $riskIndicators[] = "Core file modified: {$filename}";
+                }
+                // --- Standard classification by file type ---
+                elseif (preg_match('/migration/i', $filename)) {
                     $changeType = 'sql_migration';
                     $riskScore = 25;
                     $reasoning = 'Database migration file — schema changes affect all services reading this data.';
@@ -1733,9 +2047,8 @@ class GitHubWebhookController extends Controller
                     $riskIndicators[] = "Config change: {$filename}";
                 } elseif (preg_match('/routes\//i', $filename)) {
                     $changeType = 'routing_change';
-                    $riskScore = 15;
+                    $riskScore = 20;
                     $reasoning = 'Route definition change — may add, modify, or remove API endpoints.';
-                    // Try to extract endpoint info from patch
                     if (preg_match_all("/Route::(get|post|put|delete|patch)\(['\"]([^'\"]+)/", $patch, $matches)) {
                         foreach ($matches[2] as $ep) {
                             $endpoints[] = $ep;
@@ -1763,13 +2076,42 @@ class GitHubWebhookController extends Controller
                     $reasoning = 'Test file change — does not affect production behavior.';
                 }
 
-                // Check patch for function signature changes
-                if ($patch && preg_match('/^[-+]\s*(public|protected|private)\s+function\s+\w+\(/m', $patch)) {
-                    if ($changeType === 'general_change') {
-                        $changeType = 'function_signature_change';
-                        $riskScore = 20;
+                // === STEP 4: Analyze the actual diff for dangerous patterns ===
+                if ($patch) {
+                    // Check for function signature changes
+                    if (preg_match('/^[-+]\s*(public|protected|private)\s+function\s+\w+\(/m', $patch)) {
+                        if ($changeType === 'general_change') {
+                            $changeType = 'function_signature_change';
+                            $riskScore = max($riskScore, 20);
+                        }
+                        $reasoning .= ' Function signature modified — callers may need updates.';
                     }
-                    $reasoning .= ' Function signature modified — callers may need updates.';
+
+                    // Check for env/secret patterns being removed or exposed
+                    if (preg_match('/^[-+].*(password|secret|key|token|credential)/im', $patch)) {
+                        $riskScore = max($riskScore, 25);
+                        $reasoning .= ' Sensitive data pattern detected (password/secret/key).';
+                        $riskIndicators[] = "Sensitive data pattern in: {$filename}";
+                    }
+
+                    // Check for large deletions within a modification
+                    if (! $isDeleted && $deletions > 50 && $deletions > $additions * 3) {
+                        $riskScore = max($riskScore, (int) ($riskScore * 1.3));
+                        $reasoning .= " Heavy deletion ({$deletions} lines removed vs {$additions} added) — may remove important logic.";
+                    }
+
+                    // Check for removing error handling, try/catch, validation
+                    if (preg_match('/^-\s*(try|catch|throw|validate|abort|assert)/m', $patch)) {
+                        $riskScore = max($riskScore, 15);
+                        $reasoning .= ' Error handling or validation code removed.';
+                    }
+                }
+
+                // === STEP 5: Scale score by size for large changes ===
+                $totalLines = $additions + $deletions;
+                if ($totalLines > 500 && $riskScore >= 10) {
+                    $riskScore = min(50, (int) ($riskScore * 1.2));
+                    $reasoning .= " Large change ({$totalLines} total lines affected).";
                 }
 
                 // Build file summary from actual code
@@ -1942,40 +2284,202 @@ class GitHubWebhookController extends Controller
         ];
     }
 
-    private function getMockHistorianResult(): array
+    private function getMockHistorianResult(array $blastResult = []): array
     {
+        // --- Dynamic scoring from actual blast radius data ---
+        $blastScore = $blastResult['total_blast_radius_score'] ?? 0;
+        $classifications = $blastResult['change_classifications'] ?? [];
+        $affectedFiles = $blastResult['affected_files'] ?? [];
+        $affectedServices = $blastResult['affected_services'] ?? [];
+        $riskIndicators = $blastResult['risk_indicators'] ?? [];
+        $ciRisk = $blastResult['ci_risk_addition'] ?? 0;
+        $botRisk = $blastResult['bot_risk_addition'] ?? 0;
+
+        // --- Look up real incidents from DB that match affected services/files ---
+        $incidents = [];
+        $historyScore = 0;
+        $fileMatches = 0;
+        $serviceMatches = 0;
+        $changeTypeMatches = 0;
+
+        try {
+            $query = \App\Models\Incident::where('occurred_at', '>=', now()->subDays(90));
+
+            // Match by affected services (JSON column) and file paths
+            if (! empty($affectedServices) || ! empty($affectedFiles)) {
+                $query->where(function ($q) use ($affectedServices, $affectedFiles) {
+                    foreach ($affectedServices as $svc) {
+                        $q->orWhere('affected_services', 'LIKE', "%{$svc}%");
+                    }
+                    foreach ($affectedFiles as $file) {
+                        $basename = basename($file);
+                        $q->orWhere('description', 'LIKE', "%{$basename}%")
+                          ->orWhere('affected_files', 'LIKE', "%{$basename}%")
+                          ->orWhere('root_cause_file', 'LIKE', "%{$basename}%");
+                    }
+                });
+            }
+
+            $dbIncidents = $query->orderByDesc('severity')->limit(10)->get();
+
+            foreach ($dbIncidents as $inc) {
+                $matchType = 'general';
+                $matchScore = 5;
+
+                $incServices = is_array($inc->affected_services) ? implode(', ', $inc->affected_services) : ($inc->affected_services ?? '');
+
+                // Check file match
+                foreach ($affectedFiles as $file) {
+                    $bn = basename($file);
+                    if (stripos($inc->description ?? '', $bn) !== false || stripos($inc->root_cause_file ?? '', $bn) !== false) {
+                        $matchType = 'file';
+                        $matchScore = 25;
+                        $fileMatches++;
+                        break;
+                    }
+                }
+
+                // Check service match
+                if ($matchType !== 'file') {
+                    foreach ($affectedServices as $svc) {
+                        if (stripos($incServices, $svc) !== false) {
+                            $matchType = 'service';
+                            $matchScore = 10;
+                            $serviceMatches++;
+                            break;
+                        }
+                    }
+                }
+
+                $daysAgo = $inc->occurred_at ? (int) now()->diffInDays($inc->occurred_at) : 0;
+
+                $incidents[] = [
+                    'id' => 'INC-' . str_pad($inc->id, 3, '0', STR_PAD_LEFT),
+                    'title' => $inc->title,
+                    'severity' => $inc->severity,
+                    'days_ago' => $daysAgo,
+                    'relevance' => $matchType === 'file'
+                        ? "Direct file match — {$incServices}"
+                        : "Same service area — {$incServices}",
+                    'match_type' => $matchType,
+                    'match_score' => $matchScore,
+                ];
+
+                $historyScore += $matchScore;
+            }
+        } catch (\Exception $e) {
+            Log::debug('[MockHistorian] DB incident lookup failed: ' . $e->getMessage());
+        }
+
+        // Cap history score
+        $historyScore = min($historyScore, 40);
+
+        // --- Compute risk score: blast_radius + history + CI/bot ---
+        $riskScore = min(100, $blastScore + $historyScore + $ciRisk + $botRisk);
+
+        // --- Determine risk level ---
+        $riskLevel = match (true) {
+            $riskScore >= 75 => 'critical',
+            $riskScore >= 50 => 'high',
+            $riskScore >= 25 => 'medium',
+            default => 'low',
+        };
+
+        // --- Build contributing factors from actual data ---
+        $factors = [];
+
+        // Describe what the PR actually does based on classifications
+        $criticalChanges = collect($classifications)->where('risk_score', '>=', 20);
+        $moderateChanges = collect($classifications)->whereBetween('risk_score', [10, 19]);
+
+        foreach ($criticalChanges as $c) {
+            $typeLabel = str_replace('_', ' ', $c['change_type']);
+            $factors[] = "Critical change: {$c['file']} — {$typeLabel} (risk +{$c['risk_score']})";
+        }
+
+        if ($moderateChanges->count() > 0) {
+            $factors[] = $moderateChanges->count() . ' moderate-risk file(s) changed';
+        }
+
+        if (count($incidents) > 0) {
+            $p1Count = collect($incidents)->where('severity', 1)->count();
+            if ($p1Count > 0) {
+                $factors[] = "{$p1Count} P1 incident(s) found in the same area within 90 days";
+            } else {
+                $factors[] = count($incidents) . ' related incident(s) found in 90-day history';
+            }
+        }
+
+        if ($ciRisk > 0) {
+            $factors[] = "CI checks failing — adds +{$ciRisk} risk points";
+        }
+
+        if ($botRisk > 0) {
+            $factors[] = "Security bot findings detected — adds +{$botRisk} risk points";
+        }
+
+        if (count($affectedServices) > 1) {
+            $factors[] = count($affectedServices) . ' services in blast radius: ' . implode(', ', array_slice($affectedServices, 0, 4));
+        }
+
+        if (count($affectedFiles) > 10) {
+            $factors[] = 'Large PR with ' . count($affectedFiles) . ' files changed — wide blast radius';
+        }
+
+        // If nothing notable, say so
+        if (empty($factors)) {
+            $factors[] = 'No critical patterns detected in this change';
+            $factors[] = 'No matching historical incidents found';
+        }
+
+        // --- Build recommendation ---
+        if ($riskScore >= 75) {
+            $recommendation = 'BLOCK: This PR carries critical risk. ' . implode('. ', array_slice($factors, 0, 2)) . '. Deploy only after thorough review and with a rollback plan ready.';
+        } elseif ($riskScore >= 50) {
+            $recommendation = 'CAUTION: Elevated risk detected. ' . implode('. ', array_slice($factors, 0, 2)) . '. Consider deploying during a low-traffic window with enhanced monitoring.';
+        } elseif ($riskScore >= 25) {
+            $recommendation = 'MODERATE: Some risk factors present. Standard review process recommended. ' . ($factors[0] ?? '');
+        } else {
+            $recommendation = 'LOW RISK: This PR looks safe to deploy. No significant risk patterns found. Standard deployment process is fine.';
+        }
+
         return [
             'status' => 'scored',
-            'risk_score' => 65,
-            'risk_level' => 'high',
-            'historical_incidents' => [
-                [
-                    'id' => 'INC-001',
-                    'title' => 'Payment processing outage',
-                    'severity' => 1,
-                    'days_ago' => 12,
-                    'relevance' => 'Same service area — payment-service',
-                    'match_type' => 'service',
-                    'match_score' => 10,
-                ],
-            ],
+            'risk_score' => $riskScore,
+            'risk_level' => $riskLevel,
+            'historical_incidents' => $incidents,
             'match_summary' => [
-                'file_matches' => 0,
-                'service_matches' => 1,
-                'change_type_matches' => 0,
-                'history_score' => 10,
-                'blast_radius_score' => 60,
-                'ci_risk_addition' => 0,
-                'bot_risk_addition' => 0,
+                'file_matches' => $fileMatches,
+                'service_matches' => $serviceMatches,
+                'change_type_matches' => $changeTypeMatches,
+                'history_score' => $historyScore,
+                'blast_radius_score' => $blastScore,
+                'ci_risk_addition' => $ciRisk,
+                'bot_risk_addition' => $botRisk,
             ],
-            'contributing_factors' => [
-                'Service area has recent P1 incident history (12 days ago)',
-                'Multiple downstream services affected (4 services)',
-                'Changes to critical payment path with shared utility modifications',
-                'Blast radius score: 60/100',
-            ],
-            'recommendation' => 'Proceed with caution. The payment-service had a P1 outage 12 days ago. Consider deploying during a low-traffic window with enhanced monitoring on error rates and latency for payment-service, billing-api, and notification-service.',
+            'contributing_factors' => $factors,
+            'recommendation' => $recommendation,
         ];
+    }
+
+    /**
+     * Classify file risk by path pattern — used for deletion/gutting score scaling.
+     */
+    private function classifyFileRisk(string $filename): int
+    {
+        return match (true) {
+            (bool) preg_match('/routes\/(web|api)\.php/i', $filename) => 35,
+            (bool) preg_match('/migration/i', $filename) => 25,
+            (bool) preg_match('/middleware|auth|guard|policy/i', $filename) => 30,
+            (bool) preg_match('/config\//i', $filename) => 20,
+            (bool) preg_match('/Controller\.php$/i', $filename) => 15,
+            (bool) preg_match('/Model\.php$/i', $filename) => 15,
+            (bool) preg_match('/Service\.php$/i', $filename) => 20,
+            (bool) preg_match('/routes\//i', $filename) => 20,
+            (bool) preg_match('/\.blade\.php|\.css|\.scss$/i', $filename) => 2,
+            (bool) preg_match('/test/i', $filename) => 2,
+            default => 10,
+        };
     }
 
     private function getMockNegotiatorResult(array $riskResult): array
@@ -2208,6 +2712,98 @@ class GitHubWebhookController extends Controller
                 'response' => "Database migration files:\n\n{$fileList}\n\nMigrations are high-risk — they modify the schema and can't be easily rolled back in production.",
                 'highlight_nodes' => $dbFiles->pluck('file')->toArray(),
                 'suggested_followups' => ['What services depend on the database?', 'Show the risk breakdown'],
+            ];
+        }
+
+        // Code snippet analysis — when user sends code via "Send to Chat"
+        if (preg_match('/analyze this code|code snippet|potential issues|what are the|```/i', $q)) {
+            // Extract file name from query
+            $snippetFile = '';
+            if (preg_match('/from\s+(\S+\.?\w+)/i', $query, $snipMatch)) {
+                $snippetFile = rtrim($snipMatch[1], ':');
+            }
+
+            // Extract the code block
+            $codeBlock = '';
+            if (preg_match('/```\s*([\s\S]*?)\s*```/s', $query, $codeMatch)) {
+                $codeBlock = trim($codeMatch[1]);
+            }
+
+            // Find matching file in the PR's changed files
+            $matchedFile = $sortedFiles->first(function ($f) use ($snippetFile) {
+                $fname = strtolower($f['file'] ?? '');
+
+                return str_contains($fname, strtolower($snippetFile)) || strtolower(basename($fname)) === strtolower($snippetFile);
+            });
+
+            // Analyze the code snippet for patterns
+            $issues = [];
+            $riskFlags = [];
+            if (! empty($codeBlock)) {
+                // Check for common patterns
+                if (preg_match('/import\s+.*from/i', $codeBlock)) {
+                    $importCount = preg_match_all('/import\s+/i', $codeBlock);
+                    $issues[] = "**{$importCount} import(s)** detected — this file has external dependencies that could cascade if broken.";
+                }
+                if (preg_match('/async|await|Promise|setTimeout/i', $codeBlock)) {
+                    $issues[] = 'Contains **async/concurrency** patterns — check for race conditions and proper error handling.';
+                }
+                if (preg_match('/catch|try|throw|Error/i', $codeBlock)) {
+                    $issues[] = 'Has **error handling** — verify catch blocks handle all edge cases.';
+                }
+                if (preg_match('/password|secret|token|api[_-]?key|credential/i', $codeBlock)) {
+                    $riskFlags[] = 'Possible **sensitive data** references (secrets/tokens/credentials).';
+                }
+                if (preg_match('/eval\s*\(|exec\s*\(|innerHTML|dangerouslySetInnerHTML/i', $codeBlock)) {
+                    $riskFlags[] = 'Potential **injection vulnerability** (eval/exec/innerHTML usage).';
+                }
+                if (preg_match('/console\.\s*log|print\s*\(|debugger/i', $codeBlock)) {
+                    $issues[] = 'Contains **debug statements** that should be removed before production.';
+                }
+                if (preg_match('/TODO|FIXME|HACK|XXX/i', $codeBlock)) {
+                    $issues[] = 'Has **TODO/FIXME** markers — unfinished work that may need attention.';
+                }
+                if (preg_match('/interface|type\s+\w+\s*=/i', $codeBlock)) {
+                    $issues[] = 'Defines **types/interfaces** — changes here affect all implementors.';
+                }
+                if (preg_match('/export\s+(default|class|function|const)/i', $codeBlock)) {
+                    $issues[] = 'Has **public exports** — changes to the API surface may break consumers.';
+                }
+                if (preg_match('/config|env|process\.env|\.env/i', $codeBlock)) {
+                    $issues[] = 'References **configuration/environment** — verify env vars are set in all deployment targets.';
+                }
+            }
+
+            $response = '';
+            if ($snippetFile) {
+                $response .= "**Code analysis for `{$snippetFile}`:**\n\n";
+            } else {
+                $response .= "**Code snippet analysis:**\n\n";
+            }
+
+            if ($matchedFile) {
+                $response .= "This file has a risk score of **{$matchedFile['risk_score']} pts** (_{$matchedFile['change_type']}_).\n\n";
+                $highlights = [$matchedFile['file']];
+            }
+
+            if (! empty($riskFlags)) {
+                $response .= "**Security Concerns:**\n".implode("\n", array_map(fn ($r) => "- {$r}", $riskFlags))."\n\n";
+            }
+
+            if (! empty($issues)) {
+                $response .= "**Observations:**\n".implode("\n", array_map(fn ($i) => "- {$i}", $issues))."\n\n";
+            }
+
+            if (empty($issues) && empty($riskFlags)) {
+                $response .= "No obvious issues detected in this snippet. The code appears to follow standard patterns.\n\n";
+            }
+
+            $response .= "Overall PR risk: **{$riskScore}/100** ({$riskLevel}).";
+
+            return [
+                'response' => $response,
+                'highlight_nodes' => $highlights ?? [],
+                'suggested_followups' => ['What depends on this file?', 'Show the highest risk files', 'Explain the full blast radius'],
             ];
         }
 

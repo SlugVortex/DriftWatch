@@ -1,0 +1,24 @@
+# agents/Dockerfile.mcp
+# DriftWatch MCP Server — Model Context Protocol tool integration
+#
+# Provides 10 tools (GitHub read/write + DB) for agent access
+#
+# Usage:
+#   docker build -f Dockerfile.mcp -t driftwatch-mcp .
+#   docker run -p 8100:8100 --env-file ../.env driftwatch-mcp
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install only MCP dependencies (lighter than full agent requirements)
+RUN pip install --no-cache-dir httpx fastmcp
+
+# Copy MCP server
+COPY mcp_server.py .
+
+EXPOSE 8100
+
+ENV MCP_PORT=8100
+
+CMD ["python", "mcp_server.py"]

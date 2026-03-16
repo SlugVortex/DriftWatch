@@ -268,31 +268,28 @@
                         <small class="text-secondary">Set <code>GITHUB_WEBHOOK_SECRET</code> in your <code>.env</code> file.</small>
                     </div>
                     <div class="mb-0">
-                        <label class="form-label fw-medium">GitHub Token</label>
-                        <div class="input-group" id="githubTokenGroup">
-                            <input type="password"
-                                   class="form-control"
-                                   id="githubTokenInput"
-                                   placeholder="{{ config('services.github.token') ? 'Token configured — enter new token to replace' : 'ghp_xxxxxxxxxxxx' }}"
-                                   autocomplete="new-password">
-                            <button class="btn btn-outline-secondary" type="button" id="toggleTokenVisibility"
-                                    onclick="document.getElementById('githubTokenInput').type =
-                                             document.getElementById('githubTokenInput').type === 'password' ? 'text' : 'password'">
-                                <span class="material-symbols-outlined fs-16">visibility</span>
+                        <label class="form-label fw-medium d-flex align-items-center gap-2">
+                            GitHub Token
+                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 fs-11" data-bs-toggle="modal" data-bs-target="#githubTokenHelpModal">
+                                <span class="material-symbols-outlined align-middle" style="font-size:14px;">help</span> How to create
                             </button>
-                            <button class="btn btn-primary" type="button" id="saveTokenBtn" onclick="saveGithubToken()">
-                                <span class="material-symbols-outlined fs-16 align-middle">save</span> Save
-                            </button>
-                        </div>
-                        <div class="d-flex align-items-center gap-2 mt-1">
-                            <span class="badge bg-{{ config('services.github.token') ? 'success' : 'warning' }} bg-opacity-10 text-{{ config('services.github.token') ? 'success' : 'warning' }} fs-10" id="tokenStatusBadge">
-                                {{ config('services.github.token') ? '✓ Configured' : '✗ Not configured' }}
-                            </span>
-                            <small class="text-secondary">Needs <code>repo</code> and <code>read:org</code> scopes. Generate at
-                                <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">github.com/settings/tokens</a>.
-                            </small>
-                        </div>
-                        <div id="tokenSaveResult" class="mt-2" style="display:none;"></div>
+                        </label>
+                        <form action="{{ route('driftwatch.settings.save-token') }}" method="POST">
+                            @csrf
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="github_token" id="githubTokenInput"
+                                       placeholder="{{ config('services.github.token') ? 'Token configured (paste new one to update)' : 'Paste your GitHub token here' }}"
+                                       autocomplete="off">
+                                <button type="submit" class="btn btn-primary">
+                                    <span class="material-symbols-outlined align-middle" style="font-size:16px;">save</span> Save
+                                </button>
+                            </div>
+                            @if(config('services.github.token'))
+                                <small class="text-success"><span class="material-symbols-outlined align-middle" style="font-size:13px;">check_circle</span> Token is configured ({{ Str::mask(config('services.github.token'), '*', 4, -4) }})</small>
+                            @else
+                                <small class="text-warning"><span class="material-symbols-outlined align-middle" style="font-size:13px;">warning</span> No token — agents cannot read PR code</small>
+                            @endif
+                        </form>
                     </div>
                 </div>
             </div>
@@ -740,6 +737,110 @@ flowchart LR
             </div>
         </div>
     </div>
+
+    {{-- GitHub Token Help Modal --}}
+    <div class="modal fade" id="githubTokenHelpModal" tabindex="-1" aria-labelledby="githubTokenHelpLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold" id="githubTokenHelpLabel">
+                        <span class="material-symbols-outlined align-middle me-2">key</span>
+                        How to Create a GitHub Personal Access Token
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-info fs-13 mb-4">
+                        <span class="material-symbols-outlined align-middle me-1" style="font-size:16px;">info</span>
+                        DriftWatch needs a GitHub token to read PR diffs, file contents, and post risk assessment comments. Without it, agents only see file names — not actual code.
+                    </div>
+
+                    <h6 class="fw-bold mb-3">Step-by-step instructions:</h6>
+
+                    <div class="d-flex gap-3 mb-3 p-3 bg-light rounded-3">
+                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:28px;height:28px;">1</span>
+                        <div>
+                            <strong>Go to GitHub Token Settings</strong><br>
+                            <span class="fs-13 text-secondary">Open <a href="https://github.com/settings/tokens?type=beta" target="_blank" class="text-primary">github.com/settings/tokens</a> (or: GitHub avatar → Settings → Developer settings → Personal access tokens → Fine-grained tokens)</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 mb-3 p-3 bg-light rounded-3">
+                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:28px;height:28px;">2</span>
+                        <div>
+                            <strong>Click "Generate new token"</strong><br>
+                            <span class="fs-13 text-secondary">Choose <strong>Fine-grained token</strong> (recommended) or Classic token</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 mb-3 p-3 bg-light rounded-3">
+                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:28px;height:28px;">3</span>
+                        <div>
+                            <strong>Configure the token</strong><br>
+                            <ul class="fs-13 text-secondary mb-0 mt-1">
+                                <li><strong>Name:</strong> DriftWatch</li>
+                                <li><strong>Expiration:</strong> 90 days (or custom)</li>
+                                <li><strong>Repository access:</strong> Select the repos you want DriftWatch to analyze</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 mb-3 p-3 bg-light rounded-3">
+                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:28px;height:28px;">4</span>
+                        <div>
+                            <strong>Set permissions</strong><br>
+                            <ul class="fs-13 text-secondary mb-0 mt-1">
+                                <li><strong>Contents:</strong> Read (to read file contents)</li>
+                                <li><strong>Pull requests:</strong> Read & Write (to read diffs and post comments)</li>
+                                <li><strong>Issues:</strong> Read & Write (for Copilot Agent Mode integration)</li>
+                                <li><strong>Checks:</strong> Read & Write (to create check runs)</li>
+                                <li><strong>Webhooks:</strong> Read & Write (if you want DriftWatch to auto-register)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 mb-3 p-3 bg-light rounded-3">
+                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:28px;height:28px;">5</span>
+                        <div>
+                            <strong>Click "Generate token" and copy it</strong><br>
+                            <span class="fs-13 text-secondary">You'll only see it once! Copy it immediately.</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 mb-4 p-3 bg-light rounded-3">
+                        <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:28px;height:28px;">6</span>
+                        <div>
+                            <strong>Paste it into the GitHub Token field on this page and click Save</strong>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mb-2">What does a valid token look like?</h6>
+                    <div class="p-3 bg-dark text-white rounded-3 mb-3" style="font-family: monospace; font-size: 13px;">
+                        <div class="mb-2">
+                            <span class="text-info">Fine-grained token (recommended):</span><br>
+                            <code class="text-warning">github_pat_11BU6RA2I0xxxx...xxxx</code>
+                        </div>
+                        <div>
+                            <span class="text-info">Classic token:</span><br>
+                            <code class="text-warning">ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning fs-13 mb-0">
+                        <span class="material-symbols-outlined align-middle me-1" style="font-size:16px;">security</span>
+                        <strong>Security note:</strong> The token is stored in your server's <code>.env</code> file. Never commit <code>.env</code> to version control. Rotate tokens regularly.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="https://github.com/settings/tokens?type=beta" target="_blank" class="btn btn-outline-dark">
+                        <span class="material-symbols-outlined align-middle me-1" style="font-size:16px;">open_in_new</span>
+                        Open GitHub Token Settings
+                    </a>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Got it</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -757,61 +858,5 @@ flowchart LR
         });
         document.querySelector('[data-config-id="' + configId + '"]').classList.add('active-template');
     }
-
-    function saveGithubToken() {
-    var token = document.getElementById('githubTokenInput').value.trim();
-    var btn = document.getElementById('saveTokenBtn');
-    var resultDiv = document.getElementById('tokenSaveResult');
-
-    if (!token) {
-        resultDiv.style.display = 'block';
-        resultDiv.innerHTML = '<div class="alert alert-warning py-2 fs-12 mb-0">Please enter a token before saving.</div>';
-        return;
-    }
-
-    // Basic client-side format check
-    if (!/^(ghp_|github_pat_|ghs_|gho_)[A-Za-z0-9_]+$/.test(token)) {
-        resultDiv.style.display = 'block';
-        resultDiv.innerHTML = '<div class="alert alert-warning py-2 fs-12 mb-0">Token format looks invalid. GitHub tokens start with <code>ghp_</code>, <code>github_pat_</code>, <code>ghs_</code>, or <code>gho_</code>.</div>';
-        return;
-    }
-
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving…';
-    resultDiv.style.display = 'none';
-
-    fetch('/settings/github-token', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-        },
-        body: JSON.stringify({ github_token: token }),
-    })
-    .then(function(res) { return res.json(); })
-    .then(function(data) {
-        btn.disabled = false;
-        btn.innerHTML = '<span class="material-symbols-outlined fs-16 align-middle">save</span> Save';
-
-        if (data.success) {
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '<div class="alert alert-success py-2 fs-12 mb-0"><span class="material-symbols-outlined align-middle me-1" style="font-size:14px;">check_circle</span>' + data.message + '</div>';
-            document.getElementById('githubTokenInput').value = '';
-            document.getElementById('githubTokenInput').placeholder = 'Token configured — enter new token to replace';
-            document.getElementById('tokenStatusBadge').className = 'badge bg-success bg-opacity-10 text-success fs-10';
-            document.getElementById('tokenStatusBadge').textContent = '✓ Configured';
-        } else {
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '<div class="alert alert-danger py-2 fs-12 mb-0">' + (data.error || 'Failed to save token.') + '</div>';
-        }
-    })
-    .catch(function() {
-        btn.disabled = false;
-        btn.innerHTML = '<span class="material-symbols-outlined fs-16 align-middle">save</span> Save';
-        resultDiv.style.display = 'block';
-        resultDiv.innerHTML = '<div class="alert alert-danger py-2 fs-12 mb-0">Network error — could not save token.</div>';
-    });
-}
 </script>
 @endpush

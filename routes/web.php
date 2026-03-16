@@ -35,12 +35,14 @@ Route::prefix('driftwatch')->name('driftwatch.')->middleware('auth')->group(func
     Route::post('/pr/{pullRequest}/resume-pipeline', [DriftWatchController::class, 'resumePipeline'])->name('resume-pipeline');
     Route::post('/pr/{pullRequest}/update-environment', [DriftWatchController::class, 'updateEnvironment'])->name('update-environment');
     Route::post('/pr/{pullRequest}/update-template', [DriftWatchController::class, 'updateTemplate'])->name('update-template');
+    Route::post('/pr/{pullRequest}/toggle-gate', [DriftWatchController::class, 'toggleGate'])->name('toggle-gate');
     Route::get('/incidents', [DriftWatchController::class, 'incidents'])->name('incidents');
     Route::get('/analytics', [DriftWatchController::class, 'analytics'])->name('analytics');
 
     // Settings Routes
     Route::get('/settings', [DriftWatchController::class, 'settings'])->name('settings');
     Route::post('/settings/pipeline', [DriftWatchController::class, 'savePipelineConfig'])->name('settings.pipeline');
+    Route::post('/settings/save-token', [DriftWatchController::class, 'saveGithubToken'])->name('settings.save-token');
     Route::post('/settings/pipeline/reset', [DriftWatchController::class, 'resetPipelineConfig'])->name('settings.pipeline.reset');
 
     // Update GitHub token from the UI

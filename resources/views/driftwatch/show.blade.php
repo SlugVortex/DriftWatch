@@ -103,6 +103,17 @@
     .dw-bomb-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); transform: translateY(-1px); }
     [data-theme=dark] .dw-bomb-card { background: #1e293b; border-color: #334155; }
 
+    /* Reveal glow for newly-shown hidden files */
+    @keyframes revealGlow {
+        0%   { box-shadow: 0 0 0 0 rgba(96,93,255,0.5); background: rgba(96,93,255,0.08); }
+        40%  { box-shadow: 0 0 12px 4px rgba(96,93,255,0.25); background: rgba(96,93,255,0.06); }
+        100% { box-shadow: 0 0 0 0 transparent; background: transparent; }
+    }
+    ._reveal-glow {
+        animation: revealGlow 3s ease-out forwards;
+        border-radius: 6px;
+    }
+
     /* Node hover glow on dag tree */
     #dagTreeSvg .node rect, #dagTreeSvg .node circle, #dagTreeSvg .node polygon {
         cursor: pointer;
@@ -529,26 +540,190 @@
         </div>
     @endif
 
-    {{-- DEPLOY DECISION BANNER — full-width, top of page, impossible to miss --}}
-    @if($pullRequest->deploymentDecision)
+    {{-- ============================================================ --}}
+    {{-- VERDICT CARD — The first thing the dev sees. Answers:        --}}
+    {{--   1. Is this PR safe?                                        --}}
+    {{--   2. What exactly changed?                                   --}}
+    {{--   3. Why is it risky (or not)?                               --}}
+    {{-- ============================================================ --}}
+    @if($pullRequest->riskAssessment || $pullRequest->deploymentDecision)
         @php
-            $bannerDecision = $pullRequest->deploymentDecision->decision;
-            $bannerConfig = match($bannerDecision) {
-                'approved' =>['bg' => 'bg-success', 'label' => 'SAFE TO DEPLOY', 'icon' => 'verified'],
-                'blocked' =>['bg' => 'bg-danger', 'label' => 'DEPLOYMENT BLOCKED', 'icon' => 'block'],
-                default =>['bg' => 'bg-warning text-dark', 'label' => 'AWAITING HUMAN DECISION', 'icon' => 'hourglass_top'],
-            };
+            $vScore = $pullRequest->riskAssessment->risk_score ?? 0;
+            $vDecision = $pullRequest->deploymentDecision->decision ?? 'pending_review';
+            $vFactors = $pullRequest->riskAssessment->contributing_factors ?? [];
+            $vRecommendation = $pullRequest->riskAssessment->recommendation ?? '';
+            $vClassifications = $pullRequest->blastRadius->change_classifications ?? [];
+            $vAffectedFiles = $pullRequest->blastRadius->affected_files ?? [];
+            $vAffectedServices = $pullRequest->blastRadius->affected_services ?? [];
+            $vIncidents = $pullRequest->riskAssessment->historical_incidents ?? [];
+
+            // Verdict config
+            if ($vDecision === 'approved' || ($vDecision !== 'blocked' && $vScore < 25)) {
+                $verdictBg = 'linear-gradient(135deg, #059669 0%, #10B981 100%)';
+                $verdictLabel = 'This PR is safe to deploy';
+                $verdictIcon = 'verified';
+                $verdictSublabel = 'No significant risk patterns detected. Standard deployment is fine.';
+            } elseif ($vDecision === 'blocked' || $vScore >= 75) {
+                $verdictBg = 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)';
+                $verdictLabel = 'This PR should NOT be deployed';
+                $verdictIcon = 'gpp_bad';
+                $verdictSublabel = 'Critical risk factors detected. Review required before merging.';
+            } elseif ($vScore >= 50) {
+                $verdictBg = 'linear-gradient(135deg, #D97706 0%, #F59E0B 100%)';
+                $verdictLabel = 'This PR needs careful review';
+                $verdictIcon = 'warning';
+                $verdictSublabel = 'Elevated risk — deploy with caution and monitoring.';
+            } else {
+                $verdictBg = 'linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)';
+                $verdictLabel = 'This PR looks OK with minor risks';
+                $verdictIcon = 'info';
+                $verdictSublabel = 'Low-to-moderate risk. Proceed with standard review.';
+            }
+
+            // Build "what changed" summary from classifications
+            $changesSummary = [];
+            $criticalFiles = collect($vClassifications)->where('risk_score', '>=', 20)->sortByDesc('risk_score');
+            $deletedFiles = collect($vClassifications)->where('change_type', 'routing_change')
+                ->merge(collect($vClassifications)->filter(fn($c) => str_contains($c['reasoning'] ?? '', 'delet')));
+
+            foreach ($criticalFiles->take(3) as $c) {
+                $typeLabel = match($c['change_type'] ?? 'general_change') {
+                    'sql_migration' => 'Database migration',
+                    'auth_middleware' => 'Auth/security change',
+                    'config_change' => 'Config change',
+                    'routing_change' => 'Route change',
+                    'function_signature_change' => 'API signature change',
+                    'service_change' => 'Service logic change',
+                    default => 'Code change',
+                };
+                $changesSummary[] = ['label' => $typeLabel, 'file' => basename($c['file']), 'score' => $c['risk_score']];
+            }
+
+            // Detect file deletions from the PR data
+            $deletions = $pullRequest->deletions ?? 0;
+            $additions = $pullRequest->additions ?? 0;
+            $filesChanged = $pullRequest->files_changed ?? count($vAffectedFiles);
+            $isLargeDelete = $deletions > 100 && $additions == 0;
         @endphp
-        <div class="{{ $bannerConfig['bg'] }} rounded-3 mb-4 dw-banner shadow-sm" style="min-height: 80px; display: flex; align-items: center;">
-            <div class="d-flex align-items-center justify-content-center gap-3 p-4 w-100">
-                <span class="material-symbols-outlined @if($bannerDecision == 'pending_review') text-dark @else text-white @endif" style="font-size: 36px;">{{ $bannerConfig['icon'] }}</span>
-                <span class="fw-bold fs-3 text-uppercase letter-spacing-1 @if($bannerDecision == 'pending_review') text-dark @else text-white @endif">
-                    {{ $bannerConfig['label'] }}
-                </span>
-                @if($pullRequest->deploymentDecision->decided_by)
-                    <span class="badge bg-white bg-opacity-25 fs-14 ms-3 p-2 shadow-sm @if($bannerDecision == 'pending_review') text-dark @else text-white @endif">
-                        Decision by: {{ $pullRequest->deploymentDecision->decided_by }}
-                    </span>
+        <div class="rounded-3 mb-4 shadow-sm overflow-hidden" style="background: {{ $verdictBg }};">
+            <div class="p-4">
+                {{-- Verdict header --}}
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="material-symbols-outlined text-white" style="font-size: 40px;">{{ $verdictIcon }}</span>
+                    <div>
+                        <h4 class="fw-bold text-white mb-0">{{ $verdictLabel }}</h4>
+                        <span class="text-white text-opacity-75 fs-13">{{ $verdictSublabel }}</span>
+                    </div>
+                    <div class="ms-auto d-flex align-items-center gap-3">
+                        <div class="text-center">
+                            <div class="fw-bold text-white" style="font-size: 32px; line-height: 1;">{{ $vScore }}</div>
+                            <div class="text-white text-opacity-75 fs-11">RISK SCORE</div>
+                        </div>
+                        @if($pullRequest->deploymentDecision)
+                            @php
+                                $decBadgeColor = match($vDecision) {
+                                    'approved' => 'bg-white text-success',
+                                    'blocked' => 'bg-white text-danger',
+                                    default => 'bg-white bg-opacity-25 text-white',
+                                };
+                            @endphp
+                            <span class="badge {{ $decBadgeColor }} px-3 py-2 fs-12 fw-bold text-uppercase">
+                                {{ str_replace('_', ' ', $vDecision) }}
+                            </span>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- What changed + Why it matters — two columns --}}
+                <div class="row g-3">
+                    {{-- Left: What exactly changed --}}
+                    <div class="col-md-6">
+                        <div class="bg-white bg-opacity-10 rounded-3 p-3" style="backdrop-filter: blur(4px);">
+                            <div class="fw-bold text-white fs-13 mb-2">
+                                <span class="material-symbols-outlined align-middle" style="font-size:15px;">description</span>
+                                What changed
+                            </div>
+                            @if($isLargeDelete)
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="material-symbols-outlined text-white" style="font-size:14px;">delete_forever</span>
+                                    <span class="text-white fs-13"><strong>{{ $deletions }} lines deleted</strong> across {{ $filesChanged }} file(s) — potential destructive change</span>
+                                </div>
+                            @endif
+                            @forelse($changesSummary as $cs)
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="badge {{ $cs['score'] >= 25 ? 'bg-danger' : ($cs['score'] >= 15 ? 'bg-warning text-dark' : 'bg-info') }}" style="min-width: 22px; font-size:10px;">{{ $cs['score'] }}</span>
+                                    <span class="text-white fs-13"><strong>{{ $cs['label'] }}</strong> — {{ $cs['file'] }}</span>
+                                </div>
+                            @empty
+                                <div class="text-white text-opacity-75 fs-13">
+                                    @if(count($vAffectedFiles) > 0)
+                                        {{ count($vAffectedFiles) }} file(s) changed — no critical patterns detected
+                                    @else
+                                        No file analysis available
+                                    @endif
+                                </div>
+                            @endforelse
+                            @if(count($vAffectedFiles) > 3 && count($changesSummary) > 0)
+                                <div class="text-white text-opacity-50 fs-12 mt-1">+ {{ count($vAffectedFiles) - count($changesSummary) }} more file(s)</div>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Right: Why it's risky --}}
+                    <div class="col-md-6">
+                        <div class="bg-white bg-opacity-10 rounded-3 p-3" style="backdrop-filter: blur(4px);">
+                            <div class="fw-bold text-white fs-13 mb-2">
+                                <span class="material-symbols-outlined align-middle" style="font-size:15px;">psychology</span>
+                                Why this score
+                            </div>
+                            @forelse(array_slice($vFactors, 0, 4) as $factor)
+                                <div class="d-flex align-items-start gap-2 mb-1">
+                                    <span class="material-symbols-outlined text-white text-opacity-75 flex-shrink-0" style="font-size:14px; margin-top:2px;">{{ $vScore >= 50 ? 'warning' : 'check_circle' }}</span>
+                                    <span class="text-white fs-13">{{ $factor }}</span>
+                                </div>
+                            @empty
+                                <div class="text-white text-opacity-75 fs-13">No specific risk factors identified.</div>
+                            @endforelse
+                            @if(count($vIncidents) > 0)
+                                <div class="mt-2 pt-2" style="border-top: 1px solid rgba(255,255,255,0.15);">
+                                    <span class="text-white text-opacity-75 fs-12">
+                                        <span class="material-symbols-outlined align-middle" style="font-size:13px;">history</span>
+                                        {{ count($vIncidents) }} related incident(s) in 90-day history
+                                    </span>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Action buttons when pending review --}}
+                @if($vDecision === 'pending_review')
+                    <div class="d-flex gap-2 mt-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.15);">
+                        <form action="{{ route('driftwatch.approve', $pullRequest) }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-light btn-sm fw-bold text-success shadow-sm" onclick="return confirm('Approve this deployment?')">
+                                <span class="material-symbols-outlined align-middle me-1" style="font-size:16px;">check_circle</span> Approve & Proceed
+                            </button>
+                        </form>
+                        <form action="{{ route('driftwatch.block', $pullRequest) }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-light btn-sm fw-bold text-danger shadow-sm" onclick="return confirm('Block this deployment?')">
+                                <span class="material-symbols-outlined align-middle me-1" style="font-size:16px;">block</span> Block
+                            </button>
+                        </form>
+                        @if($pullRequest->deploymentDecision->decided_by)
+                            <span class="badge bg-white bg-opacity-25 text-white fs-12 ms-auto align-self-center">
+                                Decision by: {{ $pullRequest->deploymentDecision->decided_by }}
+                            </span>
+                        @endif
+                    </div>
+                @elseif($pullRequest->deploymentDecision->decided_by)
+                    <div class="mt-3 pt-2" style="border-top: 1px solid rgba(255,255,255,0.15);">
+                        <span class="text-white text-opacity-75 fs-12">
+                            <span class="material-symbols-outlined align-middle" style="font-size:14px;">person</span>
+                            Decision by: {{ $pullRequest->deploymentDecision->decided_by }}
+                        </span>
+                    </div>
                 @endif
             </div>
         </div>
@@ -676,8 +851,30 @@
                         </select>
                     </form>
                 </div>
+                {{-- Approval Gate Toggle --}}
+                @php
+                    $currentConfig = \App\Models\PipelineConfig::where('name', $pullRequest->pipeline_template ?? 'full')->first()
+                        ?? \App\Models\PipelineConfig::first();
+                    $currentEnv = $pullRequest->target_environment ?? 'production';
+                    $envThresholds = $currentConfig?->environment_thresholds ?? [];
+                    $gateEnabled = !empty($envThresholds[$currentEnv]['require_approval']);
+                @endphp
+                <div class="d-flex align-items-center gap-2 ms-auto">
+                    <span class="material-symbols-outlined text-secondary" style="font-size:16px;">front_hand</span>
+                    <span class="fs-12 text-secondary fw-medium">Approval Gate:</span>
+                    <form action="{{ route('driftwatch.toggle-gate', $pullRequest) }}" method="POST" class="d-inline">
+                        @csrf
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" role="switch" name="gate_enabled" value="1"
+                                   id="gateToggle" {{ $gateEnabled ? 'checked' : '' }} onchange="this.form.submit()" style="cursor:pointer;">
+                            <label class="form-check-label fs-12 {{ $gateEnabled ? 'text-warning fw-bold' : 'text-secondary' }}" for="gateToggle" style="cursor:pointer;">
+                                {{ $gateEnabled ? 'ON' : 'OFF' }}
+                            </label>
+                        </div>
+                    </form>
+                </div>
                 @if($pullRequest->pipeline_paused)
-                    <span class="badge bg-warning bg-opacity-10 text-warning ms-auto">
+                    <span class="badge bg-warning bg-opacity-10 text-warning">
                         <span class="material-symbols-outlined align-middle" style="font-size:14px;">pause_circle</span>
                         Paused at {{ ucfirst($pullRequest->paused_at_stage ?? 'unknown') }}
                     </span>
@@ -1895,6 +2092,149 @@
         @endif
     @endif
 
+    {{-- Microsoft Teams Adaptive Card Preview --}}
+    @if($pullRequest->riskAssessment && $pullRequest->deploymentDecision)
+        @php
+            $teamsRiskScore = $pullRequest->riskAssessment->risk_score ?? 0;
+            $teamsDecision = $pullRequest->deploymentDecision->decision ?? 'pending_review';
+            $teamsWeatherScore = $pullRequest->deploymentDecision->weather_score ?? 0;
+            $teamsAccentColor = match(true) {
+                $teamsRiskScore >= 75 => '#FF0000',
+                $teamsRiskScore >= 50 => '#FFA500',
+                default => '#00CC00',
+            };
+            $teamsAccentBg = match(true) {
+                $teamsRiskScore >= 75 => 'rgba(255,0,0,0.08)',
+                $teamsRiskScore >= 50 => 'rgba(255,165,0,0.08)',
+                default => 'rgba(0,204,0,0.08)',
+            };
+            $teamsServices = $pullRequest->blastRadius?->affected_services ?? [];
+            $teamsServicesText = !empty($teamsServices) ? implode(', ', array_slice($teamsServices, 0, 5)) : 'None identified';
+            $teamsFactors = $pullRequest->riskAssessment->contributing_factors ?? [];
+            $teamsDecisionLabel = strtoupper($teamsDecision);
+            $teamsDecisionColor = match($teamsDecision) {
+                'approved' => '#00CC00',
+                'blocked' => '#FF0000',
+                default => '#FFA500',
+            };
+            $teamsSent = config('services.teams.webhook_url') ? true : false;
+        @endphp
+        <div class="card bg-white border-0 rounded-3 mb-4 dw-card">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h6 class="fw-bold mb-0 dw-section-title">
+                        <span class="material-symbols-outlined align-middle" style="font-size: 18px;">chat</span>
+                        Microsoft Teams — Adaptive Card
+                    </h6>
+                    <div class="d-flex align-items-center gap-2">
+                        @if($teamsSent)
+                            <span class="badge bg-success bg-opacity-10 text-success fs-11">
+                                <span class="material-symbols-outlined align-middle" style="font-size: 13px;">check_circle</span> Sent to Teams
+                            </span>
+                        @else
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary fs-11">
+                                <span class="material-symbols-outlined align-middle" style="font-size: 13px;">info</span> Preview
+                            </span>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Teams Card Preview --}}
+                <div style="max-width: 520px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; font-family: 'Segoe UI', -apple-system, sans-serif; background: #fff;">
+                    {{-- Card accent bar --}}
+                    <div style="height: 4px; background: {{ $teamsAccentColor }};"></div>
+
+                    <div style="padding: 20px;">
+                        {{-- Header --}}
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                            <img src="{{ url('/assets/images/agents/driftwatch-icon.png') }}" alt="" style="width: 24px; height: 24px; border-radius: 4px;" onerror="this.style.display='none'">
+                            <span style="font-size: 13px; font-weight: 600; color: {{ $teamsAccentColor }};">DriftWatch Deploy Alert</span>
+                        </div>
+
+                        {{-- PR Info --}}
+                        <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px;">
+                            <span style="font-size: 28px; font-weight: 700; color: {{ $teamsAccentColor }};">PR #{{ $pullRequest->pr_number }}</span>
+                            <div>
+                                <div style="font-size: 15px; font-weight: 600;">{{ Str::limit($pullRequest->pr_title, 50) }}</div>
+                                <div style="font-size: 12px; color: #616161;">{{ $pullRequest->repo_full_name }} by {{ $pullRequest->pr_author }}</div>
+                            </div>
+                        </div>
+
+                        {{-- Metrics Row --}}
+                        <div style="display: flex; gap: 24px; margin-bottom: 16px; padding: 12px; background: {{ $teamsAccentBg }}; border-radius: 6px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 28px; font-weight: 700; color: {{ $teamsAccentColor }};">{{ $teamsRiskScore }}</div>
+                                <div style="font-size: 11px; color: #616161; text-transform: uppercase;">Risk Score</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 28px; font-weight: 700; color: {{ $teamsDecisionColor }};">{{ $teamsDecisionLabel }}</div>
+                                <div style="font-size: 11px; color: #616161; text-transform: uppercase;">Decision</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 28px; font-weight: 700; color: {{ $teamsWeatherScore >= 40 ? '#FF0000' : ($teamsWeatherScore >= 20 ? '#FFA500' : '#00CC00') }};">{{ $teamsWeatherScore }}</div>
+                                <div style="font-size: 11px; color: #616161; text-transform: uppercase;">Weather</div>
+                            </div>
+                        </div>
+
+                        {{-- Facts --}}
+                        <div style="margin-bottom: 16px; font-size: 13px;">
+                            <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f0f0f0;">
+                                <span style="color: #616161; font-weight: 600;">Affected Services</span>
+                                <span>{{ $teamsServicesText }}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f0f0f0;">
+                                <span style="color: #616161; font-weight: 600;">Files Changed</span>
+                                <span>{{ $pullRequest->files_changed ?? 0 }}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f0f0f0;">
+                                <span style="color: #616161; font-weight: 600;">Blast Radius</span>
+                                <span>{{ $pullRequest->blastRadius?->total_blast_radius_score ?? 0 }}/100</span>
+                            </div>
+                        </div>
+
+                        {{-- Key Concerns --}}
+                        @if(count($teamsFactors) > 0)
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">Key Concerns:</div>
+                                @foreach(array_slice($teamsFactors, 0, 3) as $factor)
+                                    <div style="font-size: 12px; color: #424242; margin-bottom: 3px;">- {{ $factor }}</div>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        {{-- Action Buttons --}}
+                        <div style="display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid #e8e8e8;">
+                            <button style="flex: 1; padding: 8px 16px; border: none; border-radius: 4px; font-size: 13px; font-weight: 600; cursor: pointer; background: #107C10; color: white;">
+                                APPROVE Deployment
+                            </button>
+                            <button style="flex: 1; padding: 8px 16px; border: none; border-radius: 4px; font-size: 13px; font-weight: 600; cursor: pointer; background: #D13438; color: white;">
+                                BLOCK Deployment
+                            </button>
+                            <a href="{{ route('driftwatch.show', $pullRequest) }}" style="flex: 1; padding: 8px 16px; border: 1px solid #c8c8c8; border-radius: 4px; font-size: 13px; font-weight: 600; text-align: center; text-decoration: none; color: #323130; background: #fff;">
+                                View in DriftWatch
+                            </a>
+                        </div>
+                    </div>
+
+                    {{-- Footer --}}
+                    <div style="padding: 8px 20px; background: #f5f5f5; border-top: 1px solid #e8e8e8; display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 11px; color: #888;">Sent via DriftWatch Agent Pipeline</span>
+                        <span style="font-size: 11px; color: #aaa;">•</span>
+                        <span style="font-size: 11px; color: #888;">{{ $pullRequest->deploymentDecision->decided_at?->diffForHumans() ?? 'just now' }}</span>
+                        @if($teamsSent)
+                            <span style="font-size: 11px; color: #888; margin-left: auto;">HMAC-signed callbacks active</span>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="text-center mt-3 fs-12 text-secondary">
+                    <span class="material-symbols-outlined align-middle" style="font-size: 14px;">info</span>
+                    This Adaptive Card is sent to Microsoft Teams when risk score exceeds threshold ({{ config('services.teams.notify_above_score', 60) }}). Approve/Block buttons use HMAC-signed callbacks.
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- Pipeline Timeline & Artifacts --}}
     @if($pullRequest->agentRuns->count() > 0)
         <div class="card bg-white border-0 rounded-3 mb-4 dw-card">
@@ -2440,9 +2780,16 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<div class="mb-4">';
             html += '<h6 class="fw-bold fs-14 mb-2"><span class="material-symbols-outlined align-middle me-1 text-danger" style="font-size:16px;">edit_document</span> Changed Files</h6>';
 
-            Object.keys(changedGroups).sort().forEach(function(dir) {
+            var changedDirKeys = Object.keys(changedGroups).sort();
+            var changedFileCount = 0;
+            var changedLimit = 10;
+            var changedListId = 'changedFilesList_' + Date.now();
+            html += '<div id="' + changedListId + '">';
+            changedDirKeys.forEach(function(dir) {
                 var dirFiles = changedGroups[dir];
-                html += '<div class="mb-2">';
+                changedFileCount += dirFiles.length;
+                var isHidden = changedFileCount > changedLimit;
+                html += '<div class="mb-2' + (isHidden ? ' _extra-changed-files" style="display:none;"' : '"') + '>';
                 html += '<div class="d-flex align-items-center gap-1 mb-1"><span class="material-symbols-outlined text-secondary" style="font-size:14px;">folder</span><span class="fs-12 fw-medium text-secondary">' + dir + '/</span><span class="badge bg-danger bg-opacity-10 text-danger fs-11">' + dirFiles.length + '</span></div>';
                 dirFiles.forEach(function(f) {
                     var name = f.split('/').pop();
@@ -2457,6 +2804,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += '</div>';
             });
             html += '</div>';
+            if (changedFileCount > changedLimit) {
+                html += '<button class="btn btn-sm btn-outline-secondary mt-1 _toggle-changed-btn" onclick="(function(btn){var extras=document.querySelectorAll(\'#' + changedListId + ' ._extra-changed-files\');var showing=btn.dataset.showing===\'true\';extras.forEach(function(e){if(showing){e.style.display=\'none\';e.classList.remove(\'_reveal-glow\');}else{e.style.display=\'block\';e.classList.add(\'_reveal-glow\');setTimeout(function(){e.classList.remove(\'_reveal-glow\');},3000);}});btn.dataset.showing=showing?\'false\':\'true\';btn.innerHTML=showing?\'<span class=material-symbols-outlined style=font-size:14px;vertical-align:middle>unfold_more</span> Show all ' + changedFileCount + ' files\':\'<span class=material-symbols-outlined style=font-size:14px;vertical-align:middle>unfold_less</span> Show fewer files\';})(this)" data-showing="false"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">unfold_more</span> Show all ' + changedFileCount + ' files</button>';
+            }
+            html += '</div>';
         }
 
         // Affected Files (not source) — grouped by directory
@@ -2466,9 +2817,16 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<div class="mb-4">';
             html += '<h6 class="fw-bold fs-14 mb-2"><span class="material-symbols-outlined align-middle me-1 text-warning" style="font-size:16px;">share</span> Affected Files</h6>';
 
-            Object.keys(affGroups).sort().forEach(function(dir) {
+            var affDirKeys = Object.keys(affGroups).sort();
+            var affFileCount = 0;
+            var affLimit = 10;
+            var affListId = 'affFilesList_' + Date.now();
+            html += '<div id="' + affListId + '">';
+            affDirKeys.forEach(function(dir) {
                 var dirFiles = affGroups[dir];
-                html += '<div class="mb-2">';
+                affFileCount += dirFiles.length;
+                var isHidden = affFileCount > affLimit;
+                html += '<div class="mb-2' + (isHidden ? ' _extra-aff-files" style="display:none;"' : '"') + '>';
                 html += '<div class="d-flex align-items-center gap-1 mb-1"><span class="material-symbols-outlined text-secondary" style="font-size:14px;">folder</span><span class="fs-12 fw-medium text-secondary">' + dir + '/</span><span class="badge bg-warning bg-opacity-10 text-warning fs-11">' + dirFiles.length + '</span></div>';
                 dirFiles.forEach(function(f) {
                     var name = f.split('/').pop();
@@ -2480,6 +2838,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 html += '</div>';
             });
+            html += '</div>';
+            if (affFileCount > affLimit) {
+                html += '<button class="btn btn-sm btn-outline-secondary mt-1" onclick="(function(btn){var extras=document.querySelectorAll(\'#' + affListId + ' ._extra-aff-files\');var showing=btn.dataset.showing===\'true\';extras.forEach(function(e){if(showing){e.style.display=\'none\';e.classList.remove(\'_reveal-glow\');}else{e.style.display=\'block\';e.classList.add(\'_reveal-glow\');setTimeout(function(){e.classList.remove(\'_reveal-glow\');},3000);}});btn.dataset.showing=showing?\'false\':\'true\';btn.innerHTML=showing?\'<span class=material-symbols-outlined style=font-size:14px;vertical-align:middle>unfold_more</span> Show all ' + affFileCount + ' files\':\'<span class=material-symbols-outlined style=font-size:14px;vertical-align:middle>unfold_less</span> Show fewer files\';})(this)" data-showing="false"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">unfold_more</span> Show all ' + affFileCount + ' files</button>';
+            }
             html += '</div>';
         }
 
@@ -2535,7 +2897,12 @@ document.addEventListener('DOMContentLoaded', function() {
     })();
 
     // === Dependency Tree — Hierarchical LR DAG using dagre-d3 ===
-    window._initDagTree = function() {
+    var _treeShowAll = false;
+    var _treeFileLimit = 8;
+
+    window._initDagTree = function(showAll) {
+        if (typeof showAll !== 'undefined') _treeShowAll = showAll;
+
         var g = new dagreD3.graphlib.Graph().setGraph({
             rankdir: 'LR',
             marginx: 30,
@@ -2569,8 +2936,31 @@ document.addEventListener('DOMContentLoaded', function() {
         var addedNodes = { 'pr_origin': true };
         var hasEdge = {};
 
-        // Changed files
-        files.forEach(function(f) {
+        // Show more/less toggle for large file counts
+        var totalFiles = files.length;
+        var visibleFiles = (_treeShowAll || totalFiles <= _treeFileLimit) ? files : files.slice(0, _treeFileLimit);
+        var hiddenCount = totalFiles - visibleFiles.length;
+        var toggleBar = document.getElementById('treeFileToggleBar');
+        if (!toggleBar) {
+            toggleBar = document.createElement('div');
+            toggleBar.id = 'treeFileToggleBar';
+            toggleBar.style.cssText = 'text-align: center; padding: 8px; background: linear-gradient(135deg, #f0f4ff, #e8ecf4); border-radius: 8px; margin-bottom: 8px;';
+            var container = document.getElementById('dagTreeContainer');
+            container.parentNode.insertBefore(toggleBar, container);
+        }
+        if (totalFiles > _treeFileLimit) {
+            if (_treeShowAll) {
+                toggleBar.innerHTML = '<button class="btn btn-sm btn-outline-primary" onclick="window._initDagTree(false)"><span class="material-symbols-outlined align-middle me-1" style="font-size:14px;">unfold_less</span>Show fewer files (' + _treeFileLimit + ' of ' + totalFiles + ')</button>';
+            } else {
+                toggleBar.innerHTML = '<button class="btn btn-sm btn-outline-primary" onclick="window._initDagTree(true)"><span class="material-symbols-outlined align-middle me-1" style="font-size:14px;">unfold_more</span>Show all ' + totalFiles + ' files <span class="badge bg-primary bg-opacity-10 text-primary ms-1">+' + hiddenCount + ' hidden</span></button>';
+            }
+            toggleBar.style.display = 'block';
+        } else {
+            toggleBar.style.display = 'none';
+        }
+
+        // Changed files (only visible subset)
+        visibleFiles.forEach(function(f) {
             var fname = (typeof f === 'string') ? f : (f.filename || f);
             var short = fname.split('/').pop();
             var depCount = (depGraph[fname] && Array.isArray(depGraph[fname])) ? depGraph[fname].length : 0;
@@ -2656,7 +3046,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Connect changed files to services (heuristic: match path segments)
-        files.forEach(function(f) {
+        visibleFiles.forEach(function(f) {
             var fname = (typeof f === 'string') ? f : (f.filename || f);
             services.forEach(function(svc) {
                 var svcLower = svc.toLowerCase().replace(/[-_]/g, '');
@@ -2740,6 +3130,40 @@ document.addEventListener('DOMContentLoaded', function() {
         window._dagInner = inner;
         window._dagSvg = svg;
         window._dagAddedNodes = addedNodes;
+
+        // Glow newly revealed nodes when expanding from "Show all"
+        if (_treeShowAll && totalFiles > _treeFileLimit) {
+            var revealedFiles = files.slice(_treeFileLimit);
+            revealedFiles.forEach(function(f) {
+                var fname = (typeof f === 'string') ? f : (f.filename || f);
+                var nodeId = 'file_' + fname;
+                var nodeEl = inner.select('g.node[id="' + nodeId + '"] rect');
+                if (nodeEl.empty()) {
+                    // Try matching by label text
+                    inner.selectAll('g.node').each(function() {
+                        var n = d3.select(this);
+                        if (g.node(n.datum()) && n.datum() === nodeId) {
+                            nodeEl = n.select('rect');
+                        }
+                    });
+                }
+                if (!nodeEl.empty()) {
+                    var origStroke = nodeEl.style('stroke');
+                    var origWidth = nodeEl.style('stroke-width');
+                    nodeEl
+                        .style('filter', 'drop-shadow(0 0 10px rgba(96,93,255,0.7))')
+                        .style('stroke', '#605DFF')
+                        .style('stroke-width', '3px');
+                    setTimeout(function() {
+                        nodeEl
+                            .transition().duration(1500)
+                            .style('filter', 'none')
+                            .style('stroke', origStroke)
+                            .style('stroke-width', origWidth);
+                    }, 1500);
+                }
+            });
+        }
 
         // Node click — open side panel with file details
         inner.selectAll('g.node').on('click', function(event, nodeId) {
@@ -3232,10 +3656,96 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Format AI response — basic markdown to HTML
     function formatChatResponse(text) {
+        // Lightweight markdown → HTML renderer for chat responses
+        var lines = text.split('\n');
+        var html = '';
+        var inList = false;
+        var inCodeBlock = false;
+        var codeBlockContent = '';
+
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+
+            // Fenced code blocks ```
+            if (line.trim().match(/^```/)) {
+                if (inCodeBlock) {
+                    html += '<pre style="background:#1e1e2e;color:#cdd6f4;padding:10px;border-radius:8px;font-size:11px;overflow-x:auto;margin:6px 0;">' + escapeHtml(codeBlockContent.trim()) + '</pre>';
+                    codeBlockContent = '';
+                    inCodeBlock = false;
+                } else {
+                    inCodeBlock = true;
+                }
+                continue;
+            }
+            if (inCodeBlock) {
+                codeBlockContent += line + '\n';
+                continue;
+            }
+
+            // Close list if current line is not a list item
+            if (inList && !line.trim().match(/^[-*•]\s|^\d+\.\s/)) {
+                html += '</ul>';
+                inList = false;
+            }
+
+            // Headers
+            if (line.trim().match(/^###\s/)) {
+                html += '<div class="fw-bold fs-12 mt-2 mb-1">' + inlineFormat(line.replace(/^###\s+/, '')) + '</div>';
+                continue;
+            }
+            if (line.trim().match(/^##\s/)) {
+                html += '<div class="fw-bold fs-13 mt-2 mb-1">' + inlineFormat(line.replace(/^##\s+/, '')) + '</div>';
+                continue;
+            }
+            if (line.trim().match(/^#\s/)) {
+                html += '<div class="fw-bold fs-14 mt-2 mb-1">' + inlineFormat(line.replace(/^#\s+/, '')) + '</div>';
+                continue;
+            }
+
+            // Horizontal rule
+            if (line.trim().match(/^[-*_]{3,}$/)) {
+                html += '<hr style="border-color:rgba(255,255,255,0.1);margin:8px 0;">';
+                continue;
+            }
+
+            // Unordered list items (-, *, •)
+            if (line.trim().match(/^[-*•]\s/)) {
+                if (!inList) { html += '<ul style="margin:4px 0;padding-left:18px;">'; inList = true; }
+                html += '<li style="margin-bottom:2px;">' + inlineFormat(line.trim().replace(/^[-*•]\s+/, '')) + '</li>';
+                continue;
+            }
+
+            // Ordered list items (1. 2. etc)
+            if (line.trim().match(/^\d+\.\s/)) {
+                if (!inList) { html += '<ul style="margin:4px 0;padding-left:18px;list-style:decimal;">'; inList = true; }
+                html += '<li style="margin-bottom:2px;">' + inlineFormat(line.trim().replace(/^\d+\.\s+/, '')) + '</li>';
+                continue;
+            }
+
+            // Empty line = paragraph break
+            if (line.trim() === '') {
+                html += '<br>';
+                continue;
+            }
+
+            // Normal paragraph
+            html += '<div>' + inlineFormat(line) + '</div>';
+        }
+
+        if (inList) html += '</ul>';
+        if (inCodeBlock && codeBlockContent) {
+            html += '<pre style="background:#1e1e2e;color:#cdd6f4;padding:10px;border-radius:8px;font-size:11px;overflow-x:auto;margin:6px 0;">' + escapeHtml(codeBlockContent.trim()) + '</pre>';
+        }
+
+        return html;
+    }
+
+    function inlineFormat(text) {
         return text
+            .replace(/`([^`]+)`/g, '<code style="background:rgba(96,93,255,0.15);color:#a5b4fc;padding:1px 5px;border-radius:4px;font-size:11px;">$1</code>')
             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\n\n/g, '<br><br>')
-            .replace(/\n/g, '<br>');
+            .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+            .replace(/→/g, '<span style="color:#605DFF;">→</span>');
     }
 
     // Local fallback — keyword matching (used when API is unavailable)
@@ -3278,6 +3788,46 @@ document.addEventListener('DOMContentLoaded', function() {
             responseHtml = '<div class="fw-medium fs-12 mb-1">Impact Overview</div>';
             responseHtml += '<div class="fs-12">' + files.length + ' files changed across ' + services.length + ' service(s).</div>';
             if (blastSummary) responseHtml += '<div class="fs-12 mt-1">' + blastSummary + '</div>';
+        }
+        else if (q.match(/analyze this code|code snippet|potential issues|```/)) {
+            // Code snippet analysis — extract file name and analyze patterns
+            var snippetFile = '';
+            var fnMatch = query.match(/from\s+(\S+\.?\w+)/i);
+            if (fnMatch) snippetFile = fnMatch[1].replace(/:$/, '');
+
+            var codeBlock = '';
+            var cbMatch = query.match(/```[\s\S]*?([\s\S]*?)[\s\S]*?```/);
+            if (cbMatch) codeBlock = cbMatch[1].trim();
+
+            var issues = [];
+            if (codeBlock) {
+                var importCount = (codeBlock.match(/import\s+/gi) || []).length;
+                if (importCount > 0) issues.push('<strong>' + importCount + ' import(s)</strong> — external dependencies that could cascade.');
+                if (codeBlock.match(/async|await|Promise/i)) issues.push('Contains <strong>async patterns</strong> — check error handling.');
+                if (codeBlock.match(/password|secret|token|api[_-]?key/i)) issues.push('<strong>Sensitive data</strong> references detected.');
+                if (codeBlock.match(/eval\s*\(|exec\s*\(|innerHTML/i)) issues.push('Potential <strong>injection vulnerability</strong>.');
+                if (codeBlock.match(/interface|type\s+\w+\s*=/i)) issues.push('Defines <strong>types/interfaces</strong> — changes affect implementors.');
+                if (codeBlock.match(/export\s+(default|class|function|const)/i)) issues.push('Has <strong>public exports</strong> — API surface changes may break consumers.');
+                if (codeBlock.match(/config|env|process\.env/i)) issues.push('References <strong>environment config</strong> — verify in all targets.');
+            }
+
+            // Try to find the file in the tree
+            var fileMatch = _chatSearchIndex.find(function(n) {
+                return snippetFile && n.searchText.indexOf(snippetFile.toLowerCase()) >= 0;
+            });
+
+            responseHtml = '<div class="fw-medium fs-12 mb-2">Code Analysis' + (snippetFile ? ': ' + snippetFile : '') + '</div>';
+            if (fileMatch) {
+                responseHtml += buildChatFileCard(fileMatch);
+                highlightMultipleNodes([fileMatch.nodeId]);
+            }
+            if (issues.length > 0) {
+                responseHtml += '<div class="fs-12 mt-2"><strong>Findings:</strong></div>';
+                issues.forEach(function(iss) { responseHtml += '<div class="fs-12 ms-2 mt-1">• ' + iss + '</div>'; });
+            } else {
+                responseHtml += '<div class="fs-12 mt-2">No obvious issues detected in this snippet.</div>';
+            }
+            responseHtml += '<div class="fs-11 text-secondary mt-2">Overall PR risk: <strong>' + riskScore + '/100</strong> (' + riskLevel + ')</div>';
         }
         else {
             var words = q.split(/\s+/);
@@ -5757,7 +6307,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         el.querySelector('.material-symbols-outlined').textContent = 'check_circle';
                     }
                     var short = file.split('/').pop();
-                    addBotMessage('<strong>' + escapeHtml(short) + '</strong><br>' + (d.response || 'No review available.'), true);
+                    addBotMessage('<strong>' + escapeHtml(short) + '</strong><br>' + formatChatResponse(d.response || 'No review available.'), true);
                     // Auto-mark as reviewed
                     _reviewedFiles[file] = true;
                     saveReviewSession();
@@ -6038,6 +6588,180 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.appendChild(toast);
         setTimeout(function() { toast.style.opacity = '0'; setTimeout(function() { toast.remove(); }, 300); }, 3000);
     }
+
+    // === LIVE PIPELINE POLLING — Auto-trigger when PR is analyzing ===
+    (function() {
+        var prStatus = @json($pullRequest->status);
+        var prId = @json($pullRequest->id);
+        var pollInterval = null;
+        var pollStartTime = Date.now();
+        var stageLabels = {
+            archaeologist: { title: 'Mapping Blast Radius', subtitle: 'Archaeologist scanning dependencies & building dependency graph...', icon: 'explore' },
+            historian: { title: 'Calculating Risk Score', subtitle: 'Historian correlating with 90-day incidents via RAG search...', icon: 'history' },
+            negotiator: { title: 'Making Deploy Decision', subtitle: 'Negotiator weighing risk vs velocity, posting PR comment...', icon: 'gavel' },
+            chronicler: { title: 'Recording Feedback Loop', subtitle: 'Chronicler capturing prediction for future calibration...', icon: 'auto_stories' }
+        };
+        var agentOrder = ['archaeologist', 'historian', 'negotiator', 'chronicler'];
+        var lastKnownStage = null;
+
+        // Auto-show overlay if the PR is currently analyzing (e.g. webhook just fired)
+        if (prStatus === 'analyzing') {
+            showLivePipelineOverlay();
+            startPolling();
+        }
+
+        function showLivePipelineOverlay() {
+            var overlay = document.getElementById('agentLoadingOverlay');
+            if (!overlay) return;
+            overlay.style.display = 'block';
+            overlay.style.opacity = '0';
+            requestAnimationFrame(function() {
+                overlay.style.transition = 'opacity 0.4s ease';
+                overlay.style.opacity = '1';
+            });
+
+            // Elapsed timer
+            var elapsedEl = document.getElementById('loadingElapsed');
+            setInterval(function() {
+                var secs = Math.floor((Date.now() - pollStartTime) / 1000);
+                if (elapsedEl) elapsedEl.textContent = secs + 's elapsed';
+            }, 1000);
+
+            // Set initial title
+            var titleEl = document.getElementById('loadingTitle');
+            var subtitleEl = document.getElementById('loadingSubtitle');
+            if (titleEl) titleEl.textContent = 'Analyzing PR #' + @json($pullRequest->pr_number);
+            if (subtitleEl) subtitleEl.textContent = 'Waiting for agent pipeline to start...';
+        }
+
+        function startPolling() {
+            pollInterval = setInterval(function() {
+                fetch('/api/jobs/' + prId + '/status')
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) { updateOverlayFromPoll(data); })
+                    .catch(function() {});
+            }, 2000);
+        }
+
+        function updateOverlayFromPoll(data) {
+            var progressBar = document.getElementById('agentProgressBar');
+            var titleEl = document.getElementById('loadingTitle');
+            var subtitleEl = document.getElementById('loadingSubtitle');
+            var mainIcon = document.getElementById('loadingMainIcon');
+
+            if (!data.agents) return;
+
+            // Count completed agents
+            var completedCount = 0;
+            agentOrder.forEach(function(key) {
+                if (data.agents[key]) completedCount++;
+            });
+
+            // Update progress bar
+            var currentStage = data.pipeline_stage;
+
+            // Calculate progress percentage: completed agents + partial for current
+            var progress = (completedCount / 4) * 100;
+            if (currentStage && stageLabels[currentStage] && !data.agents[currentStage]) {
+                progress += 12; // Add partial progress for currently running agent
+            }
+            if (progressBar) progressBar.style.width = Math.min(progress, 100) + '%';
+
+            // Update each agent row
+            agentOrder.forEach(function(key) {
+                var img = document.getElementById('img-' + key);
+                var label = document.getElementById('label-' + key);
+                var bar = document.getElementById('bar-' + key);
+                var status = document.getElementById('status-' + key);
+
+                if (data.agents[key]) {
+                    // Agent completed
+                    if (img) { img.style.opacity = '1'; img.style.boxShadow = '0 0 12px rgba(16,185,129,0.3)'; }
+                    if (label) label.style.opacity = '1';
+                    if (bar) bar.style.width = '100%';
+                    if (status) { status.textContent = 'Complete'; status.style.color = '#10B981'; }
+                } else if (currentStage === key) {
+                    // Agent currently running
+                    if (img) { img.style.opacity = '1'; img.style.boxShadow = '0 0 16px rgba(96,93,255,0.4)'; }
+                    if (label) label.style.opacity = '1';
+                    if (bar) bar.style.width = '60%';
+                    if (status) { status.textContent = 'Processing...'; status.style.color = '#60a5fa'; }
+
+                    // Update title/subtitle for current stage
+                    if (currentStage !== lastKnownStage) {
+                        lastKnownStage = currentStage;
+                        var info = stageLabels[currentStage];
+                        if (info) {
+                            if (titleEl) titleEl.textContent = info.title;
+                            if (subtitleEl) subtitleEl.textContent = info.subtitle;
+                            if (mainIcon) mainIcon.textContent = info.icon;
+                        }
+                    }
+                } else {
+                    // Agent waiting
+                    if (img) img.style.opacity = '0.3';
+                    if (label) label.style.opacity = '0.4';
+                    if (bar) bar.style.width = '0%';
+                    if (status) { status.textContent = 'Waiting...'; status.style.color = 'rgba(255,255,255,0.5)'; }
+                }
+            });
+
+            // Also update inline pipeline steps behind the overlay
+            agentOrder.forEach(function(key, idx) {
+                var stepEls = document.querySelectorAll('.pipeline-step');
+                if (stepEls[idx]) {
+                    if (data.agents[key]) {
+                        stepEls[idx].classList.add('done');
+                        var icon = stepEls[idx].querySelector('.material-symbols-outlined');
+                        if (icon) { icon.textContent = 'check_circle'; icon.className = 'material-symbols-outlined text-success'; }
+                    }
+                }
+            });
+
+            // Pipeline complete — show success and reload
+            if (data.status === 'completed' || currentStage === 'complete') {
+                clearInterval(pollInterval);
+
+                if (progressBar) progressBar.style.width = '100%';
+                if (titleEl) titleEl.textContent = 'Analysis Complete';
+                if (subtitleEl) subtitleEl.textContent = 'Loading results...';
+                if (mainIcon) { mainIcon.textContent = 'check_circle'; mainIcon.style.color = '#10B981'; }
+
+                // Mark all agents complete
+                agentOrder.forEach(function(key) {
+                    var img = document.getElementById('img-' + key);
+                    var label = document.getElementById('label-' + key);
+                    var bar = document.getElementById('bar-' + key);
+                    var status = document.getElementById('status-' + key);
+                    if (img) { img.style.opacity = '1'; img.style.boxShadow = '0 0 12px rgba(16,185,129,0.3)'; }
+                    if (label) label.style.opacity = '1';
+                    if (bar) bar.style.width = '100%';
+                    if (status) { status.textContent = 'Complete'; status.style.color = '#10B981'; }
+                });
+
+                // Reload page after brief pause to show completion
+                setTimeout(function() { window.location.reload(); }, 1500);
+            }
+
+            // Handle paused state (approval gate)
+            if (data.status === 'paused' || data.pipeline_paused) {
+                clearInterval(pollInterval);
+                if (progressBar) progressBar.style.width = ((completedCount / 4) * 100) + '%';
+                if (titleEl) titleEl.textContent = 'Pipeline Paused — Approval Required';
+                if (subtitleEl) subtitleEl.textContent = data.paused_reason || 'Risk threshold exceeded. Awaiting human review.';
+                if (mainIcon) { mainIcon.textContent = 'front_hand'; mainIcon.style.color = '#F59E0B'; }
+
+                // Mark paused agent
+                var pausedAgent = data.paused_at_stage;
+                if (pausedAgent) {
+                    var pStatus = document.getElementById('status-' + pausedAgent);
+                    if (pStatus) { pStatus.textContent = 'Paused'; pStatus.style.color = '#F59E0B'; }
+                }
+
+                setTimeout(function() { window.location.reload(); }, 2500);
+            }
+        }
+    })();
 });
 </script>
 @endpush

@@ -34,6 +34,8 @@ class PullRequest extends Model
         'paused_at_stage',
         'paused_at',
         'paused_reason',
+        'pipeline_stage',
+        'stage_started_at',
     ];
 
     /**
@@ -47,6 +49,7 @@ class PullRequest extends Model
             'deletions' => 'integer',
             'pipeline_paused' => 'boolean',
             'paused_at' => 'datetime',
+            'stage_started_at' => 'datetime',
         ];
     }
 
