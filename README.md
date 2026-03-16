@@ -10,7 +10,7 @@
 
 **DriftWatch is a multi-agent pre-deployment risk intelligence system that catches dangerous code before it reaches production.**
 
-[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-driftwatch.azurewebsites.net-0078D4?style=for-the-badge)](https://driftwatch.azurewebsites.net)
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-driftwatch.azurewebsites.net-0078D4?style=for-the-badge)](https://driftwatch-app.azurewebsites.net/)
 [![Laravel](https://img.shields.io/badge/Laravel-11.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)
 [![Azure AI Foundry](https://img.shields.io/badge/Azure_AI_Foundry-Agent_Service-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/products/ai-foundry)
 [![Semantic Kernel](https://img.shields.io/badge/Semantic_Kernel-Orchestration-605DFF?style=for-the-badge&logo=microsoft&logoColor=white)](https://github.com/microsoft/semantic-kernel)
@@ -23,6 +23,10 @@
 </div>
 
 ---
+
+
+**Yt Vid Demo:** https://youtu.be/ffoQgjghpbQ
+
 
 ## 📋 Table of Contents
 
@@ -287,7 +291,7 @@ New outcomes are indexed to **Azure AI Search** by the Chronicler — the RAG kn
 ### Main Dashboard
 
 <div align="center">
-  <img src="https://hackboxpmeproduction.blob.core.windows.net/proj-6d54e0a1-efde-43de-95f0-271c463cc789-1773377836617/8f0487eb-f78a-4143-8d7e-9fe09e80d85c_1773640895359?sv=2026-02-06&st=2026-03-16T06%3A10%3A24Z&se=2026-03-16T06%3A20%3A24Z&skoid=4fec1579-ad60-4829-98b1-c37115c9dd25&sktid=975f013f-7f24-47e8-a7d3-abc4752bf346&skt=2026-03-16T06%3A10%3A24Z&ske=2026-03-16T06%3A20%3A24Z&sks=b&skv=2026-02-06&sr=b&sp=r&sig=TBvPO0wKJRTJ6K8IAcl%2FiLirB52C4o%2F%2FkOIlW9U48NA%3D" alt="DriftWatch Main Dashboard" width="800"/>
+  <img src="[[https://hackboxpmeproduction.blob.core.windows.net/proj-6d54e0a1-efde-43de-95f0-271c463cc789-1773377836617/8f0487eb-f78a-4143-8d7e-9fe09e80d85c_1773640895359?sv=2026-02-06&st=2026-03-16T06%3A10%3A24Z&se=2026-03-16T06%3A20%3A24Z&skoid=4fec1579-ad60-4829-98b1-c37115c9dd25&sktid=975f013f-7f24-47e8-a7d3-abc4752bf346&skt=2026-03-16T06%3A10%3A24Z&ske=2026-03-16T06%3A20%3A24Z&sks=b&skv=2026-02-06&sr=b&sp=r&sig=TBvPO0wKJRTJ6K8IAcl%2FiLirB52C4o%2F%2FkOIlW9U48NA%3D](https://hackboxpmeproduction.blob.core.windows.net/proj-6d54e0a1-efde-43de-95f0-271c463cc789-1773377836617/642caf09-ffbb-496b-b628-d886ad342504_1773642888660?sv=2026-02-06&st=2026-03-16T06%3A58%3A06Z&se=2026-03-16T07%3A08%3A06Z&skoid=4fec1579-ad60-4829-98b1-c37115c9dd25&sktid=975f013f-7f24-47e8-a7d3-abc4752bf346&skt=2026-03-16T06%3A58%3A06Z&ske=2026-03-16T07%3A08%3A06Z&sks=b&skv=2026-02-06&sr=b&sp=r&sig=STvhyo%2FE%2FM46YNV8UgRuNTG43SXUxGHeKleV9pN9l4Y%3D)](https://hackboxpmeproduction.blob.core.windows.net/proj-6d54e0a1-efde-43de-95f0-271c463cc789-1773377836617/642caf09-ffbb-496b-b628-d886ad342504_1773642888660?sv=2026-02-06&st=2026-03-16T06%3A58%3A06Z&se=2026-03-16T07%3A08%3A06Z&skoid=4fec1579-ad60-4829-98b1-c37115c9dd25&sktid=975f013f-7f24-47e8-a7d3-abc4752bf346&skt=2026-03-16T06%3A58%3A06Z&ske=2026-03-16T07%3A08%3A06Z&sks=b&skv=2026-02-06&sr=b&sp=r&sig=STvhyo%2FE%2FM46YNV8UgRuNTG43SXUxGHeKleV9pN9l4Y%3D)" alt="DriftWatch Main Dashboard" width="800"/>
 </div>
 
 ### Feature Showcase
