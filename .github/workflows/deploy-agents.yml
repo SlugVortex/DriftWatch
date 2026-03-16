@@ -1,0 +1,62 @@
+name: Build and deploy DriftWatch Agents to Azure Functions
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'agents/**'
+      - '.github/workflows/deploy-agents.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        working-directory: agents
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set Function App settings
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: driftwatch-agents
+          app-settings-json: |
+            [
+              { "name": "DB_HOST",                               "value": "startup-flexserver-db.mysql.database.azure.com",  "slotSetting": false },
+              { "name": "DB_DATABASE",                           "value": "driftwatch",                                      "slotSetting": false },
+              { "name": "DB_USERNAME",                           "value": "${{ secrets.DB_USERNAME }}",                      "slotSetting": false },
+              { "name": "DB_PASSWORD",                           "value": "${{ secrets.DB_PASSWORD }}",                      "slotSetting": false },
+              { "name": "AZURE_OPENAI_ENDPOINT",                 "value": "${{ secrets.AZURE_OPENAI_ENDPOINT }}",            "slotSetting": false },
+              { "name": "AZURE_OPENAI_API_KEY",                  "value": "${{ secrets.AZURE_OPENAI_API_KEY }}",             "slotSetting": false },
+              { "name": "AZURE_OPENAI_DEPLOYMENT",               "value": "gpt-4.1-mini",                                    "slotSetting": false },
+              { "name": "GITHUB_TOKEN",                          "value": "${{ secrets.GH_TOKEN }}",                         "slotSetting": false },
+              { "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",  "value": "${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}", "slotSetting": false }
+            ]
+
+      - name: Deploy to Azure Functions
+        uses: Azure/functions-action@v1
+        with:
+          app-name: driftwatch-agents
+          package: agents
+          scm-do-build-during-deployment: true
+          enable-oryx-build: true
